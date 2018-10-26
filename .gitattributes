@@ -1,0 +1,5 @@
+# Set default behaviour, in case users don't have core.autocrlf set.
+* text=auto
+*.ps1 text diff eol=crlf
+*.psm1 text diff eol=crlf
+*.psd1 text diff eol=crlf
