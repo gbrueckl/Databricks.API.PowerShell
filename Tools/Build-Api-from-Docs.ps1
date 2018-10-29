@@ -20,7 +20,7 @@ function Get-ApiEndpointDetails($docItemHtml)
 	
 	# get Description
 	$descriptionHtml = $docItemHtml.getElementsByTagName("p")
-	$description = $descriptionHtml[0].innerText.Replace("Example of request:", "").Trim()
+	$description = $descriptionHtml[0].innerText.Replace("Example of request:", "").Replace("An example response:", "").Trim()
 	
 	# get Parameters
 	$parametersTableHtml = ($docItemHtml.getElementsByTagName("table"))[1] # the second table contains the Parameters
@@ -82,6 +82,13 @@ function Get-PSFunctionTemplateFromApiDetails($apiDetails, $psFunctionName)
 	$parametersDefinition = $parametersDefinition.TrimEnd().TrimEnd(',')
 	$parametersBody = $parametersBody.TrimEnd()
 	
+	$parametersAsJson = ""
+	# for POST requests, we have to convert the parameters to JSON
+	if($apiDetails.method -eq "POST")
+	{
+		$parametersAsJson = ('{0}$parameters = $parameters | ConvertTo-Json{0}') -f "`n"
+	}
+	
 	$docTemplate = ('
 			Function {0}
 			{{
@@ -104,23 +111,23 @@ function Get-PSFunctionTemplateFromApiDetails($apiDetails, $psFunctionName)
 			Test-Initialized
 
 			Write-Verbose "Setting final ApiURL ..."
-			$apiUrl = $script:dbApiRootUrl + "/{6}"
+			$apiUrl = Get-DbApiUrl -ApiEndpoint "/{6}"
 			$requestMethod = "{7}"
-			Write-Verbose "Final ApiURL: $apiUrl"
+			Write-Verbose "API Call: $requestMethod $apiUrl"
 
 			#Set headers
-			$headers = Get-DatabricksHeader
+			$headers = Get-DbRequestHeader
 
 			Write-Verbose "Setting Parameters for API call ..."
 			#Set parameters
 			$parameters = @{{
 			{8} 
 			}}
-
+			{9}
 			$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
 			return $result
-	}}') -f $psFunctionName, $apiDetails.description, $apiDetails.link, $parametersDocumentation, $parametersExample, $parametersDefinition, $apiDetails.endpoint, $apiDetails.method, $parametersBody
+	}}') -f $psFunctionName, $apiDetails.description, $apiDetails.link, $parametersDocumentation, $parametersExample, $parametersDefinition, $apiDetails.endpoint, $apiDetails.method, $parametersBody, $parametersAsJson
 	
 	$docTemplate
 }
@@ -139,20 +146,35 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/workspace.html"
+$documentationUri = "https://docs.databricks.com/api/latest/jobs.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
-$functions = $functionsHtml | ForEach-Object { $_.innerText.ToString().Trim().ToLower() } | Where-Object { $_ -ne "Data Structures" }
+$functions = $functionsHtml | ForEach-Object { $_.innerText.ToString().Trim().ToLower().replace(" ", "-") } | Where-Object { $_ -ne "Data Structures" }
 $functions
 
 if($false)
 { 
 	# workspace API
-	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-WorkspaceItem"
-	Get-FunctionTemplate -html $html -name "export" -psFunctionName "Export-WorkspaceItem"
-	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-WorkspaceItemDetails"
-	Get-FunctionTemplate -html $html -name "import" -psFunctionName "Import-WorkspaceItem"
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-WorkspaceItem"
-	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-WorkspaceDirectory"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbWorkspaceItem"
+	Get-FunctionTemplate -html $html -name "export" -psFunctionName "Export-DbWorkspaceItem"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbWorkspaceItem"
+	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-DbWorkspaceItemDetails"
+	Get-FunctionTemplate -html $html -name "import" -psFunctionName "Import-DbWorkspaceItem"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbWorkspaceItem"
+	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-DbWorkspaceDirectory"
+	
+	
+	# jobs API
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbJob"
+	#Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-Job" # same as "list" but wit -id parameter
+	Get-FunctionTemplate -html $html -name "reset" -psFunctionName "Update-DbJob"
+	Get-FunctionTemplate -html $html -name "run-now" -psFunctionName "Start-DbJob"
+	Get-FunctionTemplate -html $html -name "runs-submit" -psFunctionName "Start-DbNotebook"
+	Get-FunctionTemplate -html $html -name "runs-list" -psFunctionName "Get-DbJobRun"
+	Get-FunctionTemplate -html $html -name "runs-get" -psFunctionName "Get-DbJobRun"
+	
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbWorkspaceItem"
+	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-DbWorkspaceDirectory"
 }

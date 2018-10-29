@@ -58,7 +58,8 @@ PowerShellVersion = '3.0'
 #NestedModules = @()
  
 # Functions to export from this module
-FunctionsToExport = @(
+FunctionsToExport = '*'
+<#@(
     # general cmdlets
 	"Set-DatabricksEnvironment"
     # Clusters API cmdlets
@@ -70,6 +71,7 @@ FunctionsToExport = @(
     # Instance Profiles API cmdlets
 
     # Jobs API cmdlets
+	, "Get-Job", "Delete-Job", "Update-Job"
 
     # Libraries API cmdlets
 
@@ -83,6 +85,7 @@ FunctionsToExport = @(
     , "Delete-WorkspaceItem", "Export-WorkspaceItem", "Get-WorkspaceItemDetails", "Import-WorkspaceItem", "Get-WorkspaceItem", "New-WorkspaceDirectory"
 
 )
+#>
 
 # Cmdlets to export from this module
 CmdletsToExport = @()
@@ -105,26 +108,26 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-Tags = @('databricks', 'data', 'azure', 'aws', 'spark', 'rest', 'api', 'developer', 'big data')
+		Tags = @('databricks', 'data', 'azure', 'aws', 'spark', 'rest', 'api', 'developer', 'big data')
 
-# A URL to the license for this module.
-LicenseUri = 'https://github.com/gbrueckl/Databricks.API.PowerShell/blob/master/LICENSE'
+		# A URL to the license for this module.
+		LicenseUri = 'https://github.com/gbrueckl/Databricks.API.PowerShell/blob/master/LICENSE'
 
-        # A URL to the main website for this project.
-ProjectUri = 'https://github.com/gbrueckl/Databricks.API.PowerShell'
+				# A URL to the main website for this project.
+		ProjectUri = 'https://github.com/gbrueckl/Databricks.API.PowerShell'
 
-# A URL to an icon representing this module.
-        # IconUri = ''
+		# A URL to an icon representing this module.
+		# IconUri = ''
 
-        # ReleaseNotes of this module
-        # ReleaseNotes = ''
+		# ReleaseNotes of this module
+		# ReleaseNotes = ''
 
     } # End of PSData hashtable
 
 } # End of PrivateData hashtable
 
 # HelpInfo URI of this module
- HelpInfoURI = 'https://github.com/gbrueckl/Databricks.API.PowerShell'
+HelpInfoURI = 'https://github.com/gbrueckl/Databricks.API.PowerShell'
 
 # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
 # DefaultCommandPrefix = ''
