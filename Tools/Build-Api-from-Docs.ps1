@@ -127,7 +127,7 @@ function Get-PSFunctionTemplateFromApiDetails($apiDetails, $psFunctionName)
 			$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
 			return $result
-	}}') -f $psFunctionName, $apiDetails.description, $apiDetails.link, $parametersDocumentation, $parametersExample, $parametersDefinition, $apiDetails.endpoint, $apiDetails.method, $parametersBody, $parametersAsJson
+	}}').Trim() -f $psFunctionName, $apiDetails.description, $apiDetails.link, $parametersDocumentation, $parametersExample, $parametersDefinition, $apiDetails.endpoint, $apiDetails.method, $parametersBody, $parametersAsJson
 	
 	$docTemplate
 }
@@ -146,7 +146,7 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/tokens.html"
+$documentationUri = "https://docs.databricks.com/api/latest/clusters.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
@@ -194,8 +194,28 @@ if($false)
 
 
 	# Tokens API
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-DbApiToken"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbApiToken"
+	Get-FunctionTemplate -html $html -name "revoke" -psFunctionName "Remove-DbApiToken"
+	
+	# Clusters API
+	
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-DbCluster"
+	Get-FunctionTemplate -html $html -name "edit" -psFunctionName "Update-DbCluster"
+	Get-FunctionTemplate -html $html -name "start" -psFunctionName "Start-DbCluster"
+	Get-FunctionTemplate -html $html -name "restart" -psFunctionName "Restart-DbCluster"
+	Get-FunctionTemplate -html $html -name "resize" -psFunctionName "Resize-DbCluster"
 	#TODO
-	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-DbToken"
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbToken"
-	Get-FunctionTemplate -html $html -name "revoke" -psFunctionName "Remove-DbJob"
+	Get-FunctionTemplate -html $html -name "delete-(terminate)" -psFunctionName "Stop-DbCluster"
+	Get-FunctionTemplate -html $html -name "permanent-delete" -psFunctionName "Remove-DbCluster"
+	Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-DbCluster"
+	#Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbCluster"
+	Get-FunctionTemplate -html $html -name "pin" -psFunctionName "Pin-DbCluster"
+	Get-FunctionTemplate -html $html -name "unpin" -psFunctionName "Unpin-DbCluster"
+	
+	Get-FunctionTemplate -html $html -name "list-node-types" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "list-zones" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "spark-versions" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "events" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "data-structures" -psFunctionName "Get-DbJob"
 }
