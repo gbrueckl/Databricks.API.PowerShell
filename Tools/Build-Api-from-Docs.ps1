@@ -94,7 +94,7 @@ function Get-PSFunctionTemplateFromApiDetails($apiDetails, $psFunctionName)
 			{{
 			<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			{1}
 			.DESCRIPTION
 			{1}
 			Official API Documentation: {2}
@@ -146,16 +146,17 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/jobs.html"
+$documentationUri = "https://docs.databricks.com/api/latest/tokens.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
 $functions = $functionsHtml | ForEach-Object { $_.innerText.ToString().Trim().ToLower().replace(" ", "-") } | Where-Object { $_ -ne "Data Structures" }
-$functions
+#$functions
+$functions | ForEach-Object { Write-Host "Get-FunctionTemplate -html `$html -name ""$_"" -psFunctionName ""Get-DbJob""" }
 
 if($false)
 { 
-	# workspace API
+	# Workspace API
 	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbWorkspaceItem"
 	Get-FunctionTemplate -html $html -name "export" -psFunctionName "Export-DbWorkspaceItem"
 	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbWorkspaceItem"
@@ -165,7 +166,7 @@ if($false)
 	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-DbWorkspaceDirectory"
 	
 	
-	# jobs API
+	# Jobs API
 	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbJob"
 	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbJob"
 	#Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-Job" # same as "list" but wit -id parameter
@@ -174,7 +175,27 @@ if($false)
 	Get-FunctionTemplate -html $html -name "runs-submit" -psFunctionName "Start-DbNotebook"
 	Get-FunctionTemplate -html $html -name "runs-list" -psFunctionName "Get-DbJobRun"
 	Get-FunctionTemplate -html $html -name "runs-get" -psFunctionName "Get-DbJobRun"
+	Get-FunctionTemplate -html $html -name "runs-export" -psFunctionName "Export-DbJobRun"
+	Get-FunctionTemplate -html $html -name "runs-cancel" -psFunctionName "Cancel-DbJobRun"
+	Get-FunctionTemplate -html $html -name "runs-get-output" -psFunctionName "Get-DbJobRunOutput"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbJobRun"
 	
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbWorkspaceItem"
-	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-DbWorkspaceDirectory"
+	# Secrets API
+	Get-FunctionTemplate -html $html -name "create-secret-scope" -psFunctionName "Add-DbSecretScope"
+	Get-FunctionTemplate -html $html -name "delete-secret-scope" -psFunctionName "Delete-DbSecretScope"
+	Get-FunctionTemplate -html $html -name "list-secret-scopes" -psFunctionName "Get-DbSecretScope"
+	Get-FunctionTemplate -html $html -name "put-secret" -psFunctionName "Add-DbSecret"
+	Get-FunctionTemplate -html $html -name "delete-secret" -psFunctionName "Remove-DbSecret"
+	Get-FunctionTemplate -html $html -name "list-secrets" -psFunctionName "Get-DbSecret"
+	Get-FunctionTemplate -html $html -name "put-secret-acl" -psFunctionName "Add-DbSecretScopeACL"
+	Get-FunctionTemplate -html $html -name "delete-secret-acl" -psFunctionName "Remove-DbSecretScopeACL"
+	Get-FunctionTemplate -html $html -name "get-secret-acl" -psFunctionName "Get-DbSecretScopeACL"
+	#Get-FunctionTemplate -html $html -name "list-secret-acls" -psFunctionName "Get-DbSecretScopeACL"
+
+
+	# Tokens API
+	#TODO
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-DbToken"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbToken"
+	Get-FunctionTemplate -html $html -name "revoke" -psFunctionName "Remove-DbJob"
 }

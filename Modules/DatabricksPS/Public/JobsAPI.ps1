@@ -2,10 +2,11 @@ Function Get-DbJob
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Lists all jobs or returns a specific job for a given JobID.
 			.DESCRIPTION
-			Lists all jobs. 
+			Lists all jobs or returns a specific job for a given JobID. 
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#list
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
 			.PARAMETER JobID 
 			The canonical identifier of the job retrieve. This field is optional and can be used as a filter on one particular job id.
 			.EXAMPLE
@@ -37,18 +38,18 @@ Function Get-DbJob
 	return $result
 }
 
-Function Delete-DbJob
+Function Remove-DbJob
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Deletes the job and sends an email to the addresses specified in JobSettings.email_notifications. No action will occur if the job has already been removed. After the job is removed, neither its details or its run history will be visible via the Jobs UI or API. The job is guaranteed to be removed upon completion of this request. However, runs that were active before the receipt of this request may still be active. They will be terminated asynchronously.
 			.DESCRIPTION
 			Deletes the job and sends an email to the addresses specified in JobSettings.email_notifications. No action will occur if the job has already been removed. After the job is removed, neither its details or its run history will be visible via the Jobs UI or API. The job is guaranteed to be removed upon completion of this request. However, runs that were active before the receipt of this request may still be active. They will be terminated asynchronously.
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#delete
 			.PARAMETER JobID 
 			The canonical identifier of the job to delete. This field is required.
 			.EXAMPLE
-			Delete-DbJob -JobID <JobID>
+			Remove-DbJob -JobID <JobID>
 	#>
 	[CmdletBinding()]
 	param
@@ -83,7 +84,7 @@ Function Update-DbJob
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Overwrites the settings of a job with the provided settings.
 			.DESCRIPTION
 			Overwrites the settings of a job with the provided settings.
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#reset
@@ -132,9 +133,9 @@ Function Start-DbJob
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Runs an existing job now, and returns the run_id of the triggered run.
 			.DESCRIPTION
-			Runs the job now, and returns the run_id of the triggered run.
+			Runs an existing job now, and returns the run_id of the triggered run.
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#run-now
 			.PARAMETER JobID
 			The canonical identifier of the job to start. This field is required.
@@ -191,21 +192,40 @@ Function Start-DbJob
 }
 
 
-Function Start-DbNotebook
+Function Start-ExecutionRun
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Submit a one-time run with the provided settings. This endpoint doesn't require a Databricks job to be created. You can directly submit your workload. Runs submitted via this endpoint don't show up in the UI. Once the run is submitted, you can use the jobs/runs/get API to check the run state.
 			.DESCRIPTION
 			Submit a one-time run with the provided settings. This endpoint doesn't require a Databricks job to be created. You can directly submit your workload. Runs submitted via this endpoint don't show up in the UI. Once the run is submitted, you can use the jobs/runs/get API to check the run state.
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-submit
 			.PARAMETER ClusterID 
-			If existing_cluster_id, the ID of an existing cluster that will be used for all runs of this job. When running jobs on an existing cluster, you may need to manually restart the cluster if it stops responding. We suggest running jobs on new clusters for greater reliability.
-			If new_cluster, a description of a cluster that will be created for each run.
-			.PARAMETER Path
+			The ID of an existing cluster that will be used for all runs of this job. When running jobs on an existing cluster, you may need to manually restart the cluster if it stops responding. We suggest running jobs on new clusters for greater reliability.
+			.PARAMETER NewClusterDefinition
+			A description of a cluster that will be created for each run.
+
+			.PARAMETER NotebookPath
 			The Path of the notebook to execute.
 			.PARAMETER NotebookParameters
 			A hashtable containing the parameters to pass to the notebook
+			
+			.PARAMETER PythonURI
+			The URI of the Python file to be executed. DBFS and S3 paths are supported. This field is required.
+			.PARAMETER PythonParameters
+			Command line parameters that will be passed to the Python file.
+
+			.PARAMETER JarURI
+			Deprecated since 04/2016. Provide a jar through the libraries field instead. For an example, see Create.
+			.PARAMETER JarMainClassName
+			The full name of the class containing the main method to be executed. This class must be contained in a JAR provided as a library.
+			The code should use SparkContext.getOrCreate to obtain a Spark context; otherwise, runs of the job will fail.
+			.PARAMETER JarParameters
+			Parameters that will be passed to the main method.
+
+			.PARAMETER SparkParameters 
+			Command line parameters passed to spark submit.
+			
 			.PARAMETER Name 
 			An optional name for the run. The default value is Untitled.
 			.PARAMETER Libraries 
@@ -213,14 +233,28 @@ Function Start-DbNotebook
 			.PARAMETER Timeout_Seconds 
 			An optional timeout applied to each run of this job. The default behavior is to have no timeout.
 			.EXAMPLE
-			Start-DbNotebook -Existing_Cluster_Id OR New_Cluster <existing_cluster_id OR new_cluster> -Notebook_Task OR Spark_Jar_Task OR Spark_Python_Task OR Spark_Submit_Task <notebook_task OR spark_jar_task OR spark_python_task OR spark_submit_task> -Run_Name <run_name> -Libraries <libraries> -Timeout_Seconds <timeout_seconds>
+			Start-ExecutionRun -Existing_Cluster_Id OR New_Cluster <existing_cluster_id OR new_cluster> -Notebook_Task OR Spark_Jar_Task OR Spark_Python_Task OR Spark_Submit_Task <notebook_task OR spark_jar_task OR spark_python_task OR spark_submit_task> -Run_Name <run_name> -Libraries <libraries> -Timeout_Seconds <timeout_seconds>
 	#>
+	
 	[CmdletBinding()]
 	param
 	(
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
+		
+		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 2)] [string] $PythonURI, 
+		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 3)] [string[]] $PythonParameters,
+		
+		
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarURI, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarMainClassName, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3)] [string[]] $JarParameters, 
+		
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1)] [object] $NewClusterDefinition, 
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)] [string] $SparkParameters, 
+		
+		# generic parameters
 		[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID, 
-		[Parameter(Mandatory = $false, Position = 2)] [string] $Path, 
-		[Parameter(Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
 		[Parameter(Mandatory = $false, Position = 4)] [string] $Name, 
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $Libraries, 
 		[Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds
@@ -237,13 +271,56 @@ Function Start-DbNotebook
 	$headers = Get-DbRequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
-	$notebookTask =  @{ notebook_path = $Path }
-	$notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
+	switch ($PSCmdlet.ParameterSetName) 
+	{ 
+		"Notebook" {
+			$notebookTask =  @{ notebook_path = $NotebookPath }
+			$notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
 
-	#Set parameters
-	$parameters = @{
-		existing_cluster_id = $ClusterID
-		notebook_task = $notebookTask
+			#Set parameters
+			$parameters = @{
+				existing_cluster_id = $ClusterID
+				notebook_task = $notebookTask
+			}
+		}
+		
+		"Jar" {
+			$jarTask =  @{ 
+				jar_uri = $JarURI 
+				main_class_name = $JarMainClassName
+			}
+			$jarTask | Add-Property  -Name "parameters" -Value $JarParameters
+
+			#Set parameters
+			$parameters = @{
+				existing_cluster_id = $ClusterID
+				spark_jar_task = $jarTask
+			}
+		}
+		
+		"Python" {
+			$pythonTask =  @{ 
+				python_file = $PythonURI 
+			}
+			$pythonTask | Add-Property  -Name "parameters" -Value $PythonParameters
+
+			#Set parameters
+			$parameters = @{
+				existing_cluster_id = $ClusterID
+				spark_python_task  = $pythonTask
+			}
+		}
+		
+		"Spark" {
+			$sparkTask =  @{ 
+				parameters = $SparkParameters 
+			}
+
+			#Set parameters
+			$parameters = @{
+				new_cluster = $NewClusterDefinition
+			}
+		}
 	}
 	
 	$parameters | Add-Property -Name "run_name" -Value $Name
@@ -262,10 +339,12 @@ Function Get-DbJobRun
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Lists runs from most recently started to least.
 			.DESCRIPTION
 			Lists runs from most recently started to least.
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-list
+			.PARAMETER JobRunID 
+			The canonical identifier of the run for which to retrieve the metadata. This field is required.
 			.PARAMETER JobID 
 			The job for which to list runs. If omitted, the Jobs service will list runs from all jobs.
 			.PARAMETER Active_Only OR Completed_Only 
@@ -289,7 +368,7 @@ Function Get-DbJobRun
 		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 3)] [int32] $Offset = -1, 
 		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 4)] [int32] $Limit = -1,
 		
-		[Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1)] [int64] $RunID
+		[Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1)] [int64] $JobRunID
 	)
 
 	Test-Initialized
@@ -325,11 +404,183 @@ Function Get-DbJobRun
 		"ByRunId" {
 			#Set parameters
 			$parameters = @{
-				run_id = $RunID 
+				run_id = $JobRunID 
 			}
 		}
 	}
 			
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
+
+
+Function Export-DbJobRun
+{
+	<#
+			.SYNOPSIS
+			Exports and retrieves the job run task.
+			.DESCRIPTION
+			Exports and retrieves the job run task.
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-export
+			.PARAMETER JobRunId 
+			The canonical identifier for the run. This field is required.
+			.PARAMETER Views_To_Export 
+			Which views to export (CODE, DASHBOARDS, or ALL). Defaults to CODE.
+			.EXAMPLE
+			Export-DbJobRun -JobRunID 1 -ViewsToExport All
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunId, 
+		[Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("Code", "Dashboards", "All")] $ViewsToExport = "All"
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/export"
+	$requestMethod = "GET"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-DbRequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{
+		run_id = $JobRunID 
+		views_to_export = $ViewsToExport 
+	}
+			
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
+
+
+Function Cancel-DbJobRun
+{
+	<#
+			.SYNOPSIS
+			Cancels a run. The run is canceled asynchronously, so when this request completes the run may be still be active. The run will be terminated as soon as possible.
+			.DESCRIPTION
+			Cancels a run. The run is canceled asynchronously, so when this request completes, the run may still be running. The run will be terminated shortly. If the run is already in a terminal life_cycle_state, this method is a no-op.
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-cancel
+			.PARAMETER JobRunID 
+			The canonical identifier for the run to cancel. This field is required.
+			.EXAMPLE
+			Cancel-DbJobRun -JobRunID 1
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunID
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/cancel"
+	$requestMethod = "POST"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-DbRequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{
+		run_id = $JobRunID 
+	}
+			
+	$parameters = $parameters | ConvertTo-Json
+
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
+
+
+Function Get-DbJobRunOutput
+{
+	<#
+			.SYNOPSIS
+			Retrieves both the output and the metadata of a run.
+			.DESCRIPTION
+			Retrieve the output of a run. When a notebook task returns value through the dbutils.notebook.exit() call, you can use this endpoint to retrieve that value. Databricks restricts this API to return the first 5 MB of the output. For returning a larger result, you can store job results in a cloud storage service.
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-get-output
+			.PARAMETER JobRunID 
+			The canonical identifier for the run. This field is required.
+			.EXAMPLE
+			Get-DbJobRunOutput -JobRunID 1
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunID
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/get-output"
+	$requestMethod = "GET"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-DbRequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{
+		run_id = $JobRunID 
+	}
+			
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
+
+
+Function Remove-DbJobRun
+{
+	<#
+			.SYNOPSIS
+			Deletes a non-active run. Returns an error if the run is active.
+			.DESCRIPTION
+			Deletes a non-active run. Returns an error if the run is active.
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-delete
+			.PARAMETER JobRunID 
+			The canonical identifier of the run for which to retrieve the metadata.
+			.EXAMPLE
+			Remove-DbJobRun -JobRunID 1
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $false, Position = 1)] [int64] $JobRunID
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/delete"
+	$requestMethod = "POST"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-DbRequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{
+		run_id = $JobRunID 
+	}
+			
+	$parameters = $parameters | ConvertTo-Json
+
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
 	return $result
