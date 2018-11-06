@@ -90,8 +90,8 @@ function Get-PSFunctionTemplateFromApiDetails($apiDetails, $psFunctionName)
 	}
 	
 	$docTemplate = ('
-			Function {0}
-			{{
+Function {0}
+{{
 			<#
 			.SYNOPSIS
 			{1}
@@ -157,65 +157,65 @@ $functions | ForEach-Object { Write-Host "Get-FunctionTemplate -html `$html -nam
 if($false)
 { 
 	# Workspace API
-	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbWorkspaceItem"
-	Get-FunctionTemplate -html $html -name "export" -psFunctionName "Export-DbWorkspaceItem"
-	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbWorkspaceItem"
-	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-DbWorkspaceItemDetails"
-	Get-FunctionTemplate -html $html -name "import" -psFunctionName "Import-DbWorkspaceItem"
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbWorkspaceItem"
-	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-DbWorkspaceDirectory"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-WorkspaceItem"
+	Get-FunctionTemplate -html $html -name "export" -psFunctionName "Export-WorkspaceItem"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-WorkspaceItem"
+	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-WorkspaceItemDetails"
+	Get-FunctionTemplate -html $html -name "import" -psFunctionName "Import-WorkspaceItem"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-WorkspaceItem"
+	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "New-WorkspaceDirectory"
 	
 	
 	# Jobs API
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbJob"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-Job"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-Job"
 	#Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-Job" # same as "list" but wit -id parameter
-	Get-FunctionTemplate -html $html -name "reset" -psFunctionName "Update-DbJob"
-	Get-FunctionTemplate -html $html -name "run-now" -psFunctionName "Start-DbJob"
-	Get-FunctionTemplate -html $html -name "runs-submit" -psFunctionName "Start-DbNotebook"
-	Get-FunctionTemplate -html $html -name "runs-list" -psFunctionName "Get-DbJobRun"
-	Get-FunctionTemplate -html $html -name "runs-get" -psFunctionName "Get-DbJobRun"
-	Get-FunctionTemplate -html $html -name "runs-export" -psFunctionName "Export-DbJobRun"
-	Get-FunctionTemplate -html $html -name "runs-cancel" -psFunctionName "Cancel-DbJobRun"
-	Get-FunctionTemplate -html $html -name "runs-get-output" -psFunctionName "Get-DbJobRunOutput"
-	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Delete-DbJobRun"
+	Get-FunctionTemplate -html $html -name "reset" -psFunctionName "Update-Job"
+	Get-FunctionTemplate -html $html -name "run-now" -psFunctionName "Start-Job"
+	Get-FunctionTemplate -html $html -name "runs-submit" -psFunctionName "Start-Notebook"
+	Get-FunctionTemplate -html $html -name "runs-list" -psFunctionName "Get-JobRun"
+	Get-FunctionTemplate -html $html -name "runs-get" -psFunctionName "Get-JobRun"
+	Get-FunctionTemplate -html $html -name "runs-export" -psFunctionName "Export-JobRun"
+	Get-FunctionTemplate -html $html -name "runs-cancel" -psFunctionName "Cancel-JobRun"
+	Get-FunctionTemplate -html $html -name "runs-get-output" -psFunctionName "Get-JobRunOutput"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-JobRun"
 	
 	# Secrets API
-	Get-FunctionTemplate -html $html -name "create-secret-scope" -psFunctionName "Add-DbSecretScope"
-	Get-FunctionTemplate -html $html -name "delete-secret-scope" -psFunctionName "Delete-DbSecretScope"
-	Get-FunctionTemplate -html $html -name "list-secret-scopes" -psFunctionName "Get-DbSecretScope"
-	Get-FunctionTemplate -html $html -name "put-secret" -psFunctionName "Add-DbSecret"
-	Get-FunctionTemplate -html $html -name "delete-secret" -psFunctionName "Remove-DbSecret"
-	Get-FunctionTemplate -html $html -name "list-secrets" -psFunctionName "Get-DbSecret"
-	Get-FunctionTemplate -html $html -name "put-secret-acl" -psFunctionName "Add-DbSecretScopeACL"
-	Get-FunctionTemplate -html $html -name "delete-secret-acl" -psFunctionName "Remove-DbSecretScopeACL"
-	Get-FunctionTemplate -html $html -name "get-secret-acl" -psFunctionName "Get-DbSecretScopeACL"
-	#Get-FunctionTemplate -html $html -name "list-secret-acls" -psFunctionName "Get-DbSecretScopeACL"
+	Get-FunctionTemplate -html $html -name "create-secret-scope" -psFunctionName "Add-SecretScope"
+	Get-FunctionTemplate -html $html -name "delete-secret-scope" -psFunctionName "Remove-SecretScope"
+	Get-FunctionTemplate -html $html -name "list-secret-scopes" -psFunctionName "Get-SecretScope"
+	Get-FunctionTemplate -html $html -name "put-secret" -psFunctionName "Add-Secret"
+	Get-FunctionTemplate -html $html -name "delete-secret" -psFunctionName "Remove-Secret"
+	Get-FunctionTemplate -html $html -name "list-secrets" -psFunctionName "Get-Secret"
+	Get-FunctionTemplate -html $html -name "put-secret-acl" -psFunctionName "Add-SecretScopeACL"
+	Get-FunctionTemplate -html $html -name "delete-secret-acl" -psFunctionName "Remove-SecretScopeACL"
+	Get-FunctionTemplate -html $html -name "get-secret-acl" -psFunctionName "Get-SecretScopeACL"
+	#Get-FunctionTemplate -html $html -name "list-secret-acls" -psFunctionName "Get-SecretScopeACL"
 
 
 	# Tokens API
-	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-DbApiToken"
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbApiToken"
-	Get-FunctionTemplate -html $html -name "revoke" -psFunctionName "Remove-DbApiToken"
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-ApiToken"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-ApiToken"
+	Get-FunctionTemplate -html $html -name "revoke" -psFunctionName "Remove-ApiToken"
 	
 	# Clusters API
 	
-	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-DbCluster"
-	Get-FunctionTemplate -html $html -name "edit" -psFunctionName "Update-DbCluster"
-	Get-FunctionTemplate -html $html -name "start" -psFunctionName "Start-DbCluster"
-	Get-FunctionTemplate -html $html -name "restart" -psFunctionName "Restart-DbCluster"
-	Get-FunctionTemplate -html $html -name "resize" -psFunctionName "Resize-DbCluster"
-	#TODO
-	Get-FunctionTemplate -html $html -name "delete-(terminate)" -psFunctionName "Stop-DbCluster"
-	Get-FunctionTemplate -html $html -name "permanent-delete" -psFunctionName "Remove-DbCluster"
-	Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-DbCluster"
-	#Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-DbCluster"
-	Get-FunctionTemplate -html $html -name "pin" -psFunctionName "Pin-DbCluster"
-	Get-FunctionTemplate -html $html -name "unpin" -psFunctionName "Unpin-DbCluster"
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-Cluster"
+	Get-FunctionTemplate -html $html -name "edit" -psFunctionName "Update-Cluster"
+	Get-FunctionTemplate -html $html -name "start" -psFunctionName "Start-Cluster"
+	Get-FunctionTemplate -html $html -name "restart" -psFunctionName "Restart-Cluster"
+	Get-FunctionTemplate -html $html -name "resize" -psFunctionName "Resize-Cluster"
 	
-	Get-FunctionTemplate -html $html -name "list-node-types" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "list-zones" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "spark-versions" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "events" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "data-structures" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "delete-terminate" -psFunctionName "Stop-Cluster"
+	Get-FunctionTemplate -html $html -name "permanent-delete" -psFunctionName "Remove-Cluster"
+	Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-Cluster"
+	#Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-Cluster"
+	Get-FunctionTemplate -html $html -name "pin" -psFunctionName "Pin-Cluster"
+	Get-FunctionTemplate -html $html -name "unpin" -psFunctionName "Unpin-Cluster"
+	
+	#TODO
+	Get-FunctionTemplate -html $html -name "list-node-types" -psFunctionName "Get-NodeType"
+	Get-FunctionTemplate -html $html -name "list-zones" -psFunctionName "Get-Zone"
+	Get-FunctionTemplate -html $html -name "spark-versions" -psFunctionName "Get-SparkVersion"
+	Get-FunctionTemplate -html $html -name "events" -psFunctionName "Get-ClusterEvents"
 }

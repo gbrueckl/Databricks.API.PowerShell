@@ -3,7 +3,4 @@ Thumbs.db
 *.user
 UpgradeLog.htm
 *.suo
-Modules/DatabricksPS/PublishToGallery.ps1
-Modules/DatabricksPS/Publish/*
-Modules/DatabricksPS/SingleScripts/*
-
+PublishConfig.json

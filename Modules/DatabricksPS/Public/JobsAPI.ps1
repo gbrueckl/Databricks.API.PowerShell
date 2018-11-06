@@ -1,4 +1,4 @@
-Function Get-DbJob
+Function Get-Job
 {
 	<#
 			.SYNOPSIS
@@ -10,7 +10,7 @@ Function Get-DbJob
 			.PARAMETER JobID 
 			The canonical identifier of the job retrieve. This field is optional and can be used as a filter on one particular job id.
 			.EXAMPLE
-			Get-DbJob -JobID <JobID>
+			Get-Job -JobID <JobID>
 	#>
 	[CmdletBinding()]
 	param 
@@ -21,24 +21,24 @@ Function Get-DbJob
 	Test-Initialized	 
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/list"
 	if($JobID -ne -1)
 	{
 		Write-Verbose "JobID specified ($JobID)- using Get-API instead of List-API..."
-		$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/get?job_id=$JobID"
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/get?job_id=$JobID"
 	}
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers
 
 	return $result
 }
 
-Function Remove-DbJob
+Function Remove-Job
 {
 	<#
 			.SYNOPSIS
@@ -49,7 +49,7 @@ Function Remove-DbJob
 			.PARAMETER JobID 
 			The canonical identifier of the job to delete. This field is required.
 			.EXAMPLE
-			Remove-DbJob -JobID <JobID>
+			Remove-Job -JobID <JobID>
 	#>
 	[CmdletBinding()]
 	param
@@ -60,12 +60,12 @@ Function Remove-DbJob
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -80,7 +80,7 @@ Function Remove-DbJob
 	return $result
 }
 
-Function Update-DbJob
+Function Update-Job
 {
 	<#
 			.SYNOPSIS
@@ -95,7 +95,7 @@ Function Update-DbJob
 			Changes to the following fields are not applied to active runs: JobSettings.cluster_spec or JobSettings.task.
 			Changes to the following fields are applied to active runs as well as future runs: JobSettings.timeout_second, JobSettings.email_notifications, or JobSettings.retry_policy. This field is required.
 			.EXAMPLE
-			Update-DbJob -JobID <JobID> -New_Settings <new_settings>
+			Update-Job -JobID 1 -NewSettings <new_settings>
 	#>
 	[CmdletBinding()]
 	param
@@ -107,12 +107,12 @@ Function Update-DbJob
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/reset"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/reset"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -129,7 +129,7 @@ Function Update-DbJob
 }
 
 
-Function Start-DbJob
+Function Start-Job
 {
 	<#
 			.SYNOPSIS
@@ -151,7 +151,7 @@ Function Start-DbJob
 			.PARAMETER SparkSubmitParams 
 			A list of parameters for jobs with spark submit task, e.g. "spark_submit_params": ["--class", "org.apache.spark.examples.SparkPi"]. The parameters will be passed to spark-submit script as command line parameters. If specified upon run-now, it would overwrite the parameters specified in job setting. The JSON representation of this field cannot exceed 10,000 bytes.
 			.EXAMPLE
-			Start-DbJob -JobID <JobID> -NotebookParams @{ param1 : 123, param2 : "MyTextParam" }
+			Start-Job -JobID <JobID> -NotebookParams @{ param1 : 123, param2 : "MyTextParam" }
 	#>
 	[CmdletBinding()]
 	param
@@ -166,12 +166,12 @@ Function Start-DbJob
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/run-now"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/run-now"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -179,10 +179,10 @@ Function Start-DbJob
 		job_id = $JobID 
 	}
 	
-	if($JarParams.Count -gt 0) { $parameters.Add("jar_params", $JarParams) }
-	if($NotebookParams.Count -gt 0) { $parameters.Add("notebook_params", $NotebookParams) }
-	if($PythonParams.Count -gt 0) { $parameters.Add("python_params", $PythonParams) }
-	if($SparkSubmitParams.Count -gt 0) { $parameters.Add("spark_submit_params", $SparkSubmitParams) }
+	$parameters | Add-Property  -Name "jar_params" -Value $JarParams
+	$parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams
+	$parameters | Add-Property  -Name "python_params" -Value $PythonParams
+	$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams
 
 	$parameters = $parameters | ConvertTo-Json
 
@@ -192,7 +192,7 @@ Function Start-DbJob
 }
 
 
-Function Start-ExecutionRun
+Function New-JobRun
 {
 	<#
 			.SYNOPSIS
@@ -233,29 +233,40 @@ Function Start-ExecutionRun
 			.PARAMETER Timeout_Seconds 
 			An optional timeout applied to each run of this job. The default behavior is to have no timeout.
 			.EXAMPLE
-			Start-ExecutionRun -Existing_Cluster_Id OR New_Cluster <existing_cluster_id OR new_cluster> -Notebook_Task OR Spark_Jar_Task OR Spark_Python_Task OR Spark_Submit_Task <notebook_task OR spark_jar_task OR spark_python_task OR spark_submit_task> -Run_Name <run_name> -Libraries <libraries> -Timeout_Seconds <timeout_seconds>
+			New-JobRun -ClusterID "1234-asdfae-1234" -NotebookPath "/Shared/MyNotebook" -RunName "MyJobRun" -TimeoutSeconds 300
 	#>
 	
 	[CmdletBinding()]
 	param
 	(
+		[Parameter(ParameterSetName = "NotebookJob", Mandatory = $true)]
+		[Parameter(ParameterSetName = "PythonkJob", Mandatory = $true)]
+		[Parameter(ParameterSetName = "JarJob", Mandatory = $true)]
+		[Parameter(ParameterSetName = "SparkJob", Mandatory = $true)] [int32] $JobID,
+		
 		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
-		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)]
+		[Parameter(ParameterSetName = "NotebookJob", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
+
 		
 		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 2)] [string] $PythonURI, 
-		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 3)] [string[]] $PythonParameters,
+		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 3)]
+		[Parameter(ParameterSetName = "PythonJob", Mandatory = $false, Position = 3)] [string[]] $PythonParameters,
 		
 		
 		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarURI, 
 		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarMainClassName, 
-		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3)] [string[]] $JarParameters, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3)] 
+		[Parameter(ParameterSetName = "JarJob", Mandatory = $false, Position = 3)] [string[]] $JarParameters, 
+
 		
 		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1)] [object] $NewClusterDefinition, 
-		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)] [string] $SparkParameters, 
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)]
+		[Parameter(ParameterSetName = "SparkJob", Mandatory = $true, Position = 2)] [string] $SparkParameters, 
 		
 		# generic parameters
 		[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID, 
-		[Parameter(Mandatory = $false, Position = 4)] [string] $Name, 
+		[Parameter(Mandatory = $false, Position = 4)] [string] $RunName, 
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $Libraries, 
 		[Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds
 	)
@@ -263,14 +274,22 @@ Function Start-ExecutionRun
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/submit"
+	if($PSCmdlet.ParameterSetName.EndsWith("Job"))
+	{
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/now"
+	}
+	else
+	{
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/submit"
+	}
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
+	$parameters = @{}
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
 		"Notebook" {
@@ -278,10 +297,8 @@ Function Start-ExecutionRun
 			$notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
 
 			#Set parameters
-			$parameters = @{
-				existing_cluster_id = $ClusterID
-				notebook_task = $notebookTask
-			}
+			$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+			$parameters | Add-Property -Name "notebook_task" -Value $notebookTask
 		}
 		
 		"Jar" {
@@ -292,10 +309,8 @@ Function Start-ExecutionRun
 			$jarTask | Add-Property  -Name "parameters" -Value $JarParameters
 
 			#Set parameters
-			$parameters = @{
-				existing_cluster_id = $ClusterID
-				spark_jar_task = $jarTask
-			}
+			$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+			$parameters | Add-Property -Name "spark_jar_task" -Value $jarTask
 		}
 		
 		"Python" {
@@ -305,10 +320,8 @@ Function Start-ExecutionRun
 			$pythonTask | Add-Property  -Name "parameters" -Value $PythonParameters
 
 			#Set parameters
-			$parameters = @{
-				existing_cluster_id = $ClusterID
-				spark_python_task  = $pythonTask
-			}
+			$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+			$parameters | Add-Property -Name "spark_python_task" -Value $pythonTask
 		}
 		
 		"Spark" {
@@ -317,13 +330,40 @@ Function Start-ExecutionRun
 			}
 
 			#Set parameters
-			$parameters = @{
-				new_cluster = $NewClusterDefinition
-			}
+			$parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
+			$parameters | Add-Property -Name "spark_submit_task" -Value $sparkTask
+		}
+		
+		"NotebookJob" {
+			$parameters | Add-Property -Name "job_id" -Value $JobID
+
+			#Set parameters
+			$parameters | Add-Property -Name "notebook_params" -Value $NotebookParameters
+		}
+		
+		"PythonJob" {
+			$parameters | Add-Property -Name "job_id" -Value $JobID
+
+			#Set parameters
+			$parameters | Add-Property -Name "python_params" -Value $PythonParameters
+		}
+		
+		"JarJob" {
+			$parameters | Add-Property -Name "job_id" -Value $JobID
+
+			#Set parameters
+			$parameters | Add-Property -Name "jar_params" -Value $JarParameters
+		}
+		
+		"SparkJob" {
+			$parameters | Add-Property -Name "job_id" -Value $JobID
+
+			#Set parameters
+			$parameters | Add-Property -Name "spark_submit_params" -Value $SparkParameters
 		}
 	}
 	
-	$parameters | Add-Property -Name "run_name" -Value $Name
+	$parameters | Add-Property -Name "run_name" -Value $RunName
 	$parameters | Add-Property -Name "libraries" -Value $Libraries
 	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds
 
@@ -335,7 +375,7 @@ Function Start-ExecutionRun
 }
 
 
-Function Get-DbJobRun
+Function Get-JobRun
 {
 	<#
 			.SYNOPSIS
@@ -358,7 +398,7 @@ Function Get-DbJobRun
 			.PARAMETER Limit 
 			The number of runs to return. This value should be greater than 0 and less than 1000. The default value is 20. If a request specifies a limit of 0, the service will instead use the maximum limit.
 			.EXAMPLE
-			Get-DbJobRun -Active_Only OR Completed_Only <active_only OR completed_only> -JobID <JobID> -Offset <offset> -Limit <limit>
+			Get-JobRun -Active_Only OR Completed_Only <active_only OR completed_only> -JobID <JobID> -Offset <offset> -Limit <limit>
 	#>
 	[CmdletBinding(DefaultParametersetName = "ByJobId")]
 	param
@@ -378,14 +418,14 @@ Function Get-DbJobRun
 	Write-Verbose "Setting final ApiURL ..."
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
-		"ByJobId"  { $apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/list" } 
-		"ByRunId"  { $apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/get" } 
+		"ByJobId"  { $apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/list" } 
+		"ByRunId"  { $apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/get" } 
 	} 
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	switch ($PSCmdlet.ParameterSetName) 
@@ -415,7 +455,7 @@ Function Get-DbJobRun
 }
 
 
-Function Export-DbJobRun
+Function Export-JobRun
 {
 	<#
 			.SYNOPSIS
@@ -428,7 +468,7 @@ Function Export-DbJobRun
 			.PARAMETER Views_To_Export 
 			Which views to export (CODE, DASHBOARDS, or ALL). Defaults to CODE.
 			.EXAMPLE
-			Export-DbJobRun -JobRunID 1 -ViewsToExport All
+			Export-JobRun -JobRunID 1 -ViewsToExport All
 	#>
 	[CmdletBinding()]
 	param
@@ -440,12 +480,12 @@ Function Export-DbJobRun
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/export"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/export"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -460,7 +500,7 @@ Function Export-DbJobRun
 }
 
 
-Function Cancel-DbJobRun
+Function Cancel-JobRun
 {
 	<#
 			.SYNOPSIS
@@ -471,7 +511,7 @@ Function Cancel-DbJobRun
 			.PARAMETER JobRunID 
 			The canonical identifier for the run to cancel. This field is required.
 			.EXAMPLE
-			Cancel-DbJobRun -JobRunID 1
+			Cancel-JobRun -JobRunID 1
 	#>
 	[CmdletBinding()]
 	param
@@ -482,12 +522,12 @@ Function Cancel-DbJobRun
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/cancel"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/cancel"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -503,7 +543,7 @@ Function Cancel-DbJobRun
 }
 
 
-Function Get-DbJobRunOutput
+Function Get-JobRunOutput
 {
 	<#
 			.SYNOPSIS
@@ -514,7 +554,7 @@ Function Get-DbJobRunOutput
 			.PARAMETER JobRunID 
 			The canonical identifier for the run. This field is required.
 			.EXAMPLE
-			Get-DbJobRunOutput -JobRunID 1
+			Get-JobRunOutput -JobRunID 1
 	#>
 	[CmdletBinding()]
 	param
@@ -525,12 +565,12 @@ Function Get-DbJobRunOutput
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/get-output"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/get-output"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -544,7 +584,7 @@ Function Get-DbJobRunOutput
 }
 
 
-Function Remove-DbJobRun
+Function Remove-JobRun
 {
 	<#
 			.SYNOPSIS
@@ -555,7 +595,7 @@ Function Remove-DbJobRun
 			.PARAMETER JobRunID 
 			The canonical identifier of the run for which to retrieve the metadata.
 			.EXAMPLE
-			Remove-DbJobRun -JobRunID 1
+			Remove-JobRun -JobRunID 1
 	#>
 	[CmdletBinding()]
 	param
@@ -566,12 +606,12 @@ Function Remove-DbJobRun
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/jobs/runs/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters

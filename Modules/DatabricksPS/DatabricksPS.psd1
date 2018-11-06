@@ -4,7 +4,7 @@
 RootModule = 'DatabricksPS.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.0.0'
+ModuleVersion = '0.2.0.0'
 
 # ID used to uniquely identify this module
 GUID = '163A1640-A4F2-4B1F-A3AF-2796AD56200B'
@@ -43,7 +43,7 @@ PowerShellVersion = '3.0'
 # RequiredModules = @()
 
 # Assemblies that must be loaded prior to importing this module
- #RequiredAssemblies = @()
+# RequiredAssemblies = @()
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
 # ScriptsToProcess = @()
@@ -55,37 +55,10 @@ PowerShellVersion = '3.0'
 # FormatsToProcess = @()
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-#NestedModules = @()
+# NestedModules = @()
  
 # Functions to export from this module
 FunctionsToExport = '*'
-<#@(
-    # general cmdlets
-	"Set-DatabricksEnvironment"
-    # Clusters API cmdlets
-
-    # DBFS API cmdlets
-
-    # Groups API cmdlets
-
-    # Instance Profiles API cmdlets
-
-    # Jobs API cmdlets
-	, "Get-Job", "Delete-Job", "Update-Job"
-
-    # Libraries API cmdlets
-
-    # SCIM API cmdlets
-
-    # Secrets API cmdlets
-
-    # Token API cmdlets
-
-    # Workspace API cmdlets
-    , "Delete-WorkspaceItem", "Export-WorkspaceItem", "Get-WorkspaceItemDetails", "Import-WorkspaceItem", "Get-WorkspaceItem", "New-WorkspaceDirectory"
-
-)
-#>
 
 # Cmdlets to export from this module
 CmdletsToExport = @()
@@ -97,10 +70,10 @@ VariablesToExport = @()
 AliasesToExport = '*'
 
 # List of all modules packaged with this module
-#ModuleList = @(".\DatabricksPS.psm1")
+# ModuleList = @(".\DatabricksPS.psm1")
 
 # List of all files packaged with this module
-#FileList = @()
+# FileList = @()
 
 # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
 PrivateData = @{
@@ -108,7 +81,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-		Tags = @('databricks', 'data', 'azure', 'aws', 'spark', 'rest', 'api', 'developer', 'big data')
+		Tags = @('databricks', 'data', 'azure', 'aws', 'spark', 'rest', 'api', 'developer')
 
 		# A URL to the license for this module.
 		LicenseUri = 'https://github.com/gbrueckl/Databricks.API.PowerShell/blob/master/LICENSE'
@@ -130,7 +103,7 @@ PrivateData = @{
 HelpInfoURI = 'https://github.com/gbrueckl/Databricks.API.PowerShell'
 
 # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
+DefaultCommandPrefix = 'Databricks'
 
 }
 

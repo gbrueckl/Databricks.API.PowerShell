@@ -1,4 +1,4 @@
-Function Add-DbApiToken
+Function Add-ApiToken
 {
 	<#
 			.SYNOPSIS
@@ -11,7 +11,7 @@ Function Add-DbApiToken
 			.PARAMETER Comment 
 			Optional description to attach to the token.
 			.EXAMPLE
-			Add-DbApiToken -LifetimeSeconds 360 -Comment "MyComment
+			Add-ApiToken -LifetimeSeconds 360 -Comment "MyComment
 	#>
 	[CmdletBinding()]
 	param
@@ -23,12 +23,12 @@ Function Add-DbApiToken
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/token/create"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/token/create"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -45,7 +45,7 @@ Function Add-DbApiToken
 }
 
 
-Function Get-DbApiToken
+Function Get-ApiToken
 {
 	<#
 			.SYNOPSIS
@@ -54,7 +54,7 @@ Function Get-DbApiToken
 			List all the valid tokens for a user-workspace pair.
 			Official API Documentation: https://docs.databricks.com/api/latest/tokens.html#list
 			.EXAMPLE
-			Get-DbApiToken -Token_Infos <token_infos>
+			Get-ApiToken -Token_Infos <token_infos>
 	#>
 	[CmdletBinding()]
 	param ()
@@ -62,12 +62,12 @@ Function Get-DbApiToken
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/token/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/token/list"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -79,7 +79,7 @@ Function Get-DbApiToken
 }
 
 
-Function Remove-DbApiToken
+Function Remove-ApiToken
 {
 	<#
 			.SYNOPSIS
@@ -90,7 +90,7 @@ Function Remove-DbApiToken
 			.PARAMETER TokenID 
 			The ID of the token to be revoked.
 			.EXAMPLE
-			Remove-DbApiToken -TokenID 1234
+			Remove-ApiToken -TokenID 1234
 	#>
 	[CmdletBinding()]
 	param
@@ -101,12 +101,12 @@ Function Remove-DbApiToken
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/token/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/token/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters

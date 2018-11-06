@@ -1,4 +1,4 @@
-Function New-DbSecretScope
+Function New-SecretScope
 {
 	<#
 			.SYNOPSIS
@@ -11,7 +11,7 @@ Function New-DbSecretScope
 			.PARAMETER Initial_Manage_Principal 
 			The principal that is initially granted MANAGE permission to the created scope.
 			.EXAMPLE
-			New-DbSecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
+			New-SecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
 	#>
 	[CmdletBinding()]
 	param
@@ -23,12 +23,12 @@ Function New-DbSecretScope
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/scopes/create"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/scopes/create"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -46,7 +46,7 @@ Function New-DbSecretScope
 }
 
 
-Function Remove-DbSecretScope
+Function Remove-SecretScope
 {
 	<#
 			.SYNOPSIS
@@ -57,7 +57,7 @@ Function Remove-DbSecretScope
 			.PARAMETER ScopeName 
 			Name of the scope to delete. This field is required.
 			.EXAMPLE
-			Remove-DbSecretScope -Name "MyScope"
+			Remove-SecretScope -Name "MyScope"
 	#>
 	[CmdletBinding()]
 	param
@@ -68,12 +68,12 @@ Function Remove-DbSecretScope
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/scopes/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/scopes/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -89,7 +89,7 @@ Function Remove-DbSecretScope
 }
 
 
-Function Get-DbSecretScope
+Function Get-SecretScope
 {
 	<#
 			.SYNOPSIS
@@ -98,7 +98,7 @@ Function Get-DbSecretScope
 			Lists all secret scopes available in the workspace.
 			Official API Documentation: https://docs.databricks.com/api/latest/secrets.html#list-secret-scopes
 			.EXAMPLE
-			Get-DbSecretScope
+			Get-SecretScope
 	#>
 	[CmdletBinding()]
 	param ()
@@ -106,12 +106,12 @@ Function Get-DbSecretScope
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/scopes/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/scopes/list"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -123,7 +123,7 @@ Function Get-DbSecretScope
 }
 
 
-Function Add-DbSecret
+Function Add-Secret
 {
 	<#
 			.SYNOPSIS
@@ -140,7 +140,7 @@ Function Add-DbSecret
 			.PARAMETER SecretName 
 			A unique name to identify the secret. This field is required.
 			.EXAMPLE
-			Add-DbSecret -ScopeName "MyScope" -SecretName "MyKey" -StringValue "MySecretValue"
+			Add-Secret -ScopeName "MyScope" -SecretName "MyKey" -StringValue "MySecretValue"
 	#>
 	[CmdletBinding()]
 	param
@@ -156,12 +156,12 @@ Function Add-DbSecret
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/put"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/put"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	switch ($PSCmdlet.ParameterSetName) 
@@ -191,7 +191,7 @@ Function Add-DbSecret
 	return $result
 }
 
-Function Remove-DbSecret
+Function Remove-Secret
 {
 	<#
 			.SYNOPSIS
@@ -204,7 +204,7 @@ Function Remove-DbSecret
 			.PARAMETER Key
 			Name of the secret to delete. This field is required.
 			.EXAMPLE
-			Remove-DbSecret -ScopeName "MyScope" -SecretName "MySecret"
+			Remove-Secret -ScopeName "MyScope" -SecretName "MySecret"
 	#>
 	[CmdletBinding()]
 	param
@@ -216,12 +216,12 @@ Function Remove-DbSecret
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -238,7 +238,7 @@ Function Remove-DbSecret
 }
 
 
-Function Get-DbSecret
+Function Get-Secret
 {
 	<#
 			.SYNOPSIS
@@ -249,7 +249,7 @@ Function Get-DbSecret
 			.PARAMETER ScopeName
 			The name of the scope whose secrets you want to list. This field is required.
 			.EXAMPLE
-			Get-DbSecret -ScopeName "MyScope"
+			Get-Secret -ScopeName "MyScope"
 	#>
 	[CmdletBinding()]
 	param
@@ -260,12 +260,12 @@ Function Get-DbSecret
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/list"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -279,7 +279,7 @@ Function Get-DbSecret
 }
 
 
-Function Add-DbSecretScopeACL
+Function Add-SecretScopeACL
 {
 	<#
 			.SYNOPSIS
@@ -294,7 +294,7 @@ Function Add-DbSecretScopeACL
 			.PARAMETER Permission 
 			The permission level applied to the principal. This field is required.
 			.EXAMPLE
-			Add-DbSecretScopeACL -Scope "MyScope" -Principal "data-scientists" -Permission Read
+			Add-SecretScopeACL -Scope "MyScope" -Principal "data-scientists" -Permission Read
 	#>
 	[CmdletBinding()]
 	param
@@ -307,12 +307,12 @@ Function Add-DbSecretScopeACL
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/acls/put"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/put"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -330,7 +330,7 @@ Function Add-DbSecretScopeACL
 }
 
 
-Function Remove-DbSecretScopeACL
+Function Remove-SecretScopeACL
 {
 	<#
 			.SYNOPSIS
@@ -343,7 +343,7 @@ Function Remove-DbSecretScopeACL
 			.PARAMETER Principal 
 			The principal to remove an existing ACL from. This field is required.
 			.EXAMPLE
-			Remove-DbSecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
+			Remove-SecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
 	#>
 	[CmdletBinding()]
 	param
@@ -355,12 +355,12 @@ Function Remove-DbSecretScopeACL
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/acls/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -377,7 +377,7 @@ Function Remove-DbSecretScopeACL
 }
 
 
-Function Get-DbSecretScopeACL
+Function Get-SecretScopeACL
 {
 	<#
 			.SYNOPSIS
@@ -391,7 +391,7 @@ Function Get-DbSecretScopeACL
 			.PARAMETER Principal 
 			The principal to fetch ACL information for. This field is required.
 			.EXAMPLE
-			Get-DbSecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
+			Get-SecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
 	#>
 	[CmdletBinding()]
 	param
@@ -405,17 +405,17 @@ Function Get-DbSecretScopeACL
 	Write-Verbose "Setting final ApiURL ..."
 	if($Principal -eq $null)
 	{
-		$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/acls/list"
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/list"
 	}
 	else
 	{
-		$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/secrets/acls/get"
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/get"
 	}
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters

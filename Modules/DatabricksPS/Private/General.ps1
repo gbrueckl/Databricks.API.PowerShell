@@ -62,7 +62,7 @@ function Join-Parts
 	return ( $Parts | Where-Object { $_ } | Foreach-Object { ( [string]$_ ).trim($Separator) } | Where-Object { $_ } ) -join $Separator
 }
 
-Function Get-DbRequestHeader
+Function Get-RequestHeader
 {
 	<#
 			.SYNOPSIS
@@ -70,7 +70,7 @@ Function Get-DbRequestHeader
 			.DESCRIPTION
 			Returns the HTTP header for the Databricks API including authentication etc.
 			.EXAMPLE
-			Get-DbRequestHeader
+			Get-RequestHeader
 	#>
 	[CmdletBinding()]
 	param ()
@@ -82,7 +82,7 @@ Function Get-DbRequestHeader
 	}
 }
 
-Function Get-DbApiUrl
+Function Get-ApiUrl
 {
 	<#
 			.SYNOPSIS
@@ -90,7 +90,7 @@ Function Get-DbApiUrl
 			.DESCRIPTION
 			Returns the HTTP header for the Databricks API including authentication etc.
 			.EXAMPLE
-			Get-DbRequestHeader
+			Get-ApiUrl -ApiEndPoint "/2.0/secrets/scopes/list"
 	#>
 	[CmdletBinding()]
 	param (

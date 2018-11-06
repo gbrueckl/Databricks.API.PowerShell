@@ -1,4 +1,4 @@
-Function Set-DatabricksEnvironment 
+Function Set-Environment 
 {
 	<#
 			.SYNOPSIS
@@ -18,13 +18,13 @@ Function Set-DatabricksEnvironment
 			The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
 			If not provided, it is derived from the ApiRootUrl parameter
 			.EXAMPLE
-			Set-PBIModuleConfig -pbiAPIUrl "https://api.powerbi.com/beta/myorg" -AzureADAppId "YOUR Azure AD GUID"
+			Set-Environment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $AccessToken = $null,
-		[Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl = $null,
+		[Parameter(Mandatory = $true, Position = 1)] [string] $AccessToken,
+		[Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl,
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("Azure","AWS")] $CloudProvider = $null
 	)
 
@@ -92,7 +92,7 @@ Function Set-DatabricksEnvironment
 	$script:dbInitialized = $true
 }
 
-Function Test-DatabricksEnvironment
+Function Test-Environment
 {
 	<#
 			.SYNOPSIS
@@ -101,7 +101,7 @@ Function Test-DatabricksEnvironment
 			Lists the contents of a directory, or the object if it is not a directory. If the input path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST.
 			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#list
 			.EXAMPLE
-			Test-DatabricksEnvironment
+			Test-Environment
 	#>
 	[CmdletBinding()]
 	param ()
@@ -111,12 +111,12 @@ Function Test-DatabricksEnvironment
 	$Path = "/"
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/list"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "HEADERS: "
 	Write-Verbose $headers.Values

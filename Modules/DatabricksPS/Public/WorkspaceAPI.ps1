@@ -1,4 +1,4 @@
-Function Delete-DbWorkspaceItem 
+Function Remove-WorkspaceItem 
 {
 	<#
 			.SYNOPSIS
@@ -11,7 +11,7 @@ Function Delete-DbWorkspaceItem
 			.PARAMETER Recursive 
 			The flag that specifies whether to delete the object recursively. It is false by default. Please note this deleting directory is not atomic. If it fails in the middle, some of objects under this directory may be deleted and cannot be undone.
 			.EXAMPLE
-			Remove-DbWorkspaceItem -Path <Path> -Recursive $false
+			Remove-WorkspaceItem -Path <Path> -Recursive $false
 	#>
 	[CmdletBinding()]
 	param
@@ -23,12 +23,12 @@ Function Delete-DbWorkspaceItem
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/delete"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/delete"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -44,7 +44,7 @@ Function Delete-DbWorkspaceItem
 	return $result
 }
 				
-Function Export-DbWorkspaceItem
+Function Export-WorkspaceItem
 {
 	<#
 			.SYNOPSIS
@@ -59,7 +59,7 @@ Function Export-DbWorkspaceItem
 			.PARAMETER Format 
 			This specifies the format of the exported file. By default, this is SOURCE. However it may be one of: SOURCE, HTML, JUPYTER, DBC. The value is case sensitive.
 			.EXAMPLE
-			Export-DbWorkspaceItem -Path "/" -LocalPath "C:\myExport.dbc" -Format "DBC"
+			Export-WorkspaceItem -Path "/" -LocalPath "C:\myExport.dbc" -Format "DBC"
 	#>
 	[CmdletBinding()]
 	param
@@ -72,12 +72,12 @@ Function Export-DbWorkspaceItem
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/export"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/export"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -92,7 +92,7 @@ Function Export-DbWorkspaceItem
 	[IO.File]::WriteAllBytes($LocalPath, $exportBytes)
 }
 
-Function Get-DbWorkspaceItemDetails
+Function Get-WorkspaceItemDetails
 {
 	<#
 			.SYNOPSIS
@@ -103,7 +103,7 @@ Function Get-DbWorkspaceItemDetails
 			.PARAMETER Path 
 			The absolute path of the notebook or directory. This field is required.
 			.EXAMPLE
-			Get-DbWorkspaceItemDetails -Path "/Users/user@example.com/project/ScaleExampleNotebook"
+			Get-WorkspaceItemDetails -Path "/Users/user@example.com/project/ScaleExampleNotebook"
 	#>
 	[CmdletBinding()]
 	param
@@ -114,12 +114,12 @@ Function Get-DbWorkspaceItemDetails
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/get-status"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/get-status"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -133,7 +133,7 @@ Function Get-DbWorkspaceItemDetails
 }
 
 
-Function Import-DbWorkspaceItem
+Function Import-WorkspaceItem
 {
 	<#
 			.SYNOPSIS
@@ -152,7 +152,7 @@ Function Import-DbWorkspaceItem
 			.PARAMETER Overwrite 
 			The flag that specifies whether to overwrite existing object. It is false by default. For DBC format, overwrite is not supported since it may contain a directory.
 			.EXAMPLE
-			Import-DbWorkspaceItem -Path "/myImportedFolder -Format "DBC" -LocalPath "C:\myFileToImport.dbc" -Overwrite $false
+			Import-WorkspaceItem -Path "/myImportedFolder -Format "DBC" -LocalPath "C:\myFileToImport.dbc" -Overwrite $false
 	#>
 	[CmdletBinding()]
 	param
@@ -167,12 +167,12 @@ Function Import-DbWorkspaceItem
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/import"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/import"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 	
 	$fileBytes = [IO.File]::ReadAllBytes($LocalPath)
 	$content = [Convert]::ToBase64String($fileBytes)
@@ -195,7 +195,7 @@ Function Import-DbWorkspaceItem
 }
 
 
-Function Get-DbWorkspaceItem
+Function Get-WorkspaceItem
 {
 	<#
 			.SYNOPSIS
@@ -206,7 +206,7 @@ Function Get-DbWorkspaceItem
 			.PARAMETER Path 
 			The absolute path of the notebook or directory. This field is required.
 			.EXAMPLE
-			Get-DbWorkspaceItem -Path "/"
+			Get-WorkspaceItem -Path "/"
 	#>
 	[CmdletBinding()]
 	param
@@ -217,12 +217,12 @@ Function Get-DbWorkspaceItem
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/list"
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -236,7 +236,7 @@ Function Get-DbWorkspaceItem
 }
 
 
-Function New-DbWorkspaceDirectory
+Function New-WorkspaceDirectory
 {
 	<#
 			.SYNOPSIS
@@ -247,7 +247,7 @@ Function New-DbWorkspaceDirectory
 			.PARAMETER Path 
 			The absolute path of the directory. If the parent directories do not exist, it will also create them. If the directory already exists, this command will do nothing and succeed. This field is required.
 			.EXAMPLE
-			New-DbWorkspaceDirectory -Path "/myNewDirectory"
+			New-WorkspaceDirectory -Path "/myNewDirectory"
 	#>
 	[CmdletBinding()]
 	param
@@ -258,12 +258,12 @@ Function New-DbWorkspaceDirectory
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-DbApiUrl -ApiEndpoint "/2.0/workspace/mkdirs"
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/mkdirs"
 	$requestMethod = "POST"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
 
 	#Set headers
-	$headers = Get-DbRequestHeader
+	$headers = Get-RequestHeader
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
