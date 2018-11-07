@@ -111,12 +111,12 @@ Function {0}
 			Test-Initialized
 
 			Write-Verbose "Setting final ApiURL ..."
-			$apiUrl = Get-DbApiUrl -ApiEndpoint "/{6}"
+			$apiUrl = Get-ApiUrl -ApiEndpoint "/{6}"
 			$requestMethod = "{7}"
 			Write-Verbose "API Call: $requestMethod $apiUrl"
 
 			#Set headers
-			$headers = Get-DbRequestHeader
+			$headers = Get-RequestHeader
 
 			Write-Verbose "Setting Parameters for API call ..."
 			#Set parameters
@@ -127,7 +127,7 @@ Function {0}
 			$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
 			return $result
-	}}').Trim() -f $psFunctionName, $apiDetails.description, $apiDetails.link, $parametersDocumentation, $parametersExample, $parametersDefinition, $apiDetails.endpoint, $apiDetails.method, $parametersBody, $parametersAsJson
+}}').Trim() -f $psFunctionName, $apiDetails.description, $apiDetails.link, $parametersDocumentation, $parametersExample, $parametersDefinition, $apiDetails.endpoint, $apiDetails.method, $parametersBody, $parametersAsJson
 	
 	$docTemplate
 }
@@ -146,7 +146,7 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/clusters.html"
+$documentationUri = "https://docs.databricks.com/api/latest/dbfs.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
@@ -199,23 +199,41 @@ if($false)
 	Get-FunctionTemplate -html $html -name "revoke" -psFunctionName "Remove-ApiToken"
 	
 	# Clusters API
-	
 	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-Cluster"
 	Get-FunctionTemplate -html $html -name "edit" -psFunctionName "Update-Cluster"
 	Get-FunctionTemplate -html $html -name "start" -psFunctionName "Start-Cluster"
 	Get-FunctionTemplate -html $html -name "restart" -psFunctionName "Restart-Cluster"
 	Get-FunctionTemplate -html $html -name "resize" -psFunctionName "Resize-Cluster"
-	
 	Get-FunctionTemplate -html $html -name "delete-terminate" -psFunctionName "Stop-Cluster"
 	Get-FunctionTemplate -html $html -name "permanent-delete" -psFunctionName "Remove-Cluster"
 	Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-Cluster"
 	#Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-Cluster"
 	Get-FunctionTemplate -html $html -name "pin" -psFunctionName "Pin-Cluster"
 	Get-FunctionTemplate -html $html -name "unpin" -psFunctionName "Unpin-Cluster"
-	
-	#TODO
 	Get-FunctionTemplate -html $html -name "list-node-types" -psFunctionName "Get-NodeType"
 	Get-FunctionTemplate -html $html -name "list-zones" -psFunctionName "Get-Zone"
 	Get-FunctionTemplate -html $html -name "spark-versions" -psFunctionName "Get-SparkVersion"
 	Get-FunctionTemplate -html $html -name "events" -psFunctionName "Get-ClusterEvents"
+	
+	# Groups API
+	Get-FunctionTemplate -html $html -name "add-member" -psFunctionName "Add-GroupMember"
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-Group"
+	Get-FunctionTemplate -html $html -name "list-members" -psFunctionName "Get-GroupMember"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-Group"
+	Get-FunctionTemplate -html $html -name "list-parents" -psFunctionName "Get-Membership"
+	Get-FunctionTemplate -html $html -name "remove-member" -psFunctionName "Remove-GroupMember"
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-Group"
+	
+	# DBFS API
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-FSFile"
+	Get-FunctionTemplate -html $html -name "add-block" -psFunctionName "Add-FSFileBlock"
+	Get-FunctionTemplate -html $html -name "close" -psFunctionName "Close-FSFile"
+	#TODO	
+	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-FSFile"
+	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-FsFile"
+	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "Add-FSDirectory"
+	Get-FunctionTemplate -html $html -name "move" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "put" -psFunctionName "Get-DbJob"
+	Get-FunctionTemplate -html $html -name "read" -psFunctionName "Get-DbJob"
 }
