@@ -1,3 +1,4 @@
+#requires -Version 3.0
 Function Get-Job
 {
 	<#

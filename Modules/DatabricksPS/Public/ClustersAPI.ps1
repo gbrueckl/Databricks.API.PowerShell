@@ -1,3 +1,4 @@
+#requires -Version 3.0
 Function Add-Cluster
 {
 	<#
@@ -433,9 +434,9 @@ Function Get-Cluster
 
 	Write-Verbose "Setting final ApiURL ..."
 	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/list"
-	if($ClusterID -ne $null)
+	if($ClusterID)
 	{
-		Write-Verbose "ClusterID specified ($ClusterID)- using Get-API instead of List-API..."
+		Write-Verbose "ClusterID specified ($ClusterID) - using get endpoint instead of list endpoint..."
 		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/get"
 	}
 	$requestMethod = "GET"

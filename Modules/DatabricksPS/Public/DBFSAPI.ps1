@@ -1,3 +1,4 @@
+#requires -Version 3.0
 Function Add-FSFile
 {
 	<#
@@ -265,6 +266,101 @@ Function Add-FSDirectory
 			
 	$parameters = $parameters | ConvertTo-Json
 
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
+
+Function Move-FSFile
+{
+	<#
+			.SYNOPSIS
+			Move a file from one location to another location within DBFS. If the source file does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If there already exists a file in the destination path, this call will throw an exception with RESOURCE_ALREADY_EXISTS. If the given source path is a directory, this call will always recursively move all files.
+			.DESCRIPTION
+			Move a file from one location to another location within DBFS. If the source file does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If there already exists a file in the destination path, this call will throw an exception with RESOURCE_ALREADY_EXISTS. If the given source path is a directory, this call will always recursively move all files.
+			Official API Documentation: https://docs.databricks.com/api/latest/dbfs.html#move
+			.PARAMETER SourcePath 
+			The source path of the file or directory. The path should be the absolute DBFS path (e.g. "/mnt/foo/"). This field is required.
+			.PARAMETER DestinationPath 
+			The destination path of the file or directory. The path should be the absolute DBFS path (e.g. "/mnt/bar/"). This field is required.
+			.EXAMPLE
+			Move-FSFile -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [string] $SourcePath, 
+		[Parameter(Mandatory = $true, Position = 2)] [string] $DestinationPath
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/move"
+	$requestMethod = "POST"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-RequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{
+		source_path = $SourcePath 
+		destination_path = $DestinationPath 
+	}
+			
+	$parameters = $parameters | ConvertTo-Json
+
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
+
+Function Get-FSContent
+{
+	<#
+			.SYNOPSIS
+			Returns the contents of a file. If the file does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If the path is a directory, the read length is negative, or if the offset is negative, this call will throw an exception with INVALID_PARAMETER_VALUE. If the read length exceeds 1 MB, this call will throw an exception with MAX_READ_SIZE_EXCEEDED. If offset + length exceeds the number of bytes in a file, we will read contents until the end of file.
+			.DESCRIPTION
+			Returns the contents of a file. If the file does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If the path is a directory, the read length is negative, or if the offset is negative, this call will throw an exception with INVALID_PARAMETER_VALUE. If the read length exceeds 1 MB, this call will throw an exception with MAX_READ_SIZE_EXCEEDED. If offset + length exceeds the number of bytes in a file, we will read contents until the end of file.
+			Official API Documentation: https://docs.databricks.com/api/latest/dbfs.html#read
+			.PARAMETER Path 
+			The path of the file to read. The path should be the absolute DBFS path (e.g. "/mnt/foo/"). This field is required.
+			.PARAMETER Offset 
+			The offset to read from in bytes.
+			.PARAMETER Length 
+			The number of bytes to read starting from the offset. This has a limit of 1 MB, and a default value of 0.5 MB.
+			.EXAMPLE
+			Get-FSContent -Path "/myFile.csv"
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
+		[Parameter(Mandatory = $false, Position = 2)] [int] $Offset = -1, 
+		[Parameter(Mandatory = $false, Position = 3)] [int] $Length = -1
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/read"
+	$requestMethod = "GET"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-RequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{
+		path = $Path 
+	}
+
+	$parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1
+	$parameters | Add-Property -Name "length" -Value $Length -NullValue -1
+			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
 	return $result
