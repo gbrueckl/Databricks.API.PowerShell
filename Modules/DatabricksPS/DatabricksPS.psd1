@@ -4,10 +4,10 @@
 RootModule = 'DatabricksPS.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.0.0'
+ModuleVersion = '0.3.1.0'
 
 # ID used to uniquely identify this module
-GUID = '163A1640-A4F2-4B1F-A3AF-2796AD56200B'
+GUID = '163A1640-1908-4B1F-A3AF-2796AD56200B'
 
 # Author of this module
 Author = 'Gerhard Brueckl'
