@@ -57,6 +57,8 @@ Function Add-FSFileBlock
 			The handle on an open stream. This field is required.
 			.PARAMETER Data 
 			The base64-encoded data to append to the stream. This has a limit of 1 MB. This field is required.
+			.PARAMETER AsPlainText
+			If specified, Data is interpreted as plain text and encoded to Base64 internally before the upload.
 			.EXAMPLE
 			Add-FSFileBlock -Handle 7904256 -Data "ZGF0YWJyaWNrcwo="
 	#>
@@ -64,7 +66,8 @@ Function Add-FSFileBlock
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [int] $Handle, 
-		[Parameter(Mandatory = $true, Position = 2)] [string] $Data
+		[Parameter(Mandatory = $true, Position = 2)] [string] $Data,
+		[Parameter(Mandatory = $false, Position = 2)] [switch] $AsPlainText
 	)
 
 	Test-Initialized
@@ -76,6 +79,11 @@ Function Add-FSFileBlock
 
 	#Set headers
 	$headers = Get-RequestHeader
+	
+	if($PlainText)
+	{
+		$Data = $Data | ConvertTo-Base64 -Encoding ([Text.Encoding]::UTF8)
+	}
 
 	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
@@ -331,6 +339,8 @@ Function Get-FSContent
 			The offset to read from in bytes.
 			.PARAMETER Length 
 			The number of bytes to read starting from the offset. This has a limit of 1 MB, and a default value of 0.5 MB.
+			.PARAMETER Decode
+			Adds a new property to the result that contains the decoded string value.
 			.EXAMPLE
 			Get-FSContent -Path "/myFile.csv"
 	#>
@@ -339,7 +349,8 @@ Function Get-FSContent
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $false, Position = 2)] [int] $Offset = -1, 
-		[Parameter(Mandatory = $false, Position = 3)] [int] $Length = -1
+		[Parameter(Mandatory = $false, Position = 3)] [int] $Length = -1,
+		[Parameter(Mandatory = $false, Position = 4)] [switch] $Decode
 	)
 
 	Test-Initialized
@@ -363,5 +374,12 @@ Function Get-FSContent
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
+	if($Decode)
+	{
+		Write-Verbose "Decoding data ..."
+		$decodedValue = $result.data | ConvertFrom-Base64 -Encoding ([Text.Encoding]::UTF8)
+		Write-Verbose $decodedValue
+		Add-Member -InputObject $result -MemberType NoteProperty -Name "data_decoded" -Value $decodedValue
+	}
 	return $result
 }

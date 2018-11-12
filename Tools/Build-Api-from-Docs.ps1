@@ -146,7 +146,7 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/dbfs.html"
+$documentationUri = "https://docs.databricks.com/api/latest/libraries.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
@@ -228,12 +228,20 @@ if($false)
 	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-FSFile"
 	Get-FunctionTemplate -html $html -name "add-block" -psFunctionName "Add-FSFileBlock"
 	Get-FunctionTemplate -html $html -name "close" -psFunctionName "Close-FSFile"
-	#TODO	
 	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-FSFile"
-	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-FsFile"
+	Get-FunctionTemplate -html $html -name "get-status" -psFunctionName "Get-FSItem"
+	#Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-FSFile" # same ase Get-FSItem
 	Get-FunctionTemplate -html $html -name "mkdirs" -psFunctionName "Add-FSDirectory"
-	Get-FunctionTemplate -html $html -name "move" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "put" -psFunctionName "Get-DbJob"
-	Get-FunctionTemplate -html $html -name "read" -psFunctionName "Get-DbJob"
+	
+	Get-FunctionTemplate -html $html -name "move" -psFunctionName "Move-FSFile"
+	#Get-FunctionTemplate -html $html -name "put" -psFunctionName "Get-DbJob" # NOT IMPLEMENTED / DOES NOT APPLY TO PowerShell
+	Get-FunctionTemplate -html $html -name "read" -psFunctionName "Get-FSContent"
+	
+	# Libraries API
+	Get-FunctionTemplate -html $html -name "all-cluster-statuses" -psFunctionName "Get-ClusterLibraries"
+	#Get-FunctionTemplate -html $html -name "cluster-status" -psFunctionName "Get-ClusterLibrary" # same as above
+	Get-FunctionTemplate -html $html -name "install" -psFunctionName "Add-ClusterLibraries"
+	Get-FunctionTemplate -html $html -name "uninstall" -psFunctionName "Remove-ClusterLibraries"
+	#TODO
 }
+

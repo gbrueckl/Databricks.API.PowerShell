@@ -194,3 +194,136 @@ Function Add-PropertyIfNotExists
 		raise "Property $Name already exists! Use -Force parameter to overwrite it!"	
 	}
 }
+
+
+# Original Code from https://www.powershellgallery.com/packages/Carbon/2.1.0/Content/Functions%5CConvertTo-Base64.ps1
+# Copied into here to avoid unnecessary dependencies
+function ConvertTo-Base64
+{
+	<# 
+			.SYNOPSIS 
+			Converts a value to base-64 encoding.   
+			.DESCRIPTION 
+			For some reason. .NET makes encoding a string a two-step process. This function makes it a one-step process. 
+			You're actually allowed to pass in `$null` and an empty string. If you do, you'll get `$null` and an empty string back. 
+			.PARAMETER Value
+			The value to encode as Base64 string. Also allows pipelined input!
+			.PARAMETER Encoding
+			The encoding to use to convert the Base64 bytes to a string. Default is [Text.Encoding]::UTF8
+			.LINK 
+			ConvertFrom-Base64 
+			.EXAMPLE 
+			ConvertTo-Base64 -Value 'Encode me, please!' 
+			Encodes `Encode me, please!` into a base-64 string. 
+			.EXAMPLE 
+			ConvertTo-Base64 -Value 'Encode me, please!' -Encoding ([Text.Encoding]::ASCII) 
+			Shows how to specify a custom encoding in case your string isn't in Unicode text encoding. 
+			.EXAMPLE 
+			'Encode me!' | ConvertTo-Base64 
+			Converts `Encode me!` into a base-64 string. 
+	#>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+		[AllowNull()]
+		[AllowEmptyString()]
+		[string[]]
+		# The value to base-64 encoding.
+		$Value,
+        
+		[Text.Encoding] $Encoding = ([Text.Encoding]::UTF8)
+	)
+    
+	begin
+	{
+		#Set-StrictMode -Version 'Latest'
+
+		#Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState    
+	}
+
+	process
+	{
+		$Value | ForEach-Object {
+			if( $_ -eq $null )
+			{
+				return $null
+			}
+            
+			$bytes = $Encoding.GetBytes($_)
+			[Convert]::ToBase64String($bytes)
+		}
+	}
+}
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Original Code from https://www.powershellgallery.com/packages/Carbon/2.1.0/Content/Functions%5CConvertFrom-Base64.ps1
+# Copied into here to avoid unnecessary dependencies
+function ConvertFrom-Base64
+{
+	<# 
+			.SYNOPSIS 
+			Converts a base-64 encoded string back into its original string. 
+			.DESCRIPTION 
+			For some reason. .NET makes encoding a string a two-step process. This function makes it a one-step process. 
+			You're actually allowed to pass in `$null` and an empty string. If you do, you'll get `$null` and an empty string back. 
+ 			.PARAMETER Value
+			The Base64 value to decode to a string. Also allows pipelined input!
+			.PARAMETER Encoding
+			The encoding to use to convert the Base64 bytes to a string. Default is [Text.Encoding]::UTF8
+			.LINK 
+			ConvertTo-Base64 
+			.EXAMPLE 
+			ConvertFrom-Base64 -Value 'RW5jb2RlIG1lLCBwbGVhc2Uh' 
+			Decodes `RW5jb2RlIG1lLCBwbGVhc2Uh` back into its original string. 
+			.EXAMPLE 
+			ConvertFrom-Base64 -Value 'RW5jb2RlIG1lLCBwbGVhc2Uh' -Encoding ([Text.Encoding]::ASCII) 
+			Shows how to specify a custom encoding in case your string isn't in Unicode text encoding. 
+			.EXAMPLE 
+			'RW5jb2RlIG1lIQ==' | ConvertTo-Base64 
+			Shows how you can pipeline input into `ConvertFrom-Base64`. 
+	#>
+	[CmdletBinding()]
+	param(
+		[Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+		[AllowNull()]
+		[AllowEmptyString()]
+		[string[]]
+		# The base-64 string to convert.
+		$Value,
+        
+		[Text.Encoding]
+		# The encoding to use. Default is Unicode.
+		$Encoding = ([Text.Encoding]::UTF8)
+	)
+    
+	begin
+	{
+		#Set-StrictMode -Version 'Latest'
+
+		#Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
+	}
+
+	process
+	{
+		$Value | ForEach-Object {
+			if( $_ -eq $null )
+			{
+				return $null
+			}
+            
+			$bytes = [Convert]::FromBase64String($_)
+			$Encoding.GetString($bytes)
+		}
+	}
+}
