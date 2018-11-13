@@ -13,6 +13,10 @@ Function Add-FSFile
 			The flag that specifies whether to overwrite existing file/files.
 			.EXAMPLE
 			Add-FSFile -Path "/mnt/foo/" -Overwrite $false
+			.EXAMPLE
+			$newFile = Add-DatabricksFSFile -Path "/myFile.txt" -Overwrite $true
+			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
+			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
 	[CmdletBinding()]
 	param
@@ -61,6 +65,10 @@ Function Add-FSFileBlock
 			If specified, Data is interpreted as plain text and encoded to Base64 internally before the upload.
 			.EXAMPLE
 			Add-FSFileBlock -Handle 7904256 -Data "ZGF0YWJyaWNrcwo="
+			.EXAMPLE
+			$newFile = Add-DatabricksFSFile -Path "/myFile.txt" -Overwrite $true
+			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
+			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
 	[CmdletBinding()]
 	param
@@ -111,6 +119,10 @@ Function Close-FSFile
 			The handle on an open stream. This field is required.
 			.EXAMPLE
 			Close-FSFile -Handle 7904256
+			.EXAMPLE
+			$newFile = Add-DatabricksFSFile -Path "/myFile.txt" -Overwrite $true
+			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
+			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
 	[CmdletBinding()]
 	param

@@ -45,7 +45,8 @@ Start-DatabricksJob -JobID 123 -NotebookParams @{myParameter = "test"}
 - Workspace API ([Azure](https://docs.azuredatabricks.net/api/latest/workspace.html), [AWS](https://docs.databricks.com/api/latest/workspace.html))
 - Libraries API ([Azure](https://docs.azuredatabricks.net/api/latest/libraries.html), [AWS](https://docs.databricks.com/api/latest/libraries.html))
 - DBFS API ([Azure](https://docs.azuredatabricks.net/api/latest/dbfs.html), [AWS](https://docs.databricks.com/api/latest/dbfs.html))
+- Instance Profiles API ([AWS](https://docs.databricks.com/api/latest/instance-profiles.html))
 
 # Not yet supported APIs
-- SCIM API ([AWS](https://docs.databricks.com/api/latest/scim.html))
-- Instance Profiles API ([Azure](https://docs.azuredatabricks.net/api/latest/instance-profiles.html), [AWS](https://docs.databricks.com/api/latest/instance-profiles.html))
+- SCIM API ([Azure](https://docs.azuredatabricks.net/api/latest/scim.html), [AWS](https://docs.databricks.com/api/latest/scim.html))
+

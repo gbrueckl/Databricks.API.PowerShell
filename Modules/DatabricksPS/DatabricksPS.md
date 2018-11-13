@@ -43,9 +43,10 @@ Start-DatabricksJob -JobID 123 -NotebookParams @{myParameter = "test"}
 - Secrets API ([Azure](https://docs.azuredatabricks.net/api/latest/secrets.html), [AWS](https://docs.databricks.com/api/latest/secrets.html))
 - Token API ([Azure](https://docs.azuredatabricks.net/api/latest/tokens.html), [AWS](https://docs.databricks.com/api/latest/tokens.html))
 - Workspace API ([Azure](https://docs.azuredatabricks.net/api/latest/workspace.html), [AWS](https://docs.databricks.com/api/latest/workspace.html))
+- Libraries API ([Azure](https://docs.azuredatabricks.net/api/latest/libraries.html), [AWS](https://docs.databricks.com/api/latest/libraries.html))
+- DBFS API ([Azure](https://docs.azuredatabricks.net/api/latest/dbfs.html), [AWS](https://docs.databricks.com/api/latest/dbfs.html))
+- Instance Profiles API ([AWS](https://docs.databricks.com/api/latest/instance-profiles.html))
 
 # Not yet supported APIs
-- Libraries API ([Azure](https://docs.azuredatabricks.net/api/latest/libraries.html), [AWS](https://docs.databricks.com/api/latest/libraries.html))
-- SCIM API ([AWS](https://docs.databricks.com/api/latest/scim.html))
-- Instance Profiles API ([Azure](https://docs.azuredatabricks.net/api/latest/instance-profiles.html), [AWS](https://docs.databricks.com/api/latest/instance-profiles.html))
-- DBFS API ([Azure](https://docs.azuredatabricks.net/api/latest/dbfs.html), [AWS](https://docs.databricks.com/api/latest/dbfs.html))
+- SCIM API ([Azure](https://docs.azuredatabricks.net/api/latest/scim.html), [AWS](https://docs.databricks.com/api/latest/scim.html))
+

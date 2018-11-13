@@ -15,3 +15,5 @@ $config = Get-Content "$rootPath\Publish\PublishConfig.json" | ConvertFrom-Json
 $ModuleName = (Get-ChildItem "$rootPath\Modules")[0].Name
 
 Publish-Module -NuGetApiKey $config.ApiKey -Path "$rootPath\Modules\$ModuleName"
+
+Start-Process -FilePath "https://www.powershellgallery.com/packages/$ModuleName"

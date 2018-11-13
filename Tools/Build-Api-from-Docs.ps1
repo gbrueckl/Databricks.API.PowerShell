@@ -146,7 +146,7 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/libraries.html"
+$documentationUri = "https://docs.databricks.com/api/latest/scim.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
@@ -242,6 +242,13 @@ if($false)
 	#Get-FunctionTemplate -html $html -name "cluster-status" -psFunctionName "Get-ClusterLibrary" # same as above
 	Get-FunctionTemplate -html $html -name "install" -psFunctionName "Add-ClusterLibraries"
 	Get-FunctionTemplate -html $html -name "uninstall" -psFunctionName "Remove-ClusterLibraries"
+	
+	
+	# Instance Profiles API
+	Get-FunctionTemplate -html $html -name "profiles-add" -psFunctionName "Add-InstanceProfile"
+	Get-FunctionTemplate -html $html -name "profiles-list" -psFunctionName "Get-InstanceProfile"
+	Get-FunctionTemplate -html $html -name "profiles-remove" -psFunctionName "Remove-InstanceProfile"
+	
 	#TODO
 }
 
