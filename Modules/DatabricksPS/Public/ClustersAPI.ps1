@@ -472,7 +472,7 @@ Function Unpin-Cluster
 	return $result
 }
 
-Function Get-NodeTypes
+Function Get-NodeType
 {
 	<#
 			.SYNOPSIS
@@ -482,7 +482,7 @@ Function Get-NodeTypes
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#list-node-types
 			.EXAMPLE
 			#AUTOMATED_TEST:List cluster node types
-			Get-DatabricksNodeTypes
+			Get-DatabricksNodeType
 	#>
 	[CmdletBinding()]
 	param ()
@@ -499,7 +499,7 @@ Function Get-NodeTypes
 	return $result.node_types
 }
 
-Function Get-Zones
+Function Get-Zone
 {
 	<#
 			.SYNOPSIS
@@ -509,7 +509,7 @@ Function Get-Zones
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#list-zones
 			.EXAMPLE
 			#AUTOMATED_TEST:List cluster zones
-			Get-DatabricksZones
+			Get-DatabricksZone
 			
 	#>
 	[CmdletBinding()]
@@ -527,7 +527,7 @@ Function Get-Zones
 	return $result
 }
 
-Function Get-SparkVersions
+Function Get-SparkVersion
 {
 	<#
 			.SYNOPSIS
@@ -537,7 +537,7 @@ Function Get-SparkVersions
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#spark-versions
 			.EXAMPLE
 			#AUTOMATED_TEST:List spark versions
-			Get-DatabricksSparkVersions
+			Get-DatabricksSparkVersion
 	#>
 	[CmdletBinding()]
 	param ()
@@ -554,7 +554,7 @@ Function Get-SparkVersions
 	return $result.versions
 }
 
-Function Get-ClusterEvents
+Function Get-ClusterEvent
 {
 	<#
 			.SYNOPSIS
@@ -577,7 +577,7 @@ Function Get-ClusterEvents
 			.PARAMETER Limit 
 			The maximum number of events to include in a page of events. Defaults to 50, and maximum allowed value is 500.
 			.EXAMPLE
-			Get-ClusterEvents -Cluster_Id <cluster_id> -Start_Time <start_time> -End_Time <end_time> -Order <order> -Event_Types <event_types> -Offset <offset> -Limit <limit>
+			Get-ClusterEvent -Cluster_Id <cluster_id> -Start_Time <start_time> -End_Time <end_time> -Order <order> -Event_Types <event_types> -Offset <offset> -Limit <limit>
 	#>
 	[CmdletBinding()]
 	param

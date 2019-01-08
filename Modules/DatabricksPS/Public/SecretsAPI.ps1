@@ -11,11 +11,10 @@ Function New-SecretScope
 			.PARAMETER InitialManagePrincipal 
 			The principal that is initially granted MANAGE permission to the created scope.
 			.EXAMPLE
-			New-SecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
+			New-DatabricksSecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
 			.EXAMPLE
 			#AUTOMATED_TEST:Add secret scope
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
-			Close-DatabricksFSFile -Handle $newFile.handle
+			New-DatabricksSecretScope -Name "DatabricksPS_TEST"
 	#>
 	[CmdletBinding()]
 	param
@@ -23,28 +22,19 @@ Function New-SecretScope
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] $InitialManagePrincipal = $null
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/scopes/create"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/scopes/create"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 	}
 	
 	$parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -61,33 +51,27 @@ Function Remove-SecretScope
 			.PARAMETER ScopeName 
 			Name of the scope to delete. This field is required.
 			.EXAMPLE
-			Remove-SecretScope -Name "MyScope"
+			Remove-DatabricksSecretScope -Name "MyScope"
+			.EXAMPLE
+			#AUTOMATED_TEST:Add secret scope
+			Remove-DatabricksSecretScope -Name "DatabricksPS_TEST"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/scopes/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/scopes/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -102,26 +86,19 @@ Function Get-SecretScope
 			Lists all secret scopes available in the workspace.
 			Official API Documentation: https://docs.databricks.com/api/latest/secrets.html#list-secret-scopes
 			.EXAMPLE
-			Get-SecretScope
+			Get-DatabricksSecretScope
 	#>
 	[CmdletBinding()]
 	param ()
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/scopes/list"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/scopes/list"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.scopes
 }
@@ -154,43 +131,32 @@ Function Add-Secret
 		
 		[Parameter(ParameterSetName = "StringValue", Mandatory = $true, Position = 3)] [string] $StringValue, 
 		
-		[Parameter(ParameterSetName = "BinaryValue", Mandatory = $true, Position = 3)] [byte[]] $BytesValue
+		[Parameter(ParameterSetName = "BytesValue", Mandatory = $true, Position = 3)] [byte[]] $BytesValue
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/put"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/put"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
+	#Set parameters
+	$parameters = @{}
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
 		"StringValue" {
-			#Set parameters
-			$parameters = @{
-				string_value  = $StringValue
-			}
+			$parameters | Add-Property -Name "string_value" -Value $StringValue
+			
 		}
 
 		"BytesValue" {
-			#Set parameters
-			$parameters = @{
-				bytes_value  = $BytesValue
-			}
+			$bytesBase64 = [System.Convert]::ToBase64String($BytesValue)
+			$parameters | Add-Property -Name "bytes_value" -Value $bytesBase64
 		}
 	}
 
 	$parameters | Add-Property -Name "scope" -Value $ScopeName
 	$parameters | Add-Property -Name "key" -Value $SecretName
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -208,7 +174,7 @@ Function Remove-Secret
 			.PARAMETER Key
 			Name of the secret to delete. This field is required.
 			.EXAMPLE
-			Remove-Secret -ScopeName "MyScope" -SecretName "MySecret"
+			Remove-DatabricksSecret -ScopeName "MyScope" -SecretName "MySecret"
 	#>
 	[CmdletBinding()]
 	param
@@ -216,27 +182,18 @@ Function Remove-Secret
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $SecretName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 		key = $SecretName 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -253,31 +210,24 @@ Function Get-Secret
 			.PARAMETER ScopeName
 			The name of the scope whose secrets you want to list. This field is required.
 			.EXAMPLE
-			Get-Secret -ScopeName "MyScope"
+			Get-DatabricksSecret -ScopeName "MyScope"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/list"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/list"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 	}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.secrets
 }
@@ -298,7 +248,7 @@ Function Add-SecretScopeACL
 			.PARAMETER Permission 
 			The permission level applied to the principal. This field is required.
 			.EXAMPLE
-			Add-SecretScopeACL -Scope "MyScope" -Principal "data-scientists" -Permission Read
+			Add-DatabricksSecretScopeACL -Scope "MyScope" -Principal "data-scientists" -Permission Read
 	#>
 	[CmdletBinding()]
 	param
@@ -308,27 +258,18 @@ Function Add-SecretScopeACL
 		[Parameter(Mandatory = $true, Position = 3)] [string] [ValidateSet("Manage", "Read", "Write")] $Permission
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/put"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/acls/put"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 		principal = $Principal 
 		permission = $Permission 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -347,7 +288,7 @@ Function Remove-SecretScopeACL
 			.PARAMETER Principal 
 			The principal to remove an existing ACL from. This field is required.
 			.EXAMPLE
-			Remove-SecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
+			Remove-DatabricksSecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
 	#>
 	[CmdletBinding()]
 	param
@@ -355,27 +296,18 @@ Function Remove-SecretScopeACL
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $Principal
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/secrets/acls/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 		principal = $Principal 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -395,7 +327,7 @@ Function Get-SecretScopeACL
 			.PARAMETER Principal 
 			The principal to fetch ACL information for. This field is required.
 			.EXAMPLE
-			Get-SecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
+			Get-DatabricksSecretScopeACL -ScopeName "MyScope" -Principal "data-scientists"
 	#>
 	[CmdletBinding()]
 	param
@@ -403,33 +335,23 @@ Function Get-SecretScopeACL
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] $Principal = $null
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
+	
+	$requestMethod = "GET"
+	$apiEndpoint = "/2.0/secrets/acls/list"
 	if($Principal -ne $null)
 	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/list"
+		$apiEndpoint = "/2.0/secrets/acls/get"
 	}
-	else
-	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/get"
-	}
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		scope = $ScopeName 
 	}
 	
 	$parameters | Add-Property -Name "principal" -Value $Principal
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if($Principal -ne $null)
 	{

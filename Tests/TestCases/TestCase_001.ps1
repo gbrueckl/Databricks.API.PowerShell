@@ -6,19 +6,25 @@ Write-Information "Testing Secrets API ..."
 $scopeName = "MyTestScope"
 $secretName = "MySecretPassword"
 
-$x = New-DatabricksSecretScope -ScopeName $scopeName -Verbose
-Get-DatabricksSecretScope -Verbose
+try
+{
+	$x = New-DatabricksSecretScope -ScopeName $scopeName -Verbose
+	Get-DatabricksSecretScope -Verbose
 
-Add-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -StringValue "Pass@word1234!" -Verbose
-$enc = [system.Text.Encoding]::UTF8
-$secretText = "This is a secret value" 
-$secretBytes = $enc.GetBytes($secretText) 
-Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes -Verbose
-Get-DatabricksSecret -ScopeName $scopeName -Verbose
-
-Remove-DatabricksSecret -ScopeName $scopeName -SecretName $secretName
-Remove-DatabricksSecretScope -ScopeName $scopeName
-
+	Add-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -StringValue "Pass@word1234!" -Verbose
+	$enc = [system.Text.Encoding]::UTF8
+	$secretText = "This is a secret value" 
+	$secretBytes = $enc.GetBytes($secretText) 
+	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes -Verbose
+	Get-DatabricksSecret -ScopeName $scopeName -Verbose
+}
+finally
+{
+	Write-Information "Starting Cleanup ..."
+	Remove-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -ErrorAction SilentlyContinue
+	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
+	Write-Information "Finished Cleanup"
+}
 
 
 

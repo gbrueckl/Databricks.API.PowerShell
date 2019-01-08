@@ -11,7 +11,7 @@ Function Add-ApiToken
 			.PARAMETER Comment 
 			Optional description to attach to the token.
 			.EXAMPLE
-			Add-ApiToken -LifetimeSeconds 360 -Comment "MyComment
+			Add-DatabricksApiToken -LifetimeSeconds 360 -Comment "MyComment
 	#>
 	[CmdletBinding()]
 	param
@@ -19,27 +19,18 @@ Function Add-ApiToken
 		[Parameter(Mandatory = $false, Position = 1)] [long] $LifetimeSeconds = -1, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] $Comment
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/token/create"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/token/create"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
 
 	$parameters | Add-Property -Name "lifetime_seconds" -Value $LifetimeSeconds -NullValue -1
 	$parameters | Add-Property -Name "comment" -Value $Comment 
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -54,26 +45,19 @@ Function Get-ApiToken
 			List all the valid tokens for a user-workspace pair.
 			Official API Documentation: https://docs.databricks.com/api/latest/tokens.html#list
 			.EXAMPLE
-			Get-ApiToken -Token_Infos <token_infos>
+			Get-DatabricksApiToken -Token_Infos <token_infos>
 	#>
 	[CmdletBinding()]
 	param ()
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/token/list"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/token/list"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.token_infos
 }
@@ -90,33 +74,24 @@ Function Remove-ApiToken
 			.PARAMETER TokenID 
 			The ID of the token to be revoked.
 			.EXAMPLE
-			Remove-ApiToken -TokenID 1234
+			Remove-DatabricksApiToken -TokenID 1234
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $TokenID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/token/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/token/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		token_id = $TokenID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }

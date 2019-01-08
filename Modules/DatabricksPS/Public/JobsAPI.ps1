@@ -44,8 +44,6 @@ Function Add-Job
 			"quartz_cron_expression" = "0 15 22 ? * *"
 			"timezone_id" = "America/Los_Angeles"
 			}
-			.EXAMPLE
-			
 			.PARAMETER NotebookPath
 			The Path of the notebook to execute.
 			.PARAMETER NotebookParameters
@@ -101,19 +99,12 @@ Function Add-Job
 
 		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)] [string] $SparkParameters
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/create"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/create"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{}	
 	
 	$parameters | Add-Property -Name "name" -Value $Name
@@ -185,10 +176,8 @@ Function Add-Job
 	$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns
 	$parameters | Add-Property -Name "schedule" -Value $Schedule
 	$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
-				
-	$parameters = $parameters | ConvertTo-Json
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -204,30 +193,30 @@ Function Get-Job
 			.PARAMETER JobID 
 			The canonical identifier of the job retrieve. This field is optional and can be used as a filter on one particular job id.
 			.EXAMPLE
-			Get-Job -JobID <JobID>
+			Get-DatabricksJob -JobID 123
+			.EXAMPLE
+			#AUTOMATED_TEST:List existing clusters
+			Get-DatabricksJob
 	#>
 	[CmdletBinding()]
 	param 
 	(	
 		[Parameter(Mandatory = $false, Position = 1)] [int64] $JobID = -1
 	)
-
-	Test-Initialized	 
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/list"
+	
+	$requestMethod = "GET"
+	$apiEndpoint = "/2.0/jobs/list"
 	if($JobID -ne -1)
 	{
 		Write-Verbose "JobID specified ($JobID)- using Get-API instead of List-API..."
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/get?job_id=$JobID"
+		$apiEndpoint = "/2.0/jobs/get?job_id=$JobID"
 	}
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	
+	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
+	$parameters = @{}
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if($JobID -ne -1)
 	{
@@ -260,25 +249,16 @@ Function Remove-Job
 		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobID
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/delete"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		job_id = $JobID 
 	}
-	
-	$parameters = $parameters | ConvertTo-Json
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -307,26 +287,17 @@ Function Update-Job
 		[Parameter(Mandatory = $true, Position = 2)] [object] $NewSettings
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/reset"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/reset"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		job_id = $JobID 
 		new_settings = $NewSettings 
 	}
-	
-	$parameters = $parameters | ConvertTo-Json
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -365,17 +336,10 @@ Function Start-Job
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $SparkSubmitParams = @()
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/run-now"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/run-now"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		job_id = $JobID 
@@ -386,9 +350,7 @@ Function Start-Job
 	$parameters | Add-Property  -Name "python_params" -Value $PythonParams
 	$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams
 
-	$parameters = $parameters | ConvertTo-Json
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -471,25 +433,16 @@ Function New-JobRun
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $Libraries, 
 		[Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
+	
+	$requestMethod = "POST"
+	$apiEndpoint = "/2.0/jobs/runs/submit"
 	if($PSCmdlet.ParameterSetName.EndsWith("Job"))
 	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/now"
+		$apiEndpoint = "/2.0/jobs/runs/now"
 	}
-	else
-	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/submit"
-	}
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
+	#Set parameters
 	$parameters = @{}
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
@@ -568,9 +521,7 @@ Function New-JobRun
 	$parameters | Add-Property -Name "libraries" -Value $Libraries
 	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds
 
-	$parameters = $parameters | ConvertTo-Json
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -611,29 +562,20 @@ Function Get-JobRun
 		
 		[Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1)] [int64] $JobRunID
 	)
-
-	Test-Initialized
 	
-	Write-Verbose "Running with ParameterSet '$($PSCmdlet.ParameterSetName)' ..."
-
-	Write-Verbose "Setting final ApiURL ..."
+	$requestMethod = "GET"
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
-		"ByJobId"  { $apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/list" } 
-		"ByRunId"  { $apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/get" } 
+		"ByJobId"  { $apiEndpoint = "/2.0/jobs/runs/list" } 
+		"ByRunId"  { $apiEndpoint = "/2.0/jobs/runs/get" } 
 	} 
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
+	#Set parameters
+	$parameters = @{}
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
 		"ByJobId" {
-			#Set parameters
-			$parameters = @{}
 			$parameters | Add-Property -Name "job_id" -Value $JobID -NullValue -1
 			$parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1 
 			$parameters | Add-Property -Name "limit" -Value $Limit -NullValue -1
@@ -643,14 +585,11 @@ Function Get-JobRun
 		}
 
 		"ByRunId" {
-			#Set parameters
-			$parameters = @{
-				run_id = $JobRunID 
-			}
+			$parameters | Add-Property -Name "run_id" -Value $JobRunID -NullValue -1
 		}
 	}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
@@ -681,27 +620,20 @@ Function Export-JobRun
 		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunId, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("Code", "Dashboards", "All")] $ViewsToExport = "All"
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/export"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/runs/export"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		run_id = $JobRunID 
 		views_to_export = $ViewsToExport 
 	}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+	return $result.views
 }
 
 
@@ -723,26 +655,17 @@ Function Cancel-JobRun
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/cancel"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/runs/cancel"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		run_id = $JobRunID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -766,24 +689,17 @@ Function Get-JobRunOutput
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/get-output"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/runs/get-output"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		run_id = $JobRunID 
 	}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -807,26 +723,17 @@ Function Remove-JobRun
 	(
 		[Parameter(Mandatory = $false, Position = 1)] [int64] $JobRunID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/runs/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/jobs/runs/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		run_id = $JobRunID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }

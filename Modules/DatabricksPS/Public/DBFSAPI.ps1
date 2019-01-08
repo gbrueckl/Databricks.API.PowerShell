@@ -30,27 +30,18 @@ Function Add-FSFile
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $false, Position = 2)] [bool] $Overwrite = $false
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/create"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/create"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 		overwrite = $Overwrite 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -83,32 +74,23 @@ Function Add-FSFileBlock
 		[Parameter(Mandatory = $true, Position = 2)] [string] $Data,
 		[Parameter(Mandatory = $false, Position = 2)] [switch] $AsPlainText
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/add-block"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
 	
+	$requestMethod = "POST"
+	$apiEndpoint = "/2.0/dbfs/add-block"
+
 	if($AsPlainText)
 	{
 		$Data = $Data | ConvertTo-Base64 -Encoding ([Text.Encoding]::UTF8)
 	}
-
-	Write-Verbose "Setting Parameters for API call ..."
+	
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		handle = $Handle 
 		data = $Data 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -139,26 +121,17 @@ Function Close-FSFile
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [int] $Handle
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/close"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/close"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		handle = $Handle 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -195,27 +168,18 @@ Function Remove-FSItem
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $false, Position = 2)] [bool] $Recursive = $false
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 		recursive = $Recursive 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -256,31 +220,22 @@ Function Get-FSItem
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path,
 		[Parameter(Mandatory = $false, Position = 2)] [bool] $ChildItems = $false
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
+	
+	$requestMethod = "POST"
+	$apiEndpoint = "/2.0/dbfs/list"
 	if(-not $ChildItems)
 	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/get-status"
+		$apiEndpoint = "/2.0/dbfs/get-status"
 	}
-	else
-	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/list"
-	}
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+		
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 	}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if(-not $ChildItems){
 		# if a ClusterID was specified, we return the result as it is
@@ -315,26 +270,17 @@ Function Add-FSDirectory
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/mkdirs"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/mkdirs"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -367,27 +313,18 @@ Function Move-FSFile
 		[Parameter(Mandatory = $true, Position = 1)] [string] $SourcePath, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $DestinationPath
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/move"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/move"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		source_path = $SourcePath 
 		destination_path = $DestinationPath 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -428,18 +365,11 @@ Function Get-FSContent
 		[Parameter(Mandatory = $false, Position = 3)] [int] $Length = -1,
 		[Parameter(Mandatory = $false, Position = 4)] [switch] $Decode
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/read"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/read"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
@@ -447,15 +377,16 @@ Function Get-FSContent
 
 	$parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1
 	$parameters | Add-Property -Name "length" -Value $Length -NullValue -1
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if($Decode)
 	{
 		Write-Verbose "Decoding data ..."
 		$decodedValue = $result.data | ConvertFrom-Base64 -Encoding ([Text.Encoding]::UTF8)
-		Write-Verbose $decodedValue
+		Write-Verbose "Adding decoded data to result ..."
 		Add-Member -InputObject $result -MemberType NoteProperty -Name "data_decoded" -Value $decodedValue
 	}
+	
 	return $result
 }

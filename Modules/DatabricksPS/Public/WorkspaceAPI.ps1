@@ -11,7 +11,7 @@ Function Remove-WorkspaceItem
 			.PARAMETER Recursive 
 			The flag that specifies whether to delete the object recursively. It is false by default. Please note this deleting directory is not atomic. If it fails in the middle, some of objects under this directory may be deleted and cannot be undone.
 			.EXAMPLE
-			Remove-WorkspaceItem -Path <Path> -Recursive $false
+			Remove-DatabricksWorkspaceItem -Path <Path> -Recursive $false
 	#>
 	[CmdletBinding()]
 	param
@@ -19,27 +19,18 @@ Function Remove-WorkspaceItem
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $false, Position = 2)] [bool] $Recursive
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/workspace/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 		recursive = $Recursive 
 	}
 	
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -68,25 +59,18 @@ Function Export-WorkspaceItem
 		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath, 
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $Format = "SOURCE"
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/export"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/workspace/export"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 		format = $Format  
 	}
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 				
 	$exportBytes = [Convert]::FromBase64String($result.content)
 	[IO.File]::WriteAllBytes($LocalPath, $exportBytes)
@@ -103,31 +87,24 @@ Function Get-WorkspaceItemDetails
 			.PARAMETER Path 
 			The absolute path of the notebook or directory. This field is required.
 			.EXAMPLE
-			Get-WorkspaceItemDetails -Path "/Users/user@example.com/project/ScaleExampleNotebook"
+			Get-DatabricksWorkspaceItemDetails -Path "/Users/user@example.com/project/ScaleExampleNotebook"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/get-status"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/workspace/get-status"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 	}
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -163,21 +140,17 @@ Function Import-WorkspaceItem
 		[Parameter(Mandatory = $true, Position = 4)] [string] $LocalPath, 
 		[Parameter(Mandatory = $false, Position = 5)] [bool] $Overwrite = $false
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/import"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
 	
-	$fileBytes = [IO.File]::ReadAllBytes($LocalPath)
-	$content = [Convert]::ToBase64String($fileBytes)
+	$requestMethod = "POST"
+	$apiEndpoint = "/2.0/workspace/import"
 
-	Write-Verbose "Setting Parameters for API call ..."
+	
+	Write-Verbose "Reading content from $LocalPath ..."
+	$fileBytes = [IO.File]::ReadAllBytes($LocalPath)
+	Write-Verbose "Converting content to Base64 string ..."
+	$content = [Convert]::ToBase64String($fileBytes)
+	
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
@@ -187,9 +160,7 @@ Function Import-WorkspaceItem
 		overwrite = $Overwrite 
 	}
 	
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -206,31 +177,24 @@ Function Get-WorkspaceItem
 			.PARAMETER Path 
 			The absolute path of the notebook or directory. This field is required.
 			.EXAMPLE
-			Get-WorkspaceItem -Path "/"
+			Get-DatabricksWorkspaceItem -Path "/"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/list"
+	
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/workspace/list"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 	}
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.objects
 }
@@ -247,33 +211,24 @@ Function New-WorkspaceDirectory
 			.PARAMETER Path 
 			The absolute path of the directory. If the parent directories do not exist, it will also create them. If the directory already exists, this command will do nothing and succeed. This field is required.
 			.EXAMPLE
-			New-WorkspaceDirectory -Path "/myNewDirectory"
+			New-DatabricksWorkspaceDirectory -Path "/myNewDirectory"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/mkdirs"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/workspace/mkdirs"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		path = $Path 
 	}
 	
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
