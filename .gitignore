@@ -4,3 +4,4 @@ Thumbs.db
 UpgradeLog.htm
 *.suo
 PublishConfig.json
+TestEnvironments.config.json

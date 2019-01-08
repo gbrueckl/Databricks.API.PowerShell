@@ -37,7 +37,7 @@ Function Add-ApiToken
 	$parameters | Add-Property -Name "lifetime_seconds" -Value $LifetimeSeconds -NullValue -1
 	$parameters | Add-Property -Name "comment" -Value $Comment 
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -114,7 +114,7 @@ Function Remove-ApiToken
 		token_id = $TokenID 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 

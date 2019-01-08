@@ -45,7 +45,7 @@ Function Add-GroupMember
 		"AddGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -87,7 +87,7 @@ Function Add-Group
 		group_name = $GroupName 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -261,7 +261,7 @@ Function Remove-GroupMember
 		"RemoveGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -303,7 +303,7 @@ Function Remove-Group
 		group_name = $GroupName 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 

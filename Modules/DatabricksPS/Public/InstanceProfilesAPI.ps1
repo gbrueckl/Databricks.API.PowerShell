@@ -42,7 +42,7 @@ Function Add-InstanceProfile
 		$parameters | Add-Property -Name "skip_validation" -Value $true
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -117,7 +117,7 @@ Function Remove-InstanceProfile
 		instance_profile_arn = $InstanceProfileARN 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 

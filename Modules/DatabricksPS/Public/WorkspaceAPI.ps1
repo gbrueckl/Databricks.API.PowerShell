@@ -37,7 +37,7 @@ Function Remove-WorkspaceItem
 		recursive = $Recursive 
 	}
 	
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -187,7 +187,7 @@ Function Import-WorkspaceItem
 		overwrite = $Overwrite 
 	}
 	
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -271,7 +271,7 @@ Function New-WorkspaceDirectory
 		path = $Path 
 	}
 	
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 

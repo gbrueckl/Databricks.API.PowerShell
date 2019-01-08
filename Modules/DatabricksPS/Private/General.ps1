@@ -277,7 +277,7 @@ function ConvertFrom-Base64
 			.DESCRIPTION 
 			For some reason. .NET makes encoding a string a two-step process. This function makes it a one-step process. 
 			You're actually allowed to pass in `$null` and an empty string. If you do, you'll get `$null` and an empty string back. 
- 			.PARAMETER Value
+			.PARAMETER Value
 			The Base64 value to decode to a string. Also allows pipelined input!
 			.PARAMETER Encoding
 			The encoding to use to convert the Base64 bytes to a string. Default is [Text.Encoding]::UTF8
@@ -327,3 +327,8 @@ function ConvertFrom-Base64
 		}
 	}
 }
+
+
+# TRY/CATCH with proper Error message on APIs
+#try { Invoke-RestMethod -Uri $Uri -Headers $Headers }
+#catch { ([System.IO.StreamReader]$_.Exception.Response.GetResponseStream()).ReadToEnd() }

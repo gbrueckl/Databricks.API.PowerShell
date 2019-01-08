@@ -146,7 +146,7 @@ function Get-FunctionTemplate($html, $name, $psFunctionName)
 	$text = [Microsoft.VisualBasic.Interaction]::InputBox($msg, $title, $functionText)
 }
 
-$documentationUri = "https://docs.databricks.com/api/latest/scim.html"
+$documentationUri = "https://docs.databricks.com/api/latest/jobs.html"
 $html = Invoke-WebRequest $documentationUri 
 
 $functionsHtml = $html.ParsedHtml.getElementsByTagName("h2")
@@ -167,6 +167,7 @@ if($false)
 	
 	
 	# Jobs API
+	Get-FunctionTemplate -html $html -name "create" -psFunctionName "Add-Job"
 	Get-FunctionTemplate -html $html -name "list" -psFunctionName "Get-Job"
 	Get-FunctionTemplate -html $html -name "delete" -psFunctionName "Remove-Job"
 	#Get-FunctionTemplate -html $html -name "get" -psFunctionName "Get-Job" # same as "list" but wit -id parameter

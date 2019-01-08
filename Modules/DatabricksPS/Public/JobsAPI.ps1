@@ -1,4 +1,197 @@
 #requires -Version 3.0
+Function Add-Job
+{
+	<#
+			.SYNOPSIS
+			Creates a new job with the provided settings.
+			.DESCRIPTION
+			Creates a new job with the provided settings.
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#create
+			.PARAMETER Name 
+			An optional name for the job. The default value is Untitled.
+			.PARAMETER ClusterID 
+			The ID of an existing cluster that will be used for the job. When running jobs on an existing cluster, you may need to manually restart the cluster if it stops responding. We suggest running jobs on new clusters for greater reliability.
+			.PARAMETER NewClusterDefinition
+	
+			.PARAMETER Libraries 
+			An optional list of libraries to be installed on the cluster that will execute the job. The default value is an empty list.
+			.PARAMETER TimeoutSeconds 
+			An optional timeout applied to each run of this job. The default behavior is to have no timeout.
+			.PARAMETER MaxRetries 
+			An optional maximum number of times to retry an unsuccessful run. A run is considered to be unsuccessful if it completes with a FAILED result_state or INTERNAL_ERROR life_cycle_state. The value -1 means to retry indefinitely and the value 0 means to never retry. The default behavior is to never retry.
+			.PARAMETER MinRetryIntervalMillis 
+			An optional minimal interval in milliseconds between attempts. The default behavior is that unsuccessful runs are immediately retried.
+			.PARAMETER RetryOnTimeout 
+			An optional policy to specify whether to retry a job when it times out. The default behavior is to not retry on timeout.
+			.PARAMETER MaxConcurrentRuns 
+			An optional maximum allowed number of concurrent runs of the job.
+			Set this value if you want to be able to execute multiple runs of the same job concurrently. This is useful for example if you trigger your job on a frequent schedule and want to allow consecutive runs to overlap with each other, or if you want to trigger multiple runs which differ by their input parameters.
+			This setting affects only new runs. For example, suppose the job's concurrency is 4 and there are 4 concurrent active runs. Then setting the concurrency to 3 won't kill any of the active runs. However, from then on, new runs are skipped unless there are fewer than 3 active runs.
+			This value cannot exceed 1000. Setting this value to 0 causes all new runs to be skipped. The default behavior is to allow only 1 concurrent run.
+
+			.PARAMETER EmailNotifications 
+			An optional set of email addresses notified when runs of this job begin and complete and when this job is deleted. The default behavior is to not send any emails.
+			sample: 
+			$emailNotifications = @{
+			"on_start" = @("me@home.com", "you@home.com")
+			"on_success" = @()
+			"on_failure" = @("me@home.com")
+			}
+			.PARAMETER Schedule 
+			An optional periodic schedule for this job. The default behavior is that the job runs when triggered by clicking Run Now in the Jobs UI or sending an API request to runNow.
+			Sample:
+			$schedule = @{
+			"quartz_cron_expression" = "0 15 22 ? * *"
+			"timezone_id" = "America/Los_Angeles"
+			}
+			.EXAMPLE
+			
+			.PARAMETER NotebookPath
+			The Path of the notebook to execute.
+			.PARAMETER NotebookParameters
+			A hashtable containing the parameters to pass to the notebook
+			
+			.PARAMETER PythonURI
+			The URI of the Python file to be executed. DBFS and S3 paths are supported. This field is required.
+			.PARAMETER PythonParameters
+			Command line parameters that will be passed to the Python file.
+
+			.PARAMETER JarURI
+			Deprecated since 04/2016. Provide a jar through the libraries field instead. For an example, see Create.
+			.PARAMETER JarMainClassName
+			The full name of the class containing the main method to be executed. This class must be contained in a JAR provided as a library.
+			The code should use SparkContext.getOrCreate to obtain a Spark context; otherwise, runs of the job will fail.
+			.PARAMETER JarParameters
+			Parameters that will be passed to the main method.
+
+			.PARAMETER SparkParameters 
+			Command line parameters passed to spark submit.
+			Add-DatabricksJob -Name "DatabricksPSTest" -ClusterID '1234-123456-abc789' -TimeoutSeconds 60 -NotebookPath '/Users/me@home.com/myNotebook'
+	#>
+	[CmdletBinding()]
+	param
+	(
+		# generic parameters
+		[Parameter(Mandatory = $true, Position = 1)] [string] $Name,
+		[Parameter(Mandatory = $false)] [string] $ClusterID,
+		[Parameter(Mandatory = $false)] [object] $NewClusterDefinition, 
+ 
+		[Parameter(Mandatory = $false)] [string[]] $Libraries, 
+		[Parameter(Mandatory = $false)] [int32] $TimeoutSeconds,
+		[Parameter(Mandatory = $false)] [int32] $MaxRetries,
+		[Parameter(Mandatory = $false)] [int32] $MinRetryIntervalMilliseconds,
+		[Parameter(Mandatory = $false)] [bool] $RetryOnTimeout,
+		[Parameter(Mandatory = $false)] [int32] $MaxConcurrentRuns,
+				
+		[Parameter(Mandatory = $false)] [object] $Schedule,
+				
+		[Parameter(Mandatory = $false)] [object] $EMailNotifications, 
+					
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
+
+		
+		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 2)] [string] $PythonURI, 
+		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 3)] [string[]] $PythonParameters,
+		
+		
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarURI, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarMainClassName, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3)] [string[]] $JarParameters, 
+
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)] [string] $SparkParameters
+	)
+
+	Test-Initialized
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/create"
+	$requestMethod = "POST"
+	Write-Verbose "API Call: $requestMethod $apiUrl"
+
+	#Set headers
+	$headers = Get-RequestHeader
+
+	Write-Verbose "Setting Parameters for API call ..."
+	#Set parameters
+	$parameters = @{}	
+	
+	$parameters | Add-Property -Name "name" -Value $Name
+	
+			
+	if($NewClusterDefinition)
+	{
+		$parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
+	}
+	elseif($ClusterID)
+	{
+		$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+	}
+	else
+	{
+		Write-Error "Either parameter NewClusterDefinition or parameter ClusterID have to be specified!"
+	}
+			
+	switch ($PSCmdlet.ParameterSetName) 
+	{ 
+		"Notebook" {
+			$notebookTask =  @{ notebook_path = $NotebookPath }
+			$notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
+
+			#Set parameters
+			
+			$parameters | Add-Property -Name "notebook_task" -Value $notebookTask
+		}
+		
+		"Jar" {
+			$jarTask =  @{ 
+				jar_uri = $JarURI 
+				main_class_name = $JarMainClassName
+			}
+			$jarTask | Add-Property  -Name "parameters" -Value $JarParameters
+
+			#Set parameters
+			$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+			$parameters | Add-Property -Name "spark_jar_task" -Value $jarTask
+		}
+		
+		"Python" {
+			$pythonTask =  @{ 
+				python_file = $PythonURI 
+			}
+			$pythonTask | Add-Property  -Name "parameters" -Value $PythonParameters
+
+			#Set parameters
+			$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+			$parameters | Add-Property -Name "spark_python_task" -Value $pythonTask
+		}
+		
+		"Spark" {
+			$sparkTask =  @{ 
+				parameters = $SparkParameters 
+			}
+
+			#Set parameters
+			
+			$parameters | Add-Property -Name "spark_submit_task" -Value $sparkTask
+		}
+	}
+	
+	$parameters | Add-Property -Name "libraries" -Value $Libraries
+	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds
+	$parameters | Add-Property -Name "max_retries" -Value $MaxRetries
+	$parameters | Add-Property -Name "min_retry_interval_millis" -Value $MinRetryIntervalMilliseconds
+	$parameters | Add-Property -Name "retry_on_timeout" -Value $RetryOnTimeout
+	$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns
+	$parameters | Add-Property -Name "schedule" -Value $Schedule
+	$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
+				
+	$parameters = $parameters | ConvertTo-Json
+
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	return $result
+}
 Function Get-Job
 {
 	<#
@@ -129,7 +322,6 @@ Function Update-Job
 	return $result
 }
 
-
 Function Start-Job
 {
 	<#
@@ -191,7 +383,6 @@ Function Start-Job
 
 	return $result
 }
-
 
 Function New-JobRun
 {
@@ -536,7 +727,7 @@ Function Cancel-JobRun
 		run_id = $JobRunID 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 

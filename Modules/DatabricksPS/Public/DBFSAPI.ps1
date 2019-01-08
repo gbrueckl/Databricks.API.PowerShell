@@ -12,9 +12,15 @@ Function Add-FSFile
 			.PARAMETER Overwrite 
 			The flag that specifies whether to overwrite existing file/files.
 			.EXAMPLE
-			Add-FSFile -Path "/mnt/foo/" -Overwrite $false
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
 			.EXAMPLE
-			$newFile = Add-DatabricksFSFile -Path "/myFile.txt" -Overwrite $true
+			#AUTOMATED_TEST:Add empty file
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
+			.EXAMPLE
+			#AUTOMATED_TEST:Add new file with content and close it
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
@@ -42,7 +48,7 @@ Function Add-FSFile
 		overwrite = $Overwrite 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -65,8 +71,8 @@ Function Add-FSFileBlock
 			If specified, Data is interpreted as plain text and encoded to Base64 internally before the upload.
 			.EXAMPLE
 			Add-FSFileBlock -Handle 7904256 -Data "ZGF0YWJyaWNrcwo="
-			.EXAMPLE
-			$newFile = Add-DatabricksFSFile -Path "/myFile.txt" -Overwrite $true
+			#AUTOMATED_TEST:Add new file with content and close it
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
@@ -88,7 +94,7 @@ Function Add-FSFileBlock
 	#Set headers
 	$headers = Get-RequestHeader
 	
-	if($PlainText)
+	if($AsPlainText)
 	{
 		$Data = $Data | ConvertTo-Base64 -Encoding ([Text.Encoding]::UTF8)
 	}
@@ -100,7 +106,7 @@ Function Add-FSFileBlock
 		data = $Data 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -119,8 +125,12 @@ Function Close-FSFile
 			The handle on an open stream. This field is required.
 			.EXAMPLE
 			Close-FSFile -Handle 7904256
+			#AUTOMATED_TEST:Add and close empty file
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
 			.EXAMPLE
-			$newFile = Add-DatabricksFSFile -Path "/myFile.txt" -Overwrite $true
+			#AUTOMATED_TEST:Add new file with content and close it
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
@@ -146,14 +156,14 @@ Function Close-FSFile
 		handle = $Handle 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
 	return $result
 }
 
-Function Remove-FSFile
+Function Remove-FSItem
 {
 	<#
 			.SYNOPSIS
@@ -166,7 +176,18 @@ Function Remove-FSFile
 			.PARAMETER Recursive 
 			Whether or not to recursively delete the directory's contents. Deleting empty directories can be done without providing the recursive flag.
 			.EXAMPLE
-			Remove-FSFile -Path "/MyFolder" -Recursive $false
+			Remove-FSItem -Path "/MyFolder" -Recursive $false
+			.EXAMPLE
+			#AUTOMATED_TEST:Add and remove File
+			$filePath = "/myTestFolder/myFile1.txt"
+			$newFile = Add-DatabricksFSFile -Path $filePath -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
+			Remove-DatabricksFSItem -Path $filePath
+			.EXAMPLE
+			#AUTOMATED_TEST:Add and remove folder
+			$folderPath = "/myTestFolder/myFolder"
+			Add-DatabricksFSDirectory -Path $folderPath
+			Remove-DatabricksFSItem -Path $folderPath
 	#>
 	[CmdletBinding()]
 	param
@@ -192,7 +213,7 @@ Function Remove-FSFile
 		recursive = $Recursive 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -213,6 +234,21 @@ Function Get-FSItem
 			Defines whether information of the item or its child items are returned. This field is not required. Default is 'false'.
 			.EXAMPLE
 			Get-DatabricksFSItem -Path "/myFolder/myFile"
+			.EXAMPLE
+			#AUTOMATED_TEST:Get single file
+			$filePath = "/myTestFolder/myFile1.txt"
+			$newFile = Add-DatabricksFSFile -Path $filePath -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
+			Get-DatabricksFSItem -Path $filePath
+			.EXAMPLE
+			#AUTOMATED_TEST:Get single folder
+			$folderPath = "/myTestFolder/"
+			Get-DatabricksFSItem -Path $folderPath
+			.EXAMPLE
+			#AUTOMATED_TEST:Add and remove folder
+			$folderPath = "/myTestFolder/"
+			Add-DatabricksFSDirectory -Path $folderPath
+			Get-DatabricksFSItem -Path $folderPath -ChildItems $true
 	#>
 	[CmdletBinding()]
 	param
@@ -261,6 +297,10 @@ Function Add-FSDirectory
 			The path of the new directory. The path should be the absolute DBFS path (e.g. "/mnt/foo/"). This field is required.
 			.EXAMPLE
 			Add-FSDirectory -Path "/myNewFolder"
+			.EXAMPLE
+			#AUTOMATED_TEST:Add a folder
+			$folderPath = "/myTestFolder/myFolder2"
+			Add-DatabricksFSDirectory -Path $folderPath
 	#>
 	[CmdletBinding()]
 	param
@@ -284,7 +324,7 @@ Function Add-FSDirectory
 		path = $Path 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -305,6 +345,13 @@ Function Move-FSFile
 			The destination path of the file or directory. The path should be the absolute DBFS path (e.g. "/mnt/bar/"). This field is required.
 			.EXAMPLE
 			Move-FSFile -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
+			.EXAMPLE
+			#AUTOMATED_TEST:Move single file
+			$sourcePath = "/myTestFolder/myFile1.txt"
+			$targetPath = "/myTestFolder/myMovedFile.txt"
+			$newFile = Add-DatabricksFSFile -Path $sourcePath -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
+			Move-DatabricksFSFile -SourcePath $sourcePath -DestinationPath $targetPath
 	#>
 	[CmdletBinding()]
 	param
@@ -330,7 +377,7 @@ Function Move-FSFile
 		destination_path = $DestinationPath 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -355,6 +402,15 @@ Function Get-FSContent
 			Adds a new property to the result that contains the decoded string value.
 			.EXAMPLE
 			Get-FSContent -Path "/myFile.csv"
+			.EXAMPLE
+			#AUTOMATED_TEST:Get file content
+			$content = "This is my test content!"
+			$filePath = "/myTestFolder/myFile1.txt"
+			$newFile = Add-DatabricksFSFile -Path $filePath -Overwrite $true
+			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data $content -AsPlainText
+			Close-DatabricksFSFile -Handle $newFile.handle
+			$readContent = Get-DatabricksFSContent -Path $filePath -Decode
+			if($readContent.data_decoded -ne $content) { throw "Read content does not match written content!" }
 	#>
 	[CmdletBinding()]
 	param

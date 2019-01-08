@@ -1,3 +1,44 @@
+#requires -Version 3.0
+
+Function Invoke-ApiRequest
+{
+	<#
+			.SYNOPSIS
+			Lists all jobs or returns a specific job for a given JobID.
+			.DESCRIPTION
+			Lists all jobs or returns a specific job for a given JobID. 
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#list
+			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
+			.PARAMETER Method 
+			The type of request you want to invoke. Will usually be GET or POST
+			.PARAMETER EndPoint
+			The API endpoint that you want to invoke. Please check the API reference for valid values. Example: "/2.0/jobs/list"
+			.PARAMETER Body
+			Some endpoints also support a body to supply additional information. This can be specified here. For POST requests, this is usually a JSON-string whereas for GET it is usually a hashtable which is then converted to URL parameters
+			.EXAMPLE
+			Invoke-ApiRequest -Method GET -EndPoint "/2.0/jobs/list"
+	#>
+	[CmdletBinding()]
+	param 
+	(	
+		[Parameter(Mandatory = $true, Position = 1)] [string] [ValidateSet("GET", "POST", "PUT", "DELETE")] $Method,
+		[Parameter(Mandatory = $true, Position = 2)] [string] $EndPoint,
+		[Parameter(Mandatory = $true, Position = 3)] $Body
+	)
+	Test-Initialized	 
+
+	Write-Verbose "Setting final ApiURL ..."
+	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/list"
+	Write-Verbose "API Call: $Method $apiUrl"
+	
+	#Set headers
+	$headers = Get-RequestHeader
+	
+	$result = Invoke-RestMethod -Uri $apiUrl -Method   $Method -Headers $headers -Body $Body
+
+	return $result
+}
+
 Function Set-Environment 
 {
 	<#

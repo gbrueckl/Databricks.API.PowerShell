@@ -8,10 +8,14 @@ Function New-SecretScope
 			Official API Documentation: https://docs.databricks.com/api/latest/secrets.html#create-secret-scope
 			.PARAMETER ScopeName 
 			Scope name requested by the user. Scope names are unique. This field is required.
-			.PARAMETER Initial_Manage_Principal 
+			.PARAMETER InitialManagePrincipal 
 			The principal that is initially granted MANAGE permission to the created scope.
 			.EXAMPLE
 			New-SecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
+			.EXAMPLE
+			#AUTOMATED_TEST:Add secret scope
+			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
 	[CmdletBinding()]
 	param
@@ -38,7 +42,7 @@ Function New-SecretScope
 	
 	$parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -81,7 +85,7 @@ Function Remove-SecretScope
 		scope = $ScopeName 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -184,7 +188,7 @@ Function Add-Secret
 	$parameters | Add-Property -Name "scope" -Value $ScopeName
 	$parameters | Add-Property -Name "key" -Value $SecretName
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -230,7 +234,7 @@ Function Remove-Secret
 		key = $SecretName 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -322,7 +326,7 @@ Function Add-SecretScopeACL
 		permission = $Permission 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
@@ -369,7 +373,7 @@ Function Remove-SecretScopeACL
 		principal = $Principal 
 	}
 			
-	$parameters = $parameters | ConvertTo-Json
+	$parameters = $parameters | ConvertTo-Json -Depth 10
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
