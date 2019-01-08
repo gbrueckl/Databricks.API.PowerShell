@@ -8,10 +8,12 @@ Function Get-ClusterLibraries
 			Get the status of libraries on a cluster or all clusters. A status will be available for all libraries installed on the cluster via the API or the libraries UI as well as libraries set to be installed on all clusters via the libraries UI. If a library has been set to be installed on all clusters, is_library_for_all_clusters will be true, even if the library was also installed on the cluster.
 			Official API Documentation: https://docs.databricks.com/api/latest/libraries.html#cluster-status
 			Official API Documentation: https://docs.databricks.com/api/latest/libraries.html#all-cluster-statuses
-			.PARAMETER Cluster_Id 
+			.PARAMETER ClusterID 
 			Unique identifier of the cluster whose status should be retrieved. This field is not required.
 			.EXAMPLE
-			Get-ClusterLibrary -ClusterID "1202-211320-brick1"
+			Get-ClusterLibraries -ClusterID "1234-211320-brick1"
+			.EXAMPLE
+			Get-ClusterLibraries
 	#>
 	[CmdletBinding()]
 	param
@@ -19,29 +21,31 @@ Function Get-ClusterLibraries
 		[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID = $null
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/libraries/all-cluster-statuses"
+	$requestMethod = "GET"
+	$apiEndpoint = "/2.0/libraries/all-cluster-statuses"
 	if($ClusterID)
 	{
 		Write-Verbose "ClusterID specified ($ClusterID) - using cluster-status endpoint instead of all-cluster-statuses ..."
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/libraries/cluster-status"
+		$apiEndpoint = "/2.0/libraries/cluster-status"
 	}
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
 	$parameters | Add-Property  -Name "cluster_id" -Value $ClusterID
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+	if($ClusterID)
+	{
+		# if a ClusterID was specified, we return the result as it is
+		return $result
+	}
+	else
+	{
+		# if no ClusterID was specified, we return the statuses as an array
+		return $result.statuses
+	}
 }
 
 Function Add-ClusterLibraries
@@ -55,37 +59,43 @@ Function Add-ClusterLibraries
 			.PARAMETER ClusterID 
 			Unique identifier for the cluster on which to install these libraries. This field is required.
 			.PARAMETER Libraries 
-			The libraries to install.
+			The libraries to install. See https://docs.databricks.com/api/latest/libraries.html#install for details
 			.EXAMPLE
-			Add-ClusterLibraries -ClusterID <cluster_id> -Libraries <libraries>
+			$libraries = @(
+							@{pypi = @{package = "numpy"}}
+							@{jar = "dbfs:/mnt/libraries/library.jar" }
+							)
+			Add-DatabricksClusterLibraries -ClusterID "1234-211320-brick1" -Libraries $libraries
+
+			.EXAMPLE
+			$libraries = '[
+							{
+							  "jar": "dbfs:/mnt/libraries/library.jar"
+							},
+							{
+							  "egg": "dbfs:/mnt/libraries/library.egg"
+							}
+						  ]' | ConvertFrom-Json
+			Add-DatabricksClusterLibraries -ClusterID "1234-211320-brick1" -Libraries $libraries
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID, 
-		[Parameter(Mandatory = $true, Position = 2)] [hashtable[]] $Libraries
+		[Parameter(Mandatory = $true, Position = 2)] [object[]] $Libraries
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/libraries/install"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/libraries/install"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{
 		cluster_id = $ClusterID 
 		libraries = $Libraries 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -101,37 +111,43 @@ Function Remove-ClusterLibraries
 			.PARAMETER ClusterID 
 			Unique identifier for the cluster on which to uninstall these libraries. This field is required.
 			.PARAMETER Libraries 
-			The libraries to uninstall.
+			The libraries to uninstall. See https://docs.databricks.com/api/latest/libraries.html#uninstall for details
 			.EXAMPLE
-			Remove-ClusterLibraries -ClusterID <cluster_id> -Libraries <libraries>
+			$libraries = @(
+							@{pypi = @{package = "numpy"}}
+							@{jar = "dbfs:/mnt/libraries/library.jar" }
+							)
+			Remove-DatabricksClusterLibraries -ClusterID "1234-211320-brick1" -Libraries $libraries
+
+			.EXAMPLE
+			$libraries = '[
+							{
+							  "jar": "dbfs:/mnt/libraries/library.jar"
+							},
+							{
+							  "egg": "dbfs:/mnt/libraries/library.egg"
+							}
+						  ]' | ConvertFrom-Json
+			Remove-DatabricksClusterLibraries -ClusterID "1234-211320-brick1" -Libraries $libraries
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID, 
-		[Parameter(Mandatory = $true, Position = 2)] [hashtable[]] $Libraries
+		[Parameter(Mandatory = $true, Position = 2)] [object[]] $Libraries
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/libraries/uninstall"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/libraries/uninstall"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
 		libraries = $Libraries 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }

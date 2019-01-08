@@ -28,13 +28,24 @@ Function Invoke-ApiRequest
 	Test-Initialized	 
 
 	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/jobs/list"
+	$apiUrl = Get-ApiUrl -ApiEndpoint $EndPoint
 	Write-Verbose "API Call: $Method $apiUrl"
 	
 	#Set headers
+	Write-Verbose "Building Headers ..."
 	$headers = Get-RequestHeader
 	
-	$result = Invoke-RestMethod -Uri $apiUrl -Method   $Method -Headers $headers -Body $Body
+	if($Method -eq "POST")
+	{	
+		# for POST requests we have to convert the body to JSON
+		Write-Verbose "POST request - converting Body to JSON"
+		$Body = $Body | ConvertTo-Json -Depth 20
+	}
+	
+	Write-Verbose "Headers: `n$($headers  | Out-String)"
+	Write-Verbose "Body: `n$($Body | Out-String)"
+	
+	$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
 
 	return $result
 }

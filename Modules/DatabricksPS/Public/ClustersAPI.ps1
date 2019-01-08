@@ -43,7 +43,7 @@ Function Add-Cluster
 			.PARAMETER EnableElasticDisk 
 			Autoscaling Local Storage: when enabled, this cluster will dynamically acquire additional disk space when its Spark workers are running low on disk space. This feature requires specific AWS permissions to function correctly - refer to Autoscaling local storage for details.
 			.EXAMPLE
-			Add-Cluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id "i3.xlarge"
+			Add-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id "i3.xlarge"
 	#>
 	[CmdletBinding()]
 	param
@@ -67,18 +67,11 @@ Function Add-Cluster
 		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/create"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/create"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{
 		cluster_name = $ClusterName 
 		spark_version = $SparkVersion 
@@ -111,11 +104,9 @@ Function Add-Cluster
 		"FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers  } 
 		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers  } }
 	} 
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	
 	return $result
 }
 
@@ -165,7 +156,7 @@ Function Update-Cluster
 			.PARAMETER EnableElasticDisk 
 			Autoscaling Local Storage: when enabled, this cluster will dynamically acquire additional disk space when its Spark workers are running low on disk space. This feature requires specific AWS permissions to function correctly - refer to Autoscaling local storage for details.
 			.EXAMPLE
-			Add-Cluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id "i3.xlarge"
+			Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id "i3.xlarge"
 	#>
 	[CmdletBinding()]
 	param
@@ -189,19 +180,12 @@ Function Update-Cluster
 		[Parameter(Mandatory = $true, Position = 13)] [int32] $AutoterminationMinutes, 
 		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/edit"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/edit"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{
 		cluster_id = $ClusterID
 		cluster_name = $ClusterName 
@@ -234,11 +218,9 @@ Function Update-Cluster
 	{ 
 		"FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers  } 
 		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers  } }
-	} 
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
+	}
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -254,33 +236,24 @@ Function Start-Cluster
 			.PARAMETER ClusterID 
 			The cluster to be started. This field is required.
 			.EXAMPLE
-			Start-Cluster -ClusterID "1202-211320-brick1"
+			Start-DatabricksCluster -ClusterID "1202-211320-brick1"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/start"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/start"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{
 		cluster_id = $ClusterID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -296,33 +269,24 @@ Function Restart-Cluster
 			.PARAMETER ClusterID 
 			The cluster to be started. This field is required.
 			.EXAMPLE
-			Restart-Cluster -ClusterID "1202-211320-brick1"
+			Restart-DatabricksCluster -ClusterID "1202-211320-brick1"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/restart"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/restart"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -338,33 +302,24 @@ Function Stop-Cluster
 			.PARAMETER ClusterID 
 			The cluster to be terminated. This field is required.
 			.EXAMPLE
-			Stop-Cluster -ClusterID "1202-211320-brick1"
+			Stop-DatabricksCluster -ClusterID "1202-211320-brick1"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/delete"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -380,33 +335,24 @@ Function Remove-Cluster
 			.PARAMETER ClusterID 
 			The cluster to be permanently deleted. This field is required.
 			.EXAMPLE
-			Remove-Cluster -ClusterID "1202-211320-brick1"
+			Remove-DatabricksCluster -ClusterID "1202-211320-brick1"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/permanent-delete"
+	
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	$apiEndpoint = "/2.0/clusters/permanent-delete"
+	
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -422,37 +368,42 @@ Function Get-Cluster
 			.PARAMETER ClusterID 
 			The cluster about which to retrieve information. This field is required.
 			.EXAMPLE
-			Get-Cluster -ClusterID "1202-211320-brick1"
+			Get-DatabricksCluster -ClusterID "1202-211320-brick1"
+			.EXAMPLE
+			#AUTOMATED_TEST:List existing clusters
+			Get-DatabricksCluster
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID = $null
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/list"
+	
+	$requestMethod = "GET"
+	$apiEndpoint = "/2.0/clusters/list"
 	if($ClusterID)
 	{
 		Write-Verbose "ClusterID specified ($ClusterID) - using get endpoint instead of list endpoint..."
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/get"
+		$apiEndpoint =  "/2.0/clusters/get"
 	}
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
 	#Set parameters
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{}
 	$parameters | Add-Property  -Name "cluster_id" -Value $ClusterID
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+	if($ClusterID)
+	{
+		# if a ClusterID was specified, we return the result as it is
+		return $result
+	}
+	else
+	{
+		# if no ClusterID was specified, we return the clusters as an array
+		return $result.clusters
+	}
 }
 
 Function Pin-Cluster			
@@ -466,7 +417,7 @@ Function Pin-Cluster
 			.PARAMETER ClusterID 
 			The cluster to pin. This field is required.
 			.EXAMPLE
-			Pin-Cluster -ClusterID "1202-211320-brick1"
+			Pin-DatabricksCluster -ClusterID "1202-211320-brick1"
 	#>
 	[CmdletBinding()]
 	param
@@ -474,25 +425,16 @@ Function Pin-Cluster
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/pin"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/pin"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
@@ -508,7 +450,7 @@ Function Unpin-Cluster
 			.PARAMETER ClusterID 
 			The cluster to unpin. This field is required.
 			.EXAMPLE
-			Unpin-Cluster -ClusterID "1202-211320-brick1"
+			Unpin-DatabricksCluster -ClusterID "1202-211320-brick1"
 	#>
 	[CmdletBinding()]
 	param
@@ -516,30 +458,21 @@ Function Unpin-Cluster
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
 	)
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/unpin"
 	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/unpin"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Get-NodeType
+Function Get-NodeTypes
 {
 	<#
 			.SYNOPSIS
@@ -548,31 +481,25 @@ Function Get-NodeType
 			Returns a list of supported Spark node types. These node types can be used to launch a cluster.
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#list-node-types
 			.EXAMPLE
-			Get-NodeType
+			#AUTOMATED_TEST:List cluster node types
+			Get-DatabricksNodeTypes
 	#>
 	[CmdletBinding()]
 	param ()
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/list-node-types"
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/list-node-types"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+	return $result.node_types
 }
 
-Function Get-Zone
+Function Get-Zones
 {
 	<#
 			.SYNOPSIS
@@ -581,31 +508,26 @@ Function Get-Zone
 			Returns a list of availability zones where clusters can be created in (ex: us-west-2a). These zones can be used to launch a cluster.
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#list-zones
 			.EXAMPLE
-			Get-Zone
+			#AUTOMATED_TEST:List cluster zones
+			Get-DatabricksZones
+			
 	#>
 	[CmdletBinding()]
 	param() 
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/list-zones"
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/list-zones"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Get-SparkVersion
+Function Get-SparkVersions
 {
 	<#
 			.SYNOPSIS
@@ -614,28 +536,22 @@ Function Get-SparkVersion
 			Returns the list of available Spark versions. These versions can be used to launch a cluster.
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#spark-versions
 			.EXAMPLE
-			Get-SparkVersion -Versions <versions>
+			#AUTOMATED_TEST:List spark versions
+			Get-DatabricksSparkVersions
 	#>
 	[CmdletBinding()]
 	param ()
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/spark-versions"
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/clusters/spark-versions"
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+	return $result.versions
 }
 
 Function Get-ClusterEvents
@@ -675,17 +591,10 @@ Function Get-ClusterEvents
 		[Parameter(Mandatory = $false, Position = 7)] [int] $Limit = -1
 	)
 
-	Test-Initialized
+	$requestMethod = "GET"
+	$apiEndpoint = "/2.0/clusters/events"
 
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/clusters/events"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
@@ -697,10 +606,8 @@ Function Get-ClusterEvents
 	$parameters | Add-Property  -Name "event_types" -Value $EventTypes
 	$parameters | Add-Property  -Name "offset" -Value $Offset -NullValue -1
 	$parameters | Add-Property  -Name "limit" -Value $Limit -NullValue -1
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }

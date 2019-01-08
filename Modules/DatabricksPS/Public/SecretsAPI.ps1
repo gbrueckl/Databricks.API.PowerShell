@@ -123,7 +123,7 @@ Function Get-SecretScope
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	return $result.scopes
 }
 
 
@@ -279,7 +279,7 @@ Function Get-Secret
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	return $result.secrets
 }
 
 
@@ -407,7 +407,7 @@ Function Get-SecretScopeACL
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	if($Principal -eq $null)
+	if($Principal -ne $null)
 	{
 		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/secrets/acls/list"
 	}
@@ -431,5 +431,14 @@ Function Get-SecretScopeACL
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	if($Principal -ne $null)
+	{
+		# if a Principal was specified, we return the result as it is
+		return $result
+	}
+	else
+	{
+		# if no Principal was specified, we return the ACLs as an array
+		return $result.acls
+	}
 }

@@ -124,7 +124,7 @@ Function Add-Property
 	
 	if($Value -eq $null -or $Value -eq $NullValue)
 	{
-		Write-Verbose "Found a null-Value to add ..."
+		Write-Verbose "Found a null-Value to add as $Name ..."
 		if($AllowEmptyValue)
 		{
 			Write-Verbose "Adding null-value  ..."
@@ -138,7 +138,7 @@ Function Add-Property
 	}
 	elseif($Value.GetType().Name -eq 'Object[]') # array
 	{
-		Write-Verbose "Found an Array to add ..."
+		Write-Verbose "Found an Array-Property to add as $Name ..."
 		if($Value.Count -gt 0 -or $AllowEmptyValue)
 		{
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
@@ -146,7 +146,7 @@ Function Add-Property
 	}
 	elseif($Value.GetType().Name -eq 'Hashtable') # hashtable
 	{
-		Write-Verbose "Found a Hashtable to add ..."
+		Write-Verbose "Found a Hashtable-Property to add as $Name ..."
 		if($Value.Count -gt 0 -or $AllowEmptyValue)
 		{
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
@@ -154,7 +154,7 @@ Function Add-Property
 	}
 	elseif($Value.GetType().Name -eq 'String') # String
 	{
-		Write-Verbose "Found a String to add ..."
+		Write-Verbose "Found a String-Property to add as $Name ..."
 		if(-not [string]::IsNullOrEmpty($Value) -or $AllowEmptyValue)
 		{
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
@@ -162,13 +162,13 @@ Function Add-Property
 	}
 	elseif($Value.GetType().Name -eq 'Boolean') # Boolean
 	{
-		Write-Verbose "Found a Boolean to add ..."
+		Write-Verbose "Found a Boolean-Property to add as $Name ..."
 
 		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value.ToString().ToLower()
 	}
 	else
 	{
-		Write-Verbose "Found a $($Value.GetType().Name) to add ..."
+		Write-Verbose "Found a $($Value.GetType().Name)-Property to add as $Name ..."
 
 		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
 	}

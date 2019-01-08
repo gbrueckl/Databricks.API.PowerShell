@@ -229,7 +229,16 @@ Function Get-Job
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers
 
-	return $result
+	if($JobID -ne -1)
+	{
+		# if a ClusterID was specified, we return the result as it is
+		return $result
+	}
+	else
+	{
+		# if no ClusterID was specified, we return the jobs as an array
+		return $result.jobs
+	}
 }
 
 Function Remove-Job
@@ -643,7 +652,11 @@ Function Get-JobRun
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	switch ($PSCmdlet.ParameterSetName) 
+	{ 
+		"ByJobId"  { return $result.runs } 
+		"ByRunId"  { return $result } 
+	} 
 }
 
 

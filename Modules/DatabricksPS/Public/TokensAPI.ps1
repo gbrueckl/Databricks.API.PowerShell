@@ -75,7 +75,7 @@ Function Get-ApiToken
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	return $result.token_infos
 }
 
 

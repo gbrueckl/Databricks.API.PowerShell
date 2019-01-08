@@ -260,13 +260,13 @@ Function Get-FSItem
 	Test-Initialized
 
 	Write-Verbose "Setting final ApiURL ..."
-	if($ChildItems)
+	if(-not $ChildItems)
 	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/list"
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/get-status"
 	}
 	else
 	{
-		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/get-status"
+		$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/dbfs/list"
 	}
 	$requestMethod = "GET"
 	Write-Verbose "API Call: $requestMethod $apiUrl"
@@ -282,7 +282,15 @@ Function Get-FSItem
 			
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	if(-not $ChildItems){
+		# if a ClusterID was specified, we return the result as it is
+		return $result
+	}
+	else
+	{
+		# if no ClusterID was specified, we return the files as an array
+		return $result.files
+	}
 }
 
 Function Add-FSDirectory

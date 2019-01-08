@@ -232,7 +232,7 @@ Function Get-WorkspaceItem
 
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
 
-	return $result
+	return $result.objects
 }
 
 
