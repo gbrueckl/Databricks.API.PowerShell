@@ -128,7 +128,7 @@ Function Add-Property
 		if($AllowEmptyValue)
 		{
 			Write-Verbose "Adding null-value  ..."
-			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
+			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value 
 		}
 		else
 		{

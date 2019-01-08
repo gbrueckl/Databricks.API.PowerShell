@@ -76,16 +76,6 @@ Function Add-Cluster
 		cluster_name = $ClusterName 
 		spark_version = $SparkVersion 
 		node_type_id = $NodeTypeId 
-		
-		
-		driver_node_type_id = $DriverNodeTypeId 
-		ssh_public_keys = $SshPublicKeys 
-		custom_tags = $CustomTags 
-		cluster_log_conf = $ClusterLogConf 
-		init_scripts = $InitScripts 
-		spark_env_vars = $SparkEnvVars 
-		autotermination_minutes = $AutoterminationMinutes 
-		enable_elastic_disk = $EnableElasticDisk 
 	}
 
 	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf
@@ -161,12 +151,12 @@ Function Update-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(ParameterSetName = "FixedSize", Mandatory = $true, Position = 1)] [int32] $NumWorkers,
-		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MinWorkers, 
-		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 3)] [int32] $MaxWorkers, 
+		[Parameter(ParameterSetName = "FixedSize", Mandatory = $false, Position = 1)] [int32] $NumWorkers,
+		[Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 2)] [int32] $MinWorkers, 
+		[Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 3)] [int32] $MaxWorkers, 
 		
 		[Parameter(Mandatory = $true, Position = 3)] [string] $ClusterID, 
-		[Parameter(Mandatory = $true, Position = 3)] [string] $ClusterName, 
+		[Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
 		[Parameter(Mandatory = $true, Position = 3)] [string] $SparkVersion, 
 		[Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
 		[Parameter(Mandatory = $false, Position = 5)] [hashtable] $AwsAttributes, 
@@ -177,7 +167,7 @@ Function Update-Cluster
 		[Parameter(Mandatory = $false, Position = 10)] [object] $ClusterLogConf, 
 		[Parameter(Mandatory = $false, Position = 11)] [string[]] $InitScripts, 
 		[Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
-		[Parameter(Mandatory = $true, Position = 13)] [int32] $AutoterminationMinutes, 
+		[Parameter(Mandatory = $false, Position = 13)] [int32] $AutoterminationMinutes, 
 		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk
 	)
 	
@@ -188,21 +178,11 @@ Function Update-Cluster
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{
 		cluster_id = $ClusterID
-		cluster_name = $ClusterName 
-		spark_version = $SparkVersion 
-		node_type_id = $NodeTypeId 
-		
-		
-		driver_node_type_id = $DriverNodeTypeId 
-		ssh_public_keys = $SshPublicKeys 
-		custom_tags = $CustomTags 
-		cluster_log_conf = $ClusterLogConf 
-		init_scripts = $InitScripts 
-		spark_env_vars = $SparkEnvVars 
-		autotermination_minutes = $AutoterminationMinutes 
-		enable_elastic_disk = $EnableElasticDisk 
 	}
 
+	$parameters | Add-Property -Name "cluster_name" -Value $ClusterName
+	$parameters | Add-Property -Name "spark_version" -Value $SparkVersion
+	$parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId
 	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf
 	$parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes
 	$parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId
