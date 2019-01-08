@@ -191,7 +191,7 @@ Function Add-PropertyIfNotExists
 	}
 	else
 	{
-		raise "Property $Name already exists! Use -Force parameter to overwrite it!"	
+		throw "Property $Name already exists! Use -Force parameter to overwrite it!"	
 	}
 }
 
