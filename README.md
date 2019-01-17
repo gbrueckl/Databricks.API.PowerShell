@@ -36,6 +36,18 @@ Export-DatabricksWorkspaceItem -Path "/TestNotebook1" -LocalPath "C:\TestNoteboo
 Start-DatabricksJob -JobID 123 -NotebookParams @{myParameter = "test"}
 ```
 
+Using pipelined cmdlets:
+```powershell
+# stop all clusters
+Get-DatabricksCluster | Stop-DatabricksCluster
+
+# create multiple directories
+"/test1","/test2" | Add-DatabricksWorkspaceDirectory
+
+# get all run outputs for a given job
+Get-DatabricksJobRun -JobID 123 | Get-DatabricksJobRunOutput
+```
+
 # Supported APIs and endpoint
 - Clusters API ([Azure](https://docs.azuredatabricks.net/api/latest/clusters.html), [AWS](https://docs.databricks.com/api/latest/clusters.html))
 - Groups API ([Azure](https://docs.azuredatabricks.net/api/latest/groups.html), [AWS](https://docs.databricks.com/api/latest/groups.html))
