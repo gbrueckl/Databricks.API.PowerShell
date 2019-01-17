@@ -201,32 +201,35 @@ Function Get-Job
 	[CmdletBinding()]
 	param 
 	(	
-		[Parameter(Mandatory = $false, Position = 1)] [int64] $JobID = -1
+		[Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/jobs/list"
-	if($JobID -ne -1)
-	{
-		Write-Verbose "JobID specified ($JobID)- using Get-API instead of List-API..."
-		$apiEndpoint = "/2.0/jobs/get?job_id=$JobID"
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/jobs/list"
+		if($JobID -ne -1)
+		{
+			Write-Verbose "JobID specified ($JobID)- using Get-API instead of List-API..."
+			$apiEndpoint = "/2.0/jobs/get?job_id=$JobID"
+		}
 	}
 	
-	#Set parameters
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	$parameters = @{}
+	process {
+		#Set parameters
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		$parameters = @{}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if($JobID -ne -1)
-	{
-		# if a ClusterID was specified, we return the result as it is
-		return $result
-	}
-	else
-	{
-		# if no ClusterID was specified, we return the jobs as an array
-		return $result.jobs
+		if($JobID -ne -1)
+		{
+			# if a ClusterID was specified, we return the result as it is
+			return $result
+		}
+		else
+		{
+			# if no ClusterID was specified, we return the jobs as an array
+			return $result.jobs
+		}
 	}
 }
 
@@ -246,21 +249,24 @@ Function Remove-Job
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID
 	)
-
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/jobs/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		job_id = $JobID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/jobs/delete"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			job_id = $JobID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Update-Job
@@ -283,23 +289,26 @@ Function Update-Job
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobID, 
-		[Parameter(Mandatory = $true, Position = 2)] [object] $NewSettings
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
+		[Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("settings")] [object] $NewSettings
 	)
-
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/jobs/reset"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		job_id = $JobID 
-		new_settings = $NewSettings 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/jobs/reset"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			job_id = $JobID 
+			new_settings = $NewSettings 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Start-Job
@@ -329,30 +338,33 @@ Function Start-Job
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobID, 
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
 		[Parameter(Mandatory = $false, Position = 2)] [string[]] $JarParams = @(), 
 		[Parameter(Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @(), 
 		[Parameter(Mandatory = $false, Position = 4)] [string[]] $PythonParams = @(), 
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $SparkSubmitParams = @()
 	)
-
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/jobs/run-now"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		job_id = $JobID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/jobs/run-now"
 	}
+
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			job_id = $JobID 
+		}
 	
-	$parameters | Add-Property  -Name "jar_params" -Value $JarParams
-	$parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams
-	$parameters | Add-Property  -Name "python_params" -Value $PythonParams
-	$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams
+		$parameters | Add-Property  -Name "jar_params" -Value $JarParams
+		$parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams
+		$parameters | Add-Property  -Name "python_params" -Value $PythonParams
+		$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function New-JobRun
@@ -555,47 +567,50 @@ Function Get-JobRun
 	[CmdletBinding(DefaultParametersetName = "ByJobId")]
 	param
 	(
-		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 1)] [int64] $JobID = -1, 
+		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1, 
 		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 2)] [string] [ValidateSet("ActiveOnly", "CompletedOnly", "All")] $Filter = "All",
-		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 3)] [int32] $Offset = -1, 
-		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 4)] [int32] $Limit = -1,
+		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Offset = -1, 
+		[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Limit = -1,
 		
-		[Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1)] [int64] $JobRunID
+		[Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName=$true)] [Alias("run_id")] [int64] $JobRunID
 	)
-	
-	$requestMethod = "GET"
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"ByJobId"  { $apiEndpoint = "/2.0/jobs/runs/list" } 
-		"ByRunId"  { $apiEndpoint = "/2.0/jobs/runs/get" } 
-	} 
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"ByJobId" {
-			$parameters | Add-Property -Name "job_id" -Value $JobID -NullValue -1
-			$parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1 
-			$parameters | Add-Property -Name "limit" -Value $Limit -NullValue -1
-			
-			if($Filter -eq "ActiveOnly") { $parameters | Add-Property -Name "active_only" -Value $true }
-			if($Filter -eq "CompletedOnly") { $parameters | Add-Property -Name "completed_only" -Value $true }
-		}
-
-		"ByRunId" {
-			$parameters | Add-Property -Name "run_id" -Value $JobRunID -NullValue -1
-		}
+	begin {
+		$requestMethod = "GET"
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"ByJobId"  { $apiEndpoint = "/2.0/jobs/runs/list" } 
+			"ByRunId"  { $apiEndpoint = "/2.0/jobs/runs/get" } 
+		} 
 	}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"ByJobId" {
+				$parameters | Add-Property -Name "job_id" -Value $JobID -NullValue -1
+				$parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1 
+				$parameters | Add-Property -Name "limit" -Value $Limit -NullValue -1
+			
+				if($Filter -eq "ActiveOnly") { $parameters | Add-Property -Name "active_only" -Value $true }
+				if($Filter -eq "CompletedOnly") { $parameters | Add-Property -Name "completed_only" -Value $true }
+			}
 
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"ByJobId"  { return $result.runs } 
-		"ByRunId"  { return $result } 
-	} 
+			"ByRunId" {
+				$parameters | Add-Property -Name "run_id" -Value $JobRunID -NullValue -1
+			}
+		}
+
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"ByJobId"  { return $result.runs } 
+			"ByRunId"  { return $result } 
+		} 
+	}
 }
 
 
@@ -617,23 +632,26 @@ Function Export-JobRun
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunId, 
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunId, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("Code", "Dashboards", "All")] $ViewsToExport = "All"
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/jobs/runs/export"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		run_id = $JobRunID 
-		views_to_export = $ViewsToExport 
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/jobs/runs/export"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			run_id = $JobRunID 
+			views_to_export = $ViewsToExport 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.views
+		return $result.views
+	}
 }
 
 
@@ -653,21 +671,24 @@ Function Cancel-JobRun
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/jobs/runs/cancel"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		run_id = $JobRunID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/jobs/runs/cancel"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			run_id = $JobRunID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -687,21 +708,24 @@ Function Get-JobRunOutput
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int64] $JobRunID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/jobs/runs/get-output"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		run_id = $JobRunID 
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/jobs/runs/get-output"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			run_id = $JobRunID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -721,19 +745,22 @@ Function Remove-JobRun
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $false, Position = 1)] [int64] $JobRunID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/jobs/runs/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		run_id = $JobRunID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/jobs/runs/delete"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			run_id = $JobRunID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }

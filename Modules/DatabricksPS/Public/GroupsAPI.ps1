@@ -13,7 +13,7 @@ Function Add-GroupMember
 			.PARAMETER ParentGroupName 
 			Name of the parent group to which the new member will be added. This field is required.
 			.EXAMPLE
-			Add-GroupMember -UserName "me@mydomain.com" -ParentGroupName "Data Scientists"
+			Add-DatabricksGroupMember -UserName "me@mydomain.com" -ParentGroupName "Data Scientists"
 	#>
 	[CmdletBinding()]
 	param
@@ -22,34 +22,28 @@ Function Add-GroupMember
 		[Parameter(ParameterSetName = "AddGroup", Mandatory = $true, Position = 1)] [string] $GroupName, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ParentGroupName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/add-member"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		parent_name = $ParentGroupName 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/groups/add-member"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			parent_name = $ParentGroupName 
+		}
 			
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"AddUser"  { $parameters | Add-Property -Name "user_name" -Value $UserName }
-		"AddGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"AddUser"  { $parameters | Add-Property -Name "user_name" -Value $UserName }
+			"AddGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
+		}
+
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
 }
 
 Function Add-Group
@@ -63,35 +57,30 @@ Function Add-Group
 			.PARAMETER GroupName 
 			Name for the group; must be unique among groups owned by this organization. This field is required.
 			.EXAMPLE
-			Add-Group -GroupName "Data Scientists"
+			Add-DatabricksGroup -GroupName "Data Scientists"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $GroupName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name")] [string] $GroupName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/create"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		group_name = $GroupName 
+	
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/groups/create"
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			group_name = $GroupName 
+		}
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Get-GroupMember
@@ -105,33 +94,30 @@ Function Get-GroupMember
 			.PARAMETER GroupName 
 			The group whose members we want to retrieve. This field is required.
 			.EXAMPLE
-			Get-GroupMember -GroupName "Data Scientists"
+			Get-DatabricksGroupMember -GroupName "Data Scientists"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $GroupName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name")] [string] $GroupName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/list-members"
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		group_name = $GroupName 
+	
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/groups/list-members"
 	}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			group_name = $GroupName 
+		}
 
-	return $result
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result.members
+	}
 }
 
 Function Get-Group
@@ -143,28 +129,25 @@ Function Get-Group
 			Returns all of the groups in an organization.
 			Official API Documentation: https://docs.databricks.com/api/latest/groups.html#list
 			.EXAMPLE
-			Get-Group
+			Get-DatabricksGroup
 	#>
 	[CmdletBinding()]
 	param ()
+	
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/groups/list"
+	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
+		
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/list"
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{}
-			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
+		return $result.group_names
+	}
 }
 
 Function Get-Membership
@@ -180,7 +163,7 @@ Function Get-Membership
 			.PARAMETER GroupName 
 			The name of the group to add to the group.
 			.EXAMPLE
-			Get-Membership GroupName "Data Scientists
+			Get-DatabricksMembership GroupName "Data Scientists
 	#>
 	[CmdletBinding()]
 	param
@@ -188,30 +171,27 @@ Function Get-Membership
 		[Parameter(ParameterSetName = "UserMemberships", Mandatory = $true, Position = 1)] [string] $UserName,
 		[Parameter(ParameterSetName = "GroupMemberships", Mandatory = $true, Position = 1)] [string] $GroupName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/list-parents"
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{}
-			
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"UserMemberships"  { $parameters | Add-Property -Name "user_name" -Value $UserName }
-		"GroupMemberships" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
+	
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/groups/list-parents"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
 			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"UserMemberships"  { $parameters | Add-Property -Name "user_name" -Value $UserName }
+			"GroupMemberships" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
+		}
+		
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result.group_names
+	}
 }
 
 Function Remove-GroupMember
@@ -229,7 +209,7 @@ Function Remove-GroupMember
 			.PARAMETER ParentGroupName 
 			Name of the parent group from which the user/group will be removed. This field is required.
 			.EXAMPLE
-			Remove-GroupMember -UserName "me@mydomain.com" -ParentName "Data Scientists"
+			Remove-DatabricksGroupMember -UserName "me@mydomain.com" -ParentName "Data Scientists"
 	#>
 	[CmdletBinding()]
 	param
@@ -238,34 +218,29 @@ Function Remove-GroupMember
 		[Parameter(ParameterSetName = "RemoveGroup", Mandatory = $true, Position = 1)] [string] $GroupName, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ParentGroupName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/remove-member"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		parent_name = $ParentGroupName 
+	
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/groups/remove-member"
 	}
-			
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"RemoveUser"  { $parameters | Add-Property -Name "user_name" -Value $UserName }
-		"RemoveGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			parent_name = $ParentGroupName 
+		}
+		
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"RemoveUser"  { $parameters | Add-Property -Name "user_name" -Value $UserName }
+			"RemoveGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
+		}
+		
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result.group_names
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
-
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
 }
 
 Function Remove-Group
@@ -279,33 +254,28 @@ Function Remove-Group
 			.PARAMETER GroupName 
 			The group to remove. This field is required.
 			.EXAMPLE
-			Remove-Group -GroupName "Data Scientists"
+			Remove-DatabricksGroup -GroupName "Data Scientists"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $GroupName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name")] [string] $GroupName
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/groups/delete"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		group_name = $GroupName 
+	
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/groups/delete"
 	}
-			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			group_name = $GroupName 
+		}
+		
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
+		return $result.group_names
+	}
 }

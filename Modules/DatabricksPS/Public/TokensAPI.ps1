@@ -19,20 +19,23 @@ Function Add-ApiToken
 		[Parameter(Mandatory = $false, Position = 1)] [long] $LifetimeSeconds = -1, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] $Comment
 	)
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/token/create"
+	}
 	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/token/create"
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
 
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
-
-	$parameters | Add-Property -Name "lifetime_seconds" -Value $LifetimeSeconds -NullValue -1
-	$parameters | Add-Property -Name "comment" -Value $Comment 
+		$parameters | Add-Property -Name "lifetime_seconds" -Value $LifetimeSeconds -NullValue -1
+		$parameters | Add-Property -Name "comment" -Value $Comment 
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -49,17 +52,20 @@ Function Get-ApiToken
 	#>
 	[CmdletBinding()]
 	param ()
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/token/list"
+	}
 	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/token/list"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.token_infos
+		return $result.token_infos
+	}
 }
 
 
@@ -79,19 +85,22 @@ Function Remove-ApiToken
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $TokenID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("token_id")] [string] $TokenID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/token/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		token_id = $TokenID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/token/delete"
 	}
-	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			token_id = $TokenID 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
+	}
 }

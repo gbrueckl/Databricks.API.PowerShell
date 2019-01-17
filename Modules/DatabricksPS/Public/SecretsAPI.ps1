@@ -1,4 +1,4 @@
-Function New-SecretScope
+Function Add-SecretScope
 {
 	<#
 			.SYNOPSIS
@@ -14,29 +14,33 @@ Function New-SecretScope
 			New-DatabricksSecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
 			.EXAMPLE
 			#AUTOMATED_TEST:Add secret scope
-			New-DatabricksSecretScope -Name "DatabricksPS_TEST"
+			Add-DatabricksSecretScope -Name "DatabricksPS_TEST"
 	#>
+	[Alias("New-SecretScope")]
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] $InitialManagePrincipal = $null
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/secrets/scopes/create"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/secrets/scopes/create"
 	}
 	
-	$parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+		}
+	
+		$parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -59,21 +63,24 @@ Function Remove-SecretScope
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("scope")] [string] $ScopeName
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/secrets/scopes/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/secrets/scopes/delete"
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -126,39 +133,42 @@ Function Add-Secret
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope")] [string] $ScopeName, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $SecretName,
 		
 		[Parameter(ParameterSetName = "StringValue", Mandatory = $true, Position = 3)] [string] $StringValue, 
 		
 		[Parameter(ParameterSetName = "BytesValue", Mandatory = $true, Position = 3)] [byte[]] $BytesValue
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/secrets/put"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
-	switch ($PSCmdlet.ParameterSetName) 
-	{ 
-		"StringValue" {
-			$parameters | Add-Property -Name "string_value" -Value $StringValue
-			
-		}
-
-		"BytesValue" {
-			$bytesBase64 = [System.Convert]::ToBase64String($BytesValue)
-			$parameters | Add-Property -Name "bytes_value" -Value $bytesBase64
-		}
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/secrets/put"
 	}
 
-	$parameters | Add-Property -Name "scope" -Value $ScopeName
-	$parameters | Add-Property -Name "key" -Value $SecretName
-	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
+		switch ($PSCmdlet.ParameterSetName) 
+		{ 
+			"StringValue" {
+				$parameters | Add-Property -Name "string_value" -Value $StringValue
+			
+			}
 
-	return $result
+			"BytesValue" {
+				$bytesBase64 = [System.Convert]::ToBase64String($BytesValue)
+				$parameters | Add-Property -Name "bytes_value" -Value $bytesBase64
+			}
+		}
+
+		$parameters | Add-Property -Name "scope" -Value $ScopeName
+		$parameters | Add-Property -Name "key" -Value $SecretName
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
+	}
 }
 
 Function Remove-Secret
@@ -179,23 +189,26 @@ Function Remove-Secret
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
-		[Parameter(Mandatory = $true, Position = 2)] [string] $SecretName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName, 
+		[Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("key")] [string] $SecretName
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/secrets/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
-		key = $SecretName 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/secrets/delete"
 	}
-	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+			key = $SecretName 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
+	}
 }
 
 
@@ -215,21 +228,24 @@ Function Get-Secret
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/secrets/list"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/secrets/list"
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.secrets
+		return $result.secrets
+	}
 }
 
 
@@ -257,21 +273,24 @@ Function Add-SecretScopeACL
 		[Parameter(Mandatory = $true, Position = 2)] [string] $Principal, 
 		[Parameter(Mandatory = $true, Position = 3)] [string] [ValidateSet("Manage", "Read", "Write")] $Permission
 	)
-
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/secrets/acls/put"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
-		principal = $Principal 
-		permission = $Permission 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/secrets/acls/put"
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+			principal = $Principal 
+			permission = $Permission 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -293,23 +312,26 @@ Function Remove-SecretScopeACL
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
-		[Parameter(Mandatory = $true, Position = 2)] [string] $Principal
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName, 
+		[Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $Principal
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/secrets/acls/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
-		principal = $Principal 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/secrets/acls/delete"
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+			principal = $Principal 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 
@@ -335,32 +357,36 @@ Function Get-SecretScopeACL
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] $Principal = $null
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/secrets/acls/list"
-	if($Principal -ne $null)
-	{
-		$apiEndpoint = "/2.0/secrets/acls/get"
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/secrets/acls/list"
+		if($Principal)
+		{
+			Write-Verbose "--$Principal--"
+			$apiEndpoint = "/2.0/secrets/acls/get"
+		}
 	}
 	
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		scope = $ScopeName 
-	}
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			scope = $ScopeName 
+		}
 	
-	$parameters | Add-Property -Name "principal" -Value $Principal
+		$parameters | Add-Property -Name "principal" -Value $Principal
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if($Principal -ne $null)
-	{
-		# if a Principal was specified, we return the result as it is
-		return $result
-	}
-	else
-	{
-		# if no Principal was specified, we return the ACLs as an array
-		return $result.acls
+		if($Principal)
+		{
+			# if a Principal was specified, we return the result as it is
+			return $result
+		}
+		else
+		{
+			# if no Principal was specified, we return the ACLs as an array
+			return $result.items # the object is called "items" even though it states "acls" in the docs!
+		}
 	}
 }

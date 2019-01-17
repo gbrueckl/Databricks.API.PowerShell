@@ -12,41 +12,36 @@ Function Add-InstanceProfile
 			.PARAMETER SkipValidation 
 			By default, Databricks validates that it has sufficient permissions to launch instances with the instance profile. This validation uses AWS dry-run mode for the RunInstances API. If validation fails with an error message that does not indicate an IAM related permission issue, (e.g. "Your requested instance type is not supported in your requested Availability Zone"), you may pass this flag to skip the validation and forcibly add the instance profile.
 			.EXAMPLE
-			Add-InstanceProfile -InstanceProfileARN "arn:aws:iam::123456789:instance-profile/datascience-role" -SkipValidation
+			Add-DatabricksInstanceProfile -InstanceProfileARN "arn:aws:iam::123456789:instance-profile/datascience-role" -SkipValidation
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $InstanceProfileARN, 
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("instance_profile_arn")] [string] $InstanceProfileARN, 
 		[Parameter(Mandatory = $false, Position = 2)] [switch] $SkipValidation
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/instance-profiles/add"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		instance_profile_arn = $InstanceProfileARN
+	
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint =  "/2.0/instance-profiles/add"
 	}
 	
-	if($SkipValidation)
-	{
-		$parameters | Add-Property -Name "skip_validation" -Value $true
-	}
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			instance_profile_arn = $InstanceProfileARN
+		}
+	
+		if($SkipValidation)
+		{
+			$parameters | Add-Property -Name "skip_validation" -Value $true
+		}
 			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
+		return $result
+	}
 }
 
 Function Get-InstanceProfile
@@ -58,28 +53,25 @@ Function Get-InstanceProfile
 			Lists the instance profiles that the calling user can use to launch a cluster.
 			Official API Documentation: https://docs.databricks.com/api/latest/instance-profiles.html#profiles-list
 			.EXAMPLE
-			Get-InstanceProfile
+			Get-DatabricksInstanceProfile
 	#>
 	[CmdletBinding()]
 	param ()
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/instance-profiles/list"
-	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{}
+	
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint =  "/2.0/instance-profiles/list"
+	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{}
 			
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result.instance_profiles
+	}
 }
 
 Function Remove-InstanceProfile
@@ -93,33 +85,27 @@ Function Remove-InstanceProfile
 			.PARAMETER InstanceProfileARN 
 			The arn of the instance profile to remove. This field is required.
 			.EXAMPLE
-			Remove-InstanceProfile -InstanceProfileARN "arn:aws:iam::123456789:instance-profile/datascience-role"
+			Remove-DatabricksInstanceProfile -InstanceProfileARN "arn:aws:iam::123456789:instance-profile/datascience-role"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $InstanceProfileARN
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("instance_profile_arn")] [string] $InstanceProfileARN
 	)
-
-	Test-Initialized
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/instance-profiles/remove"
-	$requestMethod = "POST"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
-
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "Setting Parameters for API call ..."
-	#Set parameters
-	$parameters = @{
-		instance_profile_arn = $InstanceProfileARN 
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint =  "/2.0/instance-profiles/remove"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			instance_profile_arn = $InstanceProfileARN 
+		}
 			
-	$parameters = $parameters | ConvertTo-Json -Depth 10
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
+		return $result.instance_profiles
+	}
 }

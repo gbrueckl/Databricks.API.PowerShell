@@ -16,7 +16,7 @@ Function Remove-WorkspaceItem
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [string] $Path, 
 		[Parameter(Mandatory = $false, Position = 2)] [bool] $Recursive
 	)
 	
@@ -74,39 +74,6 @@ Function Export-WorkspaceItem
 				
 	$exportBytes = [Convert]::FromBase64String($result.content)
 	[IO.File]::WriteAllBytes($LocalPath, $exportBytes)
-}
-
-Function Get-WorkspaceItemDetails
-{
-	<#
-			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
-			.DESCRIPTION
-			Gets the status of an object or a directory. If path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST.
-			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#get-status
-			.PARAMETER Path 
-			The absolute path of the notebook or directory. This field is required.
-			.EXAMPLE
-			Get-DatabricksWorkspaceItemDetails -Path "/Users/user@example.com/project/ScaleExampleNotebook"
-	#>
-	[CmdletBinding()]
-	param
-	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
-	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/workspace/get-status"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		path = $Path 
-	}
-	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-	return $result
 }
 
 
@@ -182,25 +149,40 @@ Function Get-WorkspaceItem
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [string] $Path,
+		[Parameter(Mandatory = $false, Position = 2)] [switch] $ChildItems
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/workspace/list"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		path = $Path 
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/workspace/get-status"
+		if($ChildItems)
+		{
+			$apiEndpoint = "/2.0/workspace/list"
+		}
 	}
-	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.objects
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			path = $Path 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		if($ChildItems)
+		{
+			return $result.objects
+		}
+		else
+		{
+			return $result
+		}
+	}
 }
 
 
-Function New-WorkspaceDirectory
+Function Add-WorkspaceDirectory
 {
 	<#
 			.SYNOPSIS
@@ -211,24 +193,28 @@ Function New-WorkspaceDirectory
 			.PARAMETER Path 
 			The absolute path of the directory. If the parent directories do not exist, it will also create them. If the directory already exists, this command will do nothing and succeed. This field is required.
 			.EXAMPLE
-			New-DatabricksWorkspaceDirectory -Path "/myNewDirectory"
+			Add-DatabricksWorkspaceDirectory -Path "/myNewDirectory"
 	#>
+	[Alias("New-WorkspaceDirectory")]
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $Path
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [string] $Path
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/workspace/mkdirs"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		path = $Path 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/workspace/mkdirs"
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			path = $Path 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }

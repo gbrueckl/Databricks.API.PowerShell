@@ -155,7 +155,7 @@ Function Update-Cluster
 		[Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 2)] [int32] $MinWorkers, 
 		[Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 3)] [int32] $MaxWorkers, 
 		
-		[Parameter(Mandatory = $true, Position = 3)] [string] $ClusterID, 
+		[Parameter(Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
 		[Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
 		[Parameter(Mandatory = $true, Position = 3)] [string] $SparkVersion, 
 		[Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
@@ -221,21 +221,24 @@ Function Start-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/clusters/start"
-
-	#Set parameters
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	$parameters = @{
-		cluster_id = $ClusterID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/start"
 	}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	process {
+		#Set parameters
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
 
-	return $result
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
+	}
 }
 
 Function Restart-Cluster
@@ -254,21 +257,24 @@ Function Restart-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/clusters/restart"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		cluster_id = $ClusterID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/restart"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Stop-Cluster
@@ -287,21 +293,24 @@ Function Stop-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/clusters/delete"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		cluster_id = $ClusterID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/delete"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Remove-Cluster
@@ -320,21 +329,24 @@ Function Remove-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
 	)
-	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/clusters/permanent-delete"
-	
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		cluster_id = $ClusterID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/permanent-delete"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Get-Cluster
@@ -356,33 +368,36 @@ Function Get-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID = $null
+		[Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID = $null
 	)
-	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/clusters/list"
-	if($ClusterID)
-	{
-		Write-Verbose "ClusterID specified ($ClusterID) - using get endpoint instead of list endpoint..."
-		$apiEndpoint =  "/2.0/clusters/get"
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/clusters/list"
+		if($ClusterID)
+		{
+			Write-Verbose "ClusterID specified ($ClusterID) - using get endpoint instead of list endpoint..."
+			$apiEndpoint =  "/2.0/clusters/get"
+		}
 	}
 
-	#Set parameters
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	$parameters = @{}
-	$parameters | Add-Property  -Name "cluster_id" -Value $ClusterID
+	process {
+		#Set parameters
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		$parameters = @{}
+		$parameters | Add-Property  -Name "cluster_id" -Value $ClusterID
 
-	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if($ClusterID)
-	{
-		# if a ClusterID was specified, we return the result as it is
-		return $result
-	}
-	else
-	{
-		# if no ClusterID was specified, we return the clusters as an array
-		return $result.clusters
+		if($ClusterID)
+		{
+			# if a ClusterID was specified, we return the result as it is
+			return $result
+		}
+		else
+		{
+			# if no ClusterID was specified, we return the clusters as an array
+			return $result.clusters
+		}
 	}
 }
 
@@ -402,21 +417,24 @@ Function Pin-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
 	)
-
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/clusters/pin"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		cluster_id = $ClusterID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/pin"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 Function Unpin-Cluster
@@ -435,21 +453,85 @@ Function Unpin-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
 	)
-
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/clusters/unpin"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		cluster_id = $ClusterID 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/unpin"
 	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
+}
+
+Function Get-ClusterEvent
+{
+	<#
+			.SYNOPSIS
+			Retrieves a list of events about the activity of a cluster. This API is paginated. If there are more events to read, the response includes all the parameters necessary to request the next page of events.
+			.DESCRIPTION
+			Retrieves a list of events about the activity of a cluster. This API is paginated. If there are more events to read, the response includes all the parameters necessary to request the next page of events.
+			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#events
+			.PARAMETER Cluster_Id 
+			The ID of the cluster to retrieve events about. This field is required.
+			.PARAMETER Start_Time 
+			The start time in epoch milliseconds. If empty, returns events starting from the beginning of time.
+			.PARAMETER End_Time 
+			The end time in epoch milliseconds. If empty, returns events up to the current time.
+			.PARAMETER Order 
+			The order to list events in; either ASC or DESC. Defaults to DESC.
+			.PARAMETER Event_Types 
+			An optional set of event types to filter on. If empty, all event types are returned.
+			.PARAMETER Offset 
+			The offset in the result set. Defaults to 0 (no offset). When an offset is specified and the results are requested in descending order, the end_time field is required.
+			.PARAMETER Limit 
+			The maximum number of events to include in a page of events. Defaults to 50, and maximum allowed value is 500.
+			.EXAMPLE
+			Get-ClusterEvent -Cluster_Id <cluster_id> -Start_Time <start_time> -End_Time <end_time> -Order <order> -Event_Types <event_types> -Offset <offset> -Limit <limit>
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
+		[Parameter(Mandatory = $false, Position = 2)] [int64] $StartTime, 
+		[Parameter(Mandatory = $false, Position = 3)] [int64] $EndTime, 
+		[Parameter(Mandatory = $false, Position = 4)] [ValidateSet("ASC", "DESC")] [string] $Order, 
+		[Parameter(Mandatory = $false, Position = 5)] [ValidateSet("CREATING",	"DID_NOT_EXPAND_DISK",	"EXPANDED_DISK",	"FAILED_TO_EXPAND_DISK",	"INIT_SCRIPTS_STARTING",	"INIT_SCRIPTS_FINISHED",	"STARTING",	"RESTARTING",	"TERMINATING",	"EDITED",	"RUNNING",	"RESIZING",	"UPSIZE_COMPLETED",	"NODES_LOST")] [string[]]  $EventTypes, 
+		[Parameter(Mandatory = $false, Position = 6)] [int] $Offset = -1, 
+		[Parameter(Mandatory = $false, Position = 7)] [int] $Limit = -1
+	)
+	begin {
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/clusters/events"
+	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
+	
+		$parameters | Add-Property  -Name "start_time" -Value $StartTime
+		$parameters | Add-Property  -Name "end_time" -Value $EndTime
+		$parameters | Add-Property  -Name "order" -Value $Order
+		$parameters | Add-Property  -Name "event_types" -Value $EventTypes
+		$parameters | Add-Property  -Name "offset" -Value $Offset -NullValue -1
+		$parameters | Add-Property  -Name "limit" -Value $Limit -NullValue -1
+
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
+	}
 }
 
 Function Get-NodeType
@@ -532,62 +614,4 @@ Function Get-SparkVersion
 	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.versions
-}
-
-Function Get-ClusterEvent
-{
-	<#
-			.SYNOPSIS
-			Retrieves a list of events about the activity of a cluster. This API is paginated. If there are more events to read, the response includes all the parameters necessary to request the next page of events.
-			.DESCRIPTION
-			Retrieves a list of events about the activity of a cluster. This API is paginated. If there are more events to read, the response includes all the parameters necessary to request the next page of events.
-			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#events
-			.PARAMETER Cluster_Id 
-			The ID of the cluster to retrieve events about. This field is required.
-			.PARAMETER Start_Time 
-			The start time in epoch milliseconds. If empty, returns events starting from the beginning of time.
-			.PARAMETER End_Time 
-			The end time in epoch milliseconds. If empty, returns events up to the current time.
-			.PARAMETER Order 
-			The order to list events in; either ASC or DESC. Defaults to DESC.
-			.PARAMETER Event_Types 
-			An optional set of event types to filter on. If empty, all event types are returned.
-			.PARAMETER Offset 
-			The offset in the result set. Defaults to 0 (no offset). When an offset is specified and the results are requested in descending order, the end_time field is required.
-			.PARAMETER Limit 
-			The maximum number of events to include in a page of events. Defaults to 50, and maximum allowed value is 500.
-			.EXAMPLE
-			Get-ClusterEvent -Cluster_Id <cluster_id> -Start_Time <start_time> -End_Time <end_time> -Order <order> -Event_Types <event_types> -Offset <offset> -Limit <limit>
-	#>
-	[CmdletBinding()]
-	param
-	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ClusterID, 
-		[Parameter(Mandatory = $false, Position = 2)] [int64] $StartTime, 
-		[Parameter(Mandatory = $false, Position = 3)] [int64] $EndTime, 
-		[Parameter(Mandatory = $false, Position = 4)] [ValidateSet("ASC", "DESC")] [string] $Order, 
-		[Parameter(Mandatory = $false, Position = 5)] [ValidateSet("CREATING",	"DID_NOT_EXPAND_DISK",	"EXPANDED_DISK",	"FAILED_TO_EXPAND_DISK",	"INIT_SCRIPTS_STARTING",	"INIT_SCRIPTS_FINISHED",	"STARTING",	"RESTARTING",	"TERMINATING",	"EDITED",	"RUNNING",	"RESIZING",	"UPSIZE_COMPLETED",	"NODES_LOST")] [string[]]  $EventTypes, 
-		[Parameter(Mandatory = $false, Position = 6)] [int] $Offset = -1, 
-		[Parameter(Mandatory = $false, Position = 7)] [int] $Limit = -1
-	)
-
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/clusters/events"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		cluster_id = $ClusterID 
-	}
-	
-	$parameters | Add-Property  -Name "start_time" -Value $StartTime
-	$parameters | Add-Property  -Name "end_time" -Value $EndTime
-	$parameters | Add-Property  -Name "order" -Value $Order
-	$parameters | Add-Property  -Name "event_types" -Value $EventTypes
-	$parameters | Add-Property  -Name "offset" -Value $Offset -NullValue -1
-	$parameters | Add-Property  -Name "limit" -Value $Limit -NullValue -1
-
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-	return $result
 }
