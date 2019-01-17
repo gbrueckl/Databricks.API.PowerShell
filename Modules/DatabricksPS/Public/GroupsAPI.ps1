@@ -115,7 +115,7 @@ Function Get-GroupMember
 		}
 
 		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
+		
 		return $result.members
 	}
 }

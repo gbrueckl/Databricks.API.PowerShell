@@ -34,19 +34,26 @@ Function Invoke-ApiRequest
 	#Set headers
 	Write-Verbose "Building Headers ..."
 	$headers = Get-RequestHeader
+	Write-Verbose "Headers: `n$($headers  | Out-String)"
 	
-	if($Method -eq "POST")
+	if($Method -eq "GET")
 	{	
+		Write-Verbose "GET request - showing URL parameters as Key-Value pairs ..."
+		Write-Verbose "Body: `n$($Body | Out-String)"
+	}
+	else
+	{
 		# for POST requests we have to convert the body to JSON
-		Write-Verbose "POST request - converting Body to JSON"
+		Write-Verbose "POST request - converting Body to JSON ..."
 		$Body = $Body | ConvertTo-Json -Depth 20
+		
+		Write-Verbose "Body: `n$($Body)"
 	}
 	
-	Write-Verbose "Headers: `n$($headers  | Out-String)"
-	Write-Verbose "Body: `n$($Body | Out-String)"
-	
 	$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
-
+	
+	Write-Verbose "Response: $($result | ConvertTo-Json -Depth 10)"
+	
 	return $result
 }
 
