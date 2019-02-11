@@ -16,7 +16,6 @@ Function Add-SecretScope
 			#AUTOMATED_TEST:Add secret scope
 			Add-DatabricksSecretScope -Name "DatabricksPS_TEST"
 	#>
-	[Alias("New-SecretScope")]
 	[CmdletBinding()]
 	param
 	(

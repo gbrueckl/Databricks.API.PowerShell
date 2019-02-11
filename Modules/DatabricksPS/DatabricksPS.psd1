@@ -4,7 +4,7 @@
 RootModule = 'DatabricksPS.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.8.0.1'
+ModuleVersion = '0.8.5.0'
 
 # ID used to uniquely identify this module
 GUID = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -81,7 +81,7 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-		Tags = @('databricks', 'data', 'azure', 'aws', 'spark', 'rest', 'api', 'developer')
+		Tags = @('databricks', 'data', 'azure', 'aws', 'spark', 'rest', 'api', 'developer', 'CI', 'CD', 'devops')
 
 		# A URL to the license for this module.
 		LicenseUri = 'https://github.com/gbrueckl/Databricks.API.PowerShell/blob/master/LICENSE'

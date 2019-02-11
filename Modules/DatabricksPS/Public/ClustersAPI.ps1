@@ -42,8 +42,11 @@ Function Add-Cluster
 			Automatically terminates the cluster after it is inactive for this time in minutes. If not set, this cluster will not be automatically terminated. If specified, the threshold must be between 10 and 10000 minutes. You can also set this value to 0 to explicitly disable automatic termination.
 			.PARAMETER EnableElasticDisk 
 			Autoscaling Local Storage: when enabled, this cluster will dynamically acquire additional disk space when its Spark workers are running low on disk space. This feature requires specific AWS permissions to function correctly - refer to Autoscaling local storage for details.
+			.PARAMETER PythonVersion 
+			Allows you to explicitly set the Python version for the cluster by adding the entry 'PYSPARK_PYTHON' to the SparkEnvVars parameter. Default is Python 2 (2.7) 
+			For details please refer to https://docs.azuredatabricks.net/user-guide/clusters/python3.html
 			.EXAMPLE
-			Add-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id "i3.xlarge"
+			Add-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id 'Standard_DS3_v2'
 	#>
 	[CmdletBinding()]
 	param
@@ -59,12 +62,13 @@ Function Add-Cluster
 		[Parameter(Mandatory = $true, Position = 6)] [string] $NodeTypeId, 
 		[Parameter(Mandatory = $false, Position = 7)] [string] $DriverNodeTypeId, 
 		[Parameter(Mandatory = $false, Position = 8)] [string[]] $SshPublicKeys, 
-		[Parameter(Mandatory = $false, Position = 9)] [string[]] $CustomTags, 
+		[Parameter(Mandatory = $false, Position = 9)] [hashtable] $CustomTags, 
 		[Parameter(Mandatory = $false, Position = 10)] [object] $ClusterLogConf, 
 		[Parameter(Mandatory = $false, Position = 11)] [string[]] $InitScripts, 
 		[Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
 		[Parameter(Mandatory = $true, Position = 13)] [int32] $AutoterminationMinutes, 
-		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk
+		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk,
+		[Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion
 	)
 
 	$requestMethod = "POST"
@@ -76,6 +80,20 @@ Function Add-Cluster
 		cluster_name = $ClusterName 
 		spark_version = $SparkVersion 
 		node_type_id = $NodeTypeId 
+	}
+
+	if($PythonVersion) # check if a PythonVersion was explicitly specified
+	{
+		if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
+		{
+			$SparkEnvVars = @{}
+		}
+		switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
+		{ 
+			'2 (2.7)'  { $SparkEnvVars | Add-PropertyIfNotExists -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python'  } 
+			'3 (3.5)'  { $SparkEnvVars | Add-PropertyIfNotExists -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' }
+		}
+		Write-Verbose "PythonVersion set to "
 	}
 
 	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf

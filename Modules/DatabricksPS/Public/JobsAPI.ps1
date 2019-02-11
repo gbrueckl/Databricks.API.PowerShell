@@ -244,7 +244,7 @@ Function Remove-Job
 			.PARAMETER JobID 
 			The canonical identifier of the job to delete. This field is required.
 			.EXAMPLE
-			Remove-Job -JobID <JobID>
+			Remove-DatabricksJob -JobID <JobID>
 	#>
 	[CmdletBinding()]
 	param
@@ -284,7 +284,7 @@ Function Update-Job
 			Changes to the following fields are not applied to active runs: JobSettings.cluster_spec or JobSettings.task.
 			Changes to the following fields are applied to active runs as well as future runs: JobSettings.timeout_second, JobSettings.email_notifications, or JobSettings.retry_policy. This field is required.
 			.EXAMPLE
-			Update-Job -JobID 1 -NewSettings <new_settings>
+			Update-DatabricksJob -JobID 1 -NewSettings <new_settings>
 	#>
 	[CmdletBinding()]
 	param
@@ -333,7 +333,7 @@ Function Start-Job
 			.PARAMETER SparkSubmitParams 
 			A list of parameters for jobs with spark submit task, e.g. "spark_submit_params": ["--class", "org.apache.spark.examples.SparkPi"]. The parameters will be passed to spark-submit script as command line parameters. If specified upon run-now, it would overwrite the parameters specified in job setting. The JSON representation of this field cannot exceed 10,000 bytes.
 			.EXAMPLE
-			Start-Job -JobID <JobID> -NotebookParams @{ param1 : 123, param2 : "MyTextParam" }
+			Start-DatabricksJob -JobID <JobID> -NotebookParams @{ param1 : 123, param2 : "MyTextParam" }
 	#>
 	[CmdletBinding()]
 	param
@@ -408,7 +408,7 @@ Function New-JobRun
 			.PARAMETER Timeout_Seconds 
 			An optional timeout applied to each run of this job. The default behavior is to have no timeout.
 			.EXAMPLE
-			New-JobRun -ClusterID "1234-asdfae-1234" -NotebookPath "/Shared/MyNotebook" -RunName "MyJobRun" -TimeoutSeconds 300
+			New-DatabricksJobRun -ClusterID "1234-asdfae-1234" -NotebookPath "/Shared/MyNotebook" -RunName "MyJobRun" -TimeoutSeconds 300
 	#>
 	
 	[CmdletBinding()]
@@ -562,7 +562,7 @@ Function Get-JobRun
 			.PARAMETER Limit 
 			The number of runs to return. This value should be greater than 0 and less than 1000. The default value is 20. If a request specifies a limit of 0, the service will instead use the maximum limit.
 			.EXAMPLE
-			Get-JobRun -Active_Only OR Completed_Only <active_only OR completed_only> -JobID <JobID> -Offset <offset> -Limit <limit>
+			Get-DatabricksJobRun -Active_Only OR Completed_Only <active_only OR completed_only> -JobID <JobID> -Offset <offset> -Limit <limit>
 	#>
 	[CmdletBinding(DefaultParametersetName = "ByJobId")]
 	param
@@ -627,7 +627,7 @@ Function Export-JobRun
 			.PARAMETER Views_To_Export 
 			Which views to export (CODE, DASHBOARDS, or ALL). Defaults to CODE.
 			.EXAMPLE
-			Export-JobRun -JobRunID 1 -ViewsToExport All
+			Export-DatabricksJobRun -JobRunID 1 -ViewsToExport All
 	#>
 	[CmdletBinding()]
 	param
@@ -655,7 +655,7 @@ Function Export-JobRun
 }
 
 
-Function Cancel-JobRun
+Function Stop-JobRun
 {
 	<#
 			.SYNOPSIS
@@ -666,7 +666,7 @@ Function Cancel-JobRun
 			.PARAMETER JobRunID 
 			The canonical identifier for the run to cancel. This field is required.
 			.EXAMPLE
-			Cancel-JobRun -JobRunID 1
+			Stop-DatabricksJobRun -JobRunID 1
 	#>
 	[CmdletBinding()]
 	param
@@ -703,7 +703,7 @@ Function Get-JobRunOutput
 			.PARAMETER JobRunID 
 			The canonical identifier for the run. This field is required.
 			.EXAMPLE
-			Get-JobRunOutput -JobRunID 1
+			Get-DatabricksJobRunOutput -JobRunID 1
 	#>
 	[CmdletBinding()]
 	param
@@ -740,7 +740,7 @@ Function Remove-JobRun
 			.PARAMETER JobRunID 
 			The canonical identifier of the run for which to retrieve the metadata.
 			.EXAMPLE
-			Remove-JobRun -JobRunID 1
+			Remove-DatabricksJobRun -JobRunID 1
 	#>
 	[CmdletBinding()]
 	param
