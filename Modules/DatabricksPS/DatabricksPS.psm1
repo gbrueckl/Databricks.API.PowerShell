@@ -39,6 +39,7 @@ $script:dbApiRootUrl = $null
 $script:dbApiFullUrl = $null
 $script:dbCloudProvider = $null
 $script:dbInitialized = $false
+$script:dbAuthenticationProvider = $null
 
 #endregion
 

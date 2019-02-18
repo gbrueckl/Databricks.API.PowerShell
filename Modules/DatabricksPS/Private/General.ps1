@@ -76,9 +76,15 @@ Function Get-RequestHeader
 	param ()
 
 	Write-Verbose "Getting Headers for Databricks API call ..."
-	return @{
-		Authorization = "Bearer $script:dbAccessToken"
-		"Content-Type" = "application/json"
+	
+	switch($script:dbAuthenticationProvider)
+	{
+		"DatabricksApi" {	
+			return @{
+				Authorization = "Bearer $script:dbAccessToken"
+				"Content-Type" = "application/json"
+			}
+		}
 	}
 }
 

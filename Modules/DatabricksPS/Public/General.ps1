@@ -82,7 +82,8 @@ Function Set-Environment
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $AccessToken,
+		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
+		
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl,
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("Azure","AWS")] $CloudProvider = $null
 	)
@@ -119,6 +120,11 @@ Function Set-Environment
 	{
 		Write-Warning "Parameter -$paramToCheck was not provided!"
 	}
+	
+	switch($PSCmdlet.ParameterSetName) 
+	{ 
+		"DatabricksApi"  { $script:dbAuthenticationProvider = "DatabricksApi"  } 
+	} 
 
 	#region check CloudProvider
 	$paramToCheck = 'CloudProvider'

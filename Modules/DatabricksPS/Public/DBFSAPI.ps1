@@ -61,7 +61,7 @@ Function Add-FSFileBlock
 			.PARAMETER AsPlainText
 			If specified, Data is interpreted as plain text and encoded to Base64 internally before the upload.
 			.EXAMPLE
-			Add-FSFileBlock -Handle 7904256 -Data "ZGF0YWJyaWNrcwo="
+			Add-DatabricksFSFileBlock -Handle 7904256 -Data "ZGF0YWJyaWNrcwo="
 			#AUTOMATED_TEST:Add new file with content and close it
 			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
@@ -106,7 +106,7 @@ Function Close-FSFile
 			.PARAMETER Handle 
 			The handle on an open stream. This field is required.
 			.EXAMPLE
-			Close-FSFile -Handle 7904256
+			Close-DatabricksFSFile -Handle 7904256
 			#AUTOMATED_TEST:Add and close empty file
 			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
@@ -149,7 +149,7 @@ Function Remove-FSItem
 			.PARAMETER Recursive 
 			Whether or not to recursively delete the directory's contents. Deleting empty directories can be done without providing the recursive flag.
 			.EXAMPLE
-			Remove-FSItem -Path "/MyFolder" -Recursive $false
+			Remove-DatabricksFSItem -Path "/MyFolder" -Recursive $false
 			.EXAMPLE
 			#AUTOMATED_TEST:Add and remove File
 			$filePath = "/myTestFolder/myFile1.txt"
@@ -221,7 +221,7 @@ Function Get-FSItem
 		[Parameter(Mandatory = $false, Position = 2)] [bool] $ChildItems = $false
 	)
 	
-	$requestMethod = "POST"
+	$requestMethod = "GET"
 	$apiEndpoint = "/2.0/dbfs/list"
 	if(-not $ChildItems)
 	{
@@ -259,7 +259,7 @@ Function Add-FSDirectory
 			.PARAMETER Path 
 			The path of the new directory. The path should be the absolute DBFS path (e.g. "/mnt/foo/"). This field is required.
 			.EXAMPLE
-			Add-FSDirectory -Path "/myNewFolder"
+			Add-DatabricksFSDirectory -Path "/myNewFolder"
 			.EXAMPLE
 			#AUTOMATED_TEST:Add a folder
 			$folderPath = "/myTestFolder/myFolder2"
@@ -298,7 +298,7 @@ Function Move-FSFile
 			.PARAMETER DestinationPath 
 			The destination path of the file or directory. The path should be the absolute DBFS path (e.g. "/mnt/bar/"). This field is required.
 			.EXAMPLE
-			Move-FSFile -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
+			Move-DatabricksFSFile -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
 			.EXAMPLE
 			#AUTOMATED_TEST:Move single file
 			$sourcePath = "/myTestFolder/myFile1.txt"
@@ -346,7 +346,7 @@ Function Get-FSContent
 			.PARAMETER Decode
 			Adds a new property to the result that contains the decoded string value.
 			.EXAMPLE
-			Get-FSContent -Path "/myFile.csv"
+			Get-DatabricksFSContent -Path "/myFile.csv"
 			.EXAMPLE
 			#AUTOMATED_TEST:Get file content
 			$content = "This is my test content!"
@@ -389,4 +389,123 @@ Function Get-FSContent
 	}
 	
 	return $result
+}
+
+
+
+
+Function Upload-FSFile
+{
+	<#
+			.SYNOPSIS
+			Uploads a local file to the Databricks File System (DBFS)
+			.DESCRIPTION
+			Uploads a local file to the Databricks File System (DBFS).
+			This cmdlet is basically a combination of Add-DatabricksFSFile, Add-DatabricksFSFileContent and Close-DatabricksFSFile.
+			.PARAMETER Path 
+			The path of the new file to be created in DBFS. The path should be the absolute DBFS path (e.g. "/mnt/foo.txt"). This field is required.
+			.PARAMETER LocalPath 
+			The path of the local file to be uploaded.
+			.PARAMETER Overwrite 
+			The flag that specifies whether to overwrite existing file/files.
+			.PARAMETER BatchSize 
+			The BatchSize to use when uploading the data
+			.EXAMPLE
+			Upload-DatabricksFSFile -Path '/DatabricksPS_Tests/test1.txt' -LocalPath ".\test1.txt" -Overwrite $true -Verbose -BatchSize 1000
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
+		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath,
+		[Parameter(Mandatory = $false, Position = 3)] [bool] $Overwrite = $false,
+		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
+	)
+	
+	$LocalPath = "D:\Desktop\test1.txt"
+	$BatchSize = 4000
+	$dbfsFile = Add-DatabricksFSFile -Path $Path -Overwrite $Overwrite
+	
+	$localFile = [System.IO.File]::ReadAllBytes($LocalPath)
+	$totalSize = $localFile.Length
+	
+	Write-Verbose "Starting upload of file in batches of size $BatchSize ..."
+	$offset = 0
+	do
+	{
+		Write-Verbose "Adding new content from offset $offset ..."
+		if($offset + $BatchSize -gt $totalSize)
+		{
+			$BatchSize = $totalSize - $offset
+		}
+		$content = $localFile[$offset..$($offset + $BatchSize)]
+		$contentB64 = [System.Convert]::ToBase64String($content)
+		
+		Add-DatabricksFSFileBlock -Handle $dbfsFile.handle -Data $contentB64
+		
+		$offset = $offset + $BatchSize + 1
+	}
+	while($offset -lt $totalSize)
+	Write-Verbose "Finished uploading local file '$LocalPath' to DBFS '$Path'"
+	
+	Close-DatabricksFSFile -Handle $dbfsFile.handle
+	
+	return $Path
+}
+
+
+
+Function Download-FSFile
+{
+	<#
+			.SYNOPSIS
+			Downloads a file from the Databricks File System (DBFS) to the local file system.
+			.DESCRIPTION
+			Downloads a file from the Databricks File System (DBFS) to the local file system.
+			This cmdlet subsequently calls Get-DatabricksFSContent until the whole file is downloaded
+			.PARAMETER Path 
+			The path of the file in DBFS that should be downloaded. The path should be the absolute DBFS path (e.g. "/mnt/foo.txt"). This field is required.
+			.PARAMETER LocalPath 
+			The path where the downloaded file is stored locally.
+			.PARAMETER Overwrite 
+			The flag that specifies whether to overwrite existing file/files.
+			.PARAMETER BatchSize 
+			The BatchSize to use when uploading the data
+			.EXAMPLE
+			Download-DatabricksFSFile -Path '/DatabricksPS_Tests/test1.txt' -LocalPath ".\test1.txt" -Overwrite $true -Verbose -BatchSize 1000
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
+		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath,
+		[Parameter(Mandatory = $false, Position = 3)] [bool] $Overwrite = $false,
+		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
+	)
+	
+	$LocalPath = "D:\Desktop\test2.txt"
+	$dbfsFile = Get-DatabricksFSItem -Path $Path
+	
+	if($dbfsFile.is_dir)
+	{
+		Write-Error "The specified path is a directory and not a file!"
+	}
+	
+	$totalSize = $dbfsFile.file_size # number of bytes of the original file!
+	
+	Write-Verbose "Starting download of file in batches of size $BatchSize ..."
+	Set-Content -Path $LocalPath -Value @() -Encoding Byte 
+	$offset = 0
+	do
+	{
+		$dbfsFileContent = Get-DatabricksFSContent -Path $dbfsFile.path -Offset $offset -Length $BatchSize
+		$dbfsByteContent = [System.Convert]::FromBase64String($dbfsFilecontent.data)
+		
+		$dbfsByteContent | Add-Content -Path $LocalPath -Encoding Byte -ErrorAction Stop
+		
+		$offset = $offset + $BatchSize
+	} while ($offset -lt $totalSize)	
+	Write-Verbose "Finished downloading DBFS file '$Path' to local file '$LocalPath'"
+		
+	return $LocalPath
 }
