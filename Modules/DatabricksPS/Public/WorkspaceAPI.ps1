@@ -49,31 +49,51 @@ Function Export-WorkspaceItem
 			The local path where the exported file is stored.
 			.PARAMETER Format 
 			This specifies the format of the exported file. By default, this is SOURCE. However it may be one of: SOURCE, HTML, JUPYTER, DBC. The value is case sensitive.
+			.PARAMETER CreateFolder 
+			Use if the local folder should be created if it does not exist yet
 			.EXAMPLE
 			Export-WorkspaceItem -Path "/" -LocalPath "C:\myExport.dbc" -Format "DBC"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [string] $Path, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath, 
-		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $Format = "SOURCE"
+		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $Format = "SOURCE",
+		[Parameter(Mandatory = $false, Position = 4)] [switch] $CreateFolder
 	)
 	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/workspace/export"
-
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		path = $Path 
-		format = $Format  
+	begin	{ 
+		$requestMethod = "GET"
+		$apiEndpoint = "/2.0/workspace/export"
 	}
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			path = $Path 
+			format = $Format  
+		}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 				
-	$exportBytes = [Convert]::FromBase64String($result.content)
-	[IO.File]::WriteAllBytes($LocalPath, $exportBytes)
+		Write-Verbose "Converting Base64 encoded content to Byte-Array ..."
+		$exportBytes = [Convert]::FromBase64String($result.content)
+	
+		if($CreateFolder)
+		{
+			$localFolder = Split-Path $LocalPath -Parent
+			Write-Verbose "Checking if Folder '$localFolder' exists ..."
+			If(-not (Test-Path $localFolder))
+			{
+				Write-Verbose "Creating local folder '$localFolder' ..."
+				$x = New-Item -ItemType Directory -Force -Path $localFolder
+			}
+		}
+	
+		Write-Verbose "Writing binary content ($($exportBytes.Length) bytes) to  $LocalPath ..."
+		[IO.File]::WriteAllBytes($LocalPath, $exportBytes)
+	}
 }
 
 
@@ -104,32 +124,34 @@ Function Import-WorkspaceItem
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $Format = "SOURCE", 
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("SCALA", "PYTHON", "SQL", "R")] $Language, 
-		[Parameter(Mandatory = $true, Position = 4)] [string] $LocalPath, 
+		[Parameter(Mandatory = $true, Position = 4, ValueFromPipelineByPropertyName = $true)] [string] $LocalPath, 
 		[Parameter(Mandatory = $false, Position = 5)] [bool] $Overwrite = $false
 	)
 	
-	$requestMethod = "POST"
-	$apiEndpoint = "/2.0/workspace/import"
-
-	
-	Write-Verbose "Reading content from $LocalPath ..."
-	$fileBytes = [IO.File]::ReadAllBytes($LocalPath)
-	Write-Verbose "Converting content to Base64 string ..."
-	$content = [Convert]::ToBase64String($fileBytes)
-	
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{
-		path = $Path 
-		format = $Format 
-		language = $Language 
-		content = $Content 
-		overwrite = $Overwrite 
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/workspace/import"
 	}
+	process {	
+		Write-Verbose "Reading content from $LocalPath ..."
+		$fileBytes = [IO.File]::ReadAllBytes($LocalPath)
+		Write-Verbose "Converting content to Base64 string ..."
+		$content = [Convert]::ToBase64String($fileBytes)
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			path = $Path 
+			format = $Format 
+			language = $Language 
+			content = $Content 
+			overwrite = $Overwrite 
+		}
+	
+		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+		return $result
+	}
 }
 
 

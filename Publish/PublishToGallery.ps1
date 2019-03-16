@@ -14,6 +14,10 @@ else {
 $config = Get-Content "$rootPath\Publish\PublishConfig.json" | ConvertFrom-Json
 $ModuleName = (Get-ChildItem "$rootPath\Modules")[0].Name
 
+# update "CmdletsToExport" in psd1 file with latest/current functions
+. "$rootPath\Publish\UpdateCmdletsToExport.ps1"
+
+
 Publish-Module -NuGetApiKey $config.ApiKey -Path "$rootPath\Modules\$ModuleName"
 
 Start-Process -FilePath "https://www.powershellgallery.com/packages/$ModuleName"

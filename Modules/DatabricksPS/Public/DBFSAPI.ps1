@@ -212,20 +212,20 @@ Function Get-FSItem
 			#AUTOMATED_TEST:Add and remove folder
 			$folderPath = "/myTestFolder/"
 			Add-DatabricksFSDirectory -Path $folderPath
-			Get-DatabricksFSItem -Path $folderPath -ChildItems $true
+			Get-DatabricksFSItem -Path $folderPath -ChildItems
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path,
-		[Parameter(Mandatory = $false, Position = 2)] [bool] $ChildItems = $false
+		[Parameter(Mandatory = $false, Position = 2)] [switch] $ChildItems
 	)
 	
 	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/dbfs/list"
-	if(-not $ChildItems)
+	$apiEndpoint = "/2.0/dbfs/get-status"
+	if($ChildItems)
 	{
-		$apiEndpoint = "/2.0/dbfs/get-status"
+		$apiEndpoint = "/2.0/dbfs/list"
 	}
 		
 
@@ -237,14 +237,14 @@ Function Get-FSItem
 	
 	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if(-not $ChildItems){
-		# if a ClusterID was specified, we return the result as it is
-		return $result
+	if($ChildItems){
+		# if -ChildItems was specified, we return the files as an array
+		return $result.files
 	}
 	else
 	{
-		# if no ClusterID was specified, we return the files as an array
-		return $result.files
+		# if -ChildItems was not specified, we return the result as it is (a single file)
+		return $result
 	}
 }
 

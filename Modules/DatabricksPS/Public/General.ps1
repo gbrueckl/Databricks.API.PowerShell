@@ -1,4 +1,4 @@
-#requires -Version 3.0
+﻿#requires -Version 3.0
 
 Function Invoke-ApiRequest
 {
@@ -21,7 +21,7 @@ Function Invoke-ApiRequest
 	[CmdletBinding()]
 	param 
 	(	
-		[Parameter(Mandatory = $true, Position = 1)] [string] [ValidateSet("GET", "POST", "PUT", "DELETE")] $Method,
+		[Parameter(Mandatory = $true, Position = 1)] [string] [ValidateSet("DEFAULT", "DELETE", "GET", "HEAD", "MERGE", "OPTIONS", "PATCH", "POST", "PUT", "TRACE")] $Method,
 		[Parameter(Mandatory = $true, Position = 2)] [string] $EndPoint,
 		[Parameter(Mandatory = $true, Position = 3)] $Body
 	)
@@ -34,7 +34,7 @@ Function Invoke-ApiRequest
 	#Set headers
 	Write-Verbose "Building Headers ..."
 	$headers = Get-RequestHeader
-	Write-Verbose "Headers: `n$($headers  | Out-String)"
+	Write-Verbose "Headers: `n$($headers | Out-String)"
 	
 	if($Method -eq "GET")
 	{	
@@ -44,7 +44,7 @@ Function Invoke-ApiRequest
 	else
 	{
 		# for POST requests we have to convert the body to JSON
-		Write-Verbose "POST request - converting Body to JSON ..."
+		Write-Verbose "Non-GET request - converting Body to JSON ..."
 		$Body = $Body | ConvertTo-Json -Depth 20
 		
 		Write-Verbose "Body: `n$($Body)"
@@ -75,14 +75,53 @@ Function Set-Environment
 			For AWS, this could be 'https://abc-12345-xaz.cloud.databricks.com'
 			.PARAMETER CloudProvider
 			The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
-			If not provided, it is derived from the ApiRootUrl parameter
+			If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
+			.PARAMETER Credential
+			The Powershell credential to use when using AAD authentication.
+			.PARAMETER ClientID
+			The ID of the Azure Active Directory (AAD) application that was deployed to use AAD authentication with Databricks.
+			.PARAMETER TenantID
+			The ID of the Azure Active Directory (AAD). (optional)
+			
+			.PARAMETER AzureResourceID
+			This is the ID of the workspace appliance resource in Azure. You must​ provide this ID if the Databricks workspace is not provisioned yet (such that there is no effective workspace org ID). It can be composed using the Azure subscription ID, resource group name, and workspace resource name. 
+			Example: /subscriptions/<<SubscriptionID>>/resourceGroups/<<ResourceGroupName>>/providers/Microsoft.Databricks/workspaces/<<WorkspaceName>>
+			.PARAMETER OrgID
+			The organization ID of the Databricks workspace.
+			You can find the workspace org ID in the Databricks URL, for example: https://<region>.azuredatabricks.net/?o=<​org_id​> 
 			.EXAMPLE
-			Set-Environment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
+			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
+
+			.EXAMPLE
+			$azureResourceId = '/subscriptions/fb1e20c4-1234-1234-1234-f92a9ac35db4/resourceGroups/myResourceGroupName/providers/Microsoft.Databricks/workspaces/myDatabricksResource'
+			$cred = Get-Credential
+			Set-DatabricksEnvironment -ClientID '058a2e1e-1234-1234-1234-5c4c3e31e36e' -Credential $cred -AzureResourceID $azureResourceId -ApiRootUrl "https://westeurope.azuredatabricks.net"
+
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
+		
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 1)][PSCredential] $Credential,
+		
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 2)]
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 2)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 2)][string] $ClientID,
+		
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 4)]
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 4)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 4)] [string] $TenantID = "common",
+		
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 3)] [string] $AzureResourceID,
+		
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 3)] [string] $OrgID,
+		
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 3)] [string] $SubscriptionID,
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 5)] [string] $ResourceGroupName,
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 6)] [string] $WorkspaceName,
 		
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl,
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("Azure","AWS")] $CloudProvider = $null
@@ -91,19 +130,19 @@ Function Set-Environment
 	Write-Verbose "Setting [System.Net.ServicePointManager]::SecurityProtocol to [System.Net.SecurityProtocolType]::Tls12 ..."
 	[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 	Write-Verbose "Done!"
+	
+	Clear-ScriptVariables
 
-	#region check AccessToken
-	$paramToCheck = 'AccessToken'
+	#region check CloudProvider
+	$paramToCheck = 'CloudProvider'
 	Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
-	if($AccessToken -ne $null)
+	if($CloudProvider)
 	{
 		Write-Verbose "Parameter -$paramToCheck provided! Setting global $paramToCheck ..."
-		$script:dbAccessToken = $AccessToken
+		$script:dbCloudProvider = $CloudProvider
 		Write-Verbose "Done!"
-	}
-	else
-	{
-		Write-Warning "Parameter -$paramToCheck was not provided!"
+
+		Write-Warning "Parameter -$paramToCheck is deprecated! The value for -$paramToCheck will be derived from the ApiRootUrl automatically instead!"
 	}
 	#endregion
 
@@ -120,40 +159,98 @@ Function Set-Environment
 	{
 		Write-Warning "Parameter -$paramToCheck was not provided!"
 	}
-	
-	switch($PSCmdlet.ParameterSetName) 
-	{ 
-		"DatabricksApi"  { $script:dbAuthenticationProvider = "DatabricksApi"  } 
-	} 
 
-	#region check CloudProvider
-	$paramToCheck = 'CloudProvider'
-	Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
-	if($CloudProvider -ne $null)
+	Write-Verbose "Trying to derive $paramToCheck from ApiRootUrl ..."
+	Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
+	if($ApiRootUrl -ilike "*.azuredatabricks.*")
 	{
-		Write-Verbose "Parameter -$paramToCheck provided! Setting global $paramToCheck ..."
-		$script:dbCloudProvider = $CloudProvider
-		Write-Verbose "Done!"
+		Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
+		$script:dbCloudProvider = "Azure"
 	}
 	else
 	{
-		Write-Warning "Parameter -$paramToCheck was not provided!"
-		Write-Verbose "Trying to derive $paramToCheck from ApiRootUrl ..."
-		Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
-		if($ApiRootUrl -ilike "*.azuredatabricks.*")
-		{
-			Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
-			$script:dbCloudProvider = "Azure"
-		}
-		else
-		{
-			Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
-			$script:dbCloudProvider = "AWS"
-		}
-		Write-Verbose "Done!"
+		Write-Verbose "'.azuredatabricks.' not found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
+		$script:dbCloudProvider = "AWS"
 	}
+	Write-Verbose "Done!"
 	#endregion
 
+	#region Databricks API Key
+	if($PSCmdlet.ParameterSetName -eq "DatabricksApi")
+	{
+		Write-Verbose "Using Databricks API authentication via API Token ..."
+		$script:dbAuthenticationProvider = "DatabricksApi" 
+			
+		$script:dbAuthenticationHeader = @{
+			"Authorization" = "Bearer $AccessToken"
+		}
+	}
+	#endregion
+	#region AAD Authentication using Resource
+	elseif($PSCmdlet.ParameterSetName -ilike "AADAuthenticationResource*")
+	{
+		$script:dbAuthenticationProvider = "AADAuthentication" 
+		
+		if($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceDetails")
+		{
+			Write-Verbose "Using AAD authentication with Azure Resource Details ..."
+			$AzureResourceID = "/subscriptions/$SubscriptionID/resourceGroups/$ResourceGroupName/providers/Microsoft.Databricks/workspaces/$WorkspaceName"
+		}
+		elseif($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceID")
+		{
+			Write-Verbose "Using AAD authentication with Azure ResourceID ..."
+			
+			$paramToCheck = 'ApiRootUrl'
+			$wildCardPattern = '/subscriptions/*/resourceGroups/*/providers/Microsoft.Databricks/workspaces/*'
+			Write-Verbose "Checking format of -$paramToCheck ..."
+			
+			if(-not ($AzureResourceID -ilike $wildCardPattern))
+			{
+				Write-Error "Invalid -$paramToCheck provided! it has to match the following pattern: $wildCardPattern"
+			}
+			
+			Write-Verbose "Parameter -$paramToCheck has a valid format!"
+		}
+			
+		$script:dbAuthenticationHeader = @{
+			"X-Databricks-Azure-Workspace-Resource-Id" = $AzureResourceID
+		}
+	}
+	#endregion
+	#region AAD Authentication using Org ID
+	elseif($PSCmdlet.ParameterSetName -eq "AADAuthenticationOrgID")
+	{
+		Write-Verbose "Using AAD authentication with Databricks Org ID ..." 
+		$script:dbAuthenticationProvider = "AADAuthentication" 
+			
+		$script:dbAuthenticationHeader = @{
+			"X-Databricks-Org-Id" = $OrgID
+		}
+	}
+	#endregion
+	#region AAD Authentication General
+	if($PSCmdlet.ParameterSetName.StartsWith("AADAuthentication"))
+	{
+		Write-Verbose "Getting AAD access token ..."
+		$authUrl = "https://login.windows.net/$TenantID/oauth2/token/"
+		$body = @{
+			"resource" = "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d" # Resource ID for AzureDatabricks, this is fixed!
+			"client_id" = $ClientId
+			"grant_type" = "password"
+			"username" = $Credential.UserName
+			"password" = $Credential.GetNetworkCredential().Password
+			"scope" = "openid"
+		}
+		Write-Verbose "API Call: POST $authUrl"
+		Write-Verbose "Body: `n$($Body | Out-String)"
+		
+		$authResult = Invoke-RestMethod -Uri $authUrl -Method POST -Body $body
+		
+		$script:dbAuthenticationHeader["Authorization"] = "$($authResult.token_type) $($authResult.access_token)"
+		$script:dbCloudProvider = "Azure"
+	} 
+	#endregion	
+	
 	$script:dbInitialized = $true
 }
 
@@ -161,43 +258,28 @@ Function Test-Environment
 {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
 			.DESCRIPTION
-			Lists the contents of a directory, or the object if it is not a directory. If the input path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST.
+			Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
 			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#list
 			.EXAMPLE
-			Test-Environment
+			Test-DatabricksEnvironment
 	#>
 	[CmdletBinding()]
 	param ()
 
-	Test-Initialized
-	
-	$Path = "/"
-
-	Write-Verbose "Setting final ApiURL ..."
-	$apiUrl = Get-ApiUrl -ApiEndpoint "/2.0/workspace/list"
 	$requestMethod = "GET"
-	Write-Verbose "API Call: $requestMethod $apiUrl"
+	$apiEndpoint = "/2.0/dbfs/list"		
 
-	#Set headers
-	$headers = Get-RequestHeader
-
-	Write-Verbose "HEADERS: "
-	Write-Verbose $headers.Values
-	
-	Write-Verbose "Setting Parameters for API call ..."
+	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
-		path = $Path 
+		path = "/" 
 	}
 	
-	Write-Verbose "PARAMETERS: "
-	Write-Verbose $parameters.Values
+	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	$result = Invoke-RestMethod -Uri $apiUrl -Method $requestMethod -Headers $headers -Body $parameters
-
-	return $result
+	return $result.files
 }
 
 # Licensed under the Apache License, Version 2.0 (the "License");

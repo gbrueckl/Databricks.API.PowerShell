@@ -16,7 +16,18 @@ Function Test-Initialized
 	{
 		Write-Error "Databricks environment has not been initialized yet! Please run Set-DatabricksEnvironment before any other cmdlet!"
 	}
-	Write-Verbose "Databricks environment already initialized."
+	Write-Verbose "Databricks environment already initialized!"
+}
+
+Function Clear-ScriptVariables
+{
+	$script:dbAccessToken = $null
+	$script:dbApiRootUrl = $null
+	$script:dbApiFullUrl = $null
+	$script:dbCloudProvider = $null
+	$script:dbInitialized = $false
+	$script:dbAuthenticationProvider = $null
+	$script:dbAuthenticationHeader = $null
 }
 
 function Join-Parts
@@ -77,15 +88,21 @@ Function Get-RequestHeader
 
 	Write-Verbose "Getting Headers for Databricks API call ..."
 	
-	switch($script:dbAuthenticationProvider)
-	{
-		"DatabricksApi" {	
+	$headers = $script:dbAuthenticationHeader
+	$headers["Content-Type"] = "application/json"
+	
+	return $headers
+	<#
+			switch($script:dbAuthenticationProvider)
+			{
+			"DatabricksApi" {	
 			return @{
-				Authorization = "Bearer $script:dbAccessToken"
+				"Authorization" = "Bearer $script:dbAccessToken"
 				"Content-Type" = "application/json"
 			}
-		}
-	}
+			}
+			}
+	#>
 }
 
 Function Get-ApiUrl

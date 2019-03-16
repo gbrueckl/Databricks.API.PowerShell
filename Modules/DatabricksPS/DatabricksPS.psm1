@@ -34,12 +34,14 @@
 
 #region Constants/Variables for all cmdlets
 
+# also check /private/General.ps1 - Function Clear-ScriptVariables
 $script:dbAccessToken = $null
 $script:dbApiRootUrl = $null
 $script:dbApiFullUrl = $null
 $script:dbCloudProvider = $null
 $script:dbInitialized = $false
 $script:dbAuthenticationProvider = $null
+$script:dbAuthenticationHeader = $null
 
 #endregion
 
@@ -68,17 +70,18 @@ foreach($import in @($PublicFunctions + $PrivateFunctions))
 # Export Public functions ($Public.BaseName) for WIP modules
 # Set variables visible to the module and its functions only
 
-#TODO Parse ps1 files and export each line that begins with "function"
 foreach($import in $PublicFunctions)
 {
 	Write-Verbose "Exporting functions from $($import.FullName) ..."
 	$content = Get-Content $import.FullName
-	$regEx = '[Ff]unction\s*(\S*)\s'
+	# find all functions - search for "Function" or "function" followed by some whitespaces and the function name
+	# function name has to contain a "-"
+	$regEx = '[Ff]unction\s+(\S+\-\S+)\s'
 	$matches = [regex]::Matches($content, $regEx)
 	
 	Write-Verbose "$($matches.Count) functions found! Importing them ..."
 	$matches | ForEach-Object { 
-						Write-Host "Exporting function '$($_.Groups[1]) ..."
-						Export-ModuleMember -Function  $_.Groups[1] 
+						#Write-Host "Exporting function '$($_.Groups[1]) ..."
+						#Export-ModuleMember -Function  $_.Groups[1] 
 					}
 }
