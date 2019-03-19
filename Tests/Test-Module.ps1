@@ -38,7 +38,7 @@ foreach($environment in $activeEnvironments)
 	$script:dbfsTestFolder = '/' + $environment.dbfsTestFolder.Trim('/') + '/'
 	Add-DatabricksFSDirectory -Path $script:dbfsTestFolder
 	
-	#$moduleCommands = Get-Command -Module "DatabricksPS" -Name "Add-DatabricksFSFile"
+	$moduleCommands = Get-Command -Module "DatabricksPS"
 	
 
 	foreach($moduleCommand in $moduleCommands)

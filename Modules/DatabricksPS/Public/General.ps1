@@ -89,6 +89,13 @@ Function Set-Environment
 			.PARAMETER OrgID
 			The organization ID of the Databricks workspace.
 			You can find the workspace org ID in the Databricks URL, for example: https://<region>.azuredatabricks.net/?o=<​org_id​> 
+			.PARAMETER SubscriptionID
+			The Azure subscription ID in which the Databricks workspace resides.
+			A GUID, e.g. 058a2e1e-1234-1234-1234-5c4c3e31e36e
+			.PARAMETER ResourceGroupName
+			The name of the ResourceGroup in which the Databricks workspace resides.
+			.PARAMETER WorkspaceName
+			The name of the Databricks workspace.
 			.EXAMPLE
 			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
 
@@ -102,7 +109,7 @@ Function Set-Environment
 	param
 	(
 		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
-		
+		<#
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 1)][PSCredential] $Credential,
@@ -122,7 +129,7 @@ Function Set-Environment
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 3)] [string] $SubscriptionID,
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 5)] [string] $ResourceGroupName,
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 6)] [string] $WorkspaceName,
-		
+		#>
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl,
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("Azure","AWS")] $CloudProvider = $null
 	)

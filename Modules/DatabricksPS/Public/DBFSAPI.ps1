@@ -422,8 +422,6 @@ Function Upload-FSFile
 		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
 	)
 	
-	$LocalPath = "D:\Desktop\test1.txt"
-	$BatchSize = 4000
 	$dbfsFile = Add-DatabricksFSFile -Path $Path -Overwrite $Overwrite
 	
 	$localFile = [System.IO.File]::ReadAllBytes($LocalPath)
@@ -483,12 +481,16 @@ Function Download-FSFile
 		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
 	)
 	
-	$LocalPath = "D:\Desktop\test2.txt"
 	$dbfsFile = Get-DatabricksFSItem -Path $Path
 	
 	if($dbfsFile.is_dir)
 	{
 		Write-Error "The specified path is a directory and not a file!"
+	}
+	
+	if((Test-Path $LocalPath) -and $Overwrite)
+	{
+		Remove-Item $LocalPath -Force
 	}
 	
 	$totalSize = $dbfsFile.file_size # number of bytes of the original file!
@@ -498,6 +500,7 @@ Function Download-FSFile
 	$offset = 0
 	do
 	{
+		Write-Verbose "Downloading new content from offset $offset ..."
 		$dbfsFileContent = Get-DatabricksFSContent -Path $dbfsFile.path -Offset $offset -Length $BatchSize
 		$dbfsByteContent = [System.Convert]::FromBase64String($dbfsFilecontent.data)
 		
