@@ -65,10 +65,11 @@ foreach($import in @($PublicFunctions + $PrivateFunctions))
 	}
 }
 
-# Here I might...
-# Read in or create an initial config file and variable
-# Export Public functions ($Public.BaseName) for WIP modules
-# Set variables visible to the module and its functions only
+
+# The dynamic export of module members was removed and now the .psd1 file is updated with the 
+# latest functions that exist in the .ps1 files under /Public and /Private
+# This update is done right before the module is published to the gallery using the script
+# /Publish/UpdateFunctionsToExport.ps1
 
 foreach($import in $PublicFunctions)
 {
@@ -82,6 +83,6 @@ foreach($import in $PublicFunctions)
 	Write-Verbose "$($matches.Count) functions found! Importing them ..."
 	$matches | ForEach-Object { 
 						#Write-Host "Exporting function '$($_.Groups[1]) ..."
-						#Export-ModuleMember -Function  $_.Groups[1] 
+						Export-ModuleMember -Function  $_.Groups[1] 
 					}
 }

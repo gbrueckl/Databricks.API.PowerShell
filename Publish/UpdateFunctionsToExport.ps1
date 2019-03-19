@@ -40,10 +40,11 @@ if($matches.Groups[1])
 }
 
 # find "cmdletsToExport" and replace them with currently existing functions
-$regEx = '(CmdletsToExport\s*=\s*@\()([^\)]*)(\))' # use 3 groups of which the second is replaced using Regex-Replace
+$regEx = '(FunctionsToExport\s*=\s*@\()([^\)]*)(\))' # use 3 groups of which the second is replaced using Regex-Replace
 $matches = [regex]::Matches($psdContent, $regEx)
 
-$cmdletsToExport = "`n'" + ($exportedCmdlets -join "', `n'").Replace('-', "-$cmdletPrefix") + "'`n"
+#$cmdletsToExport = "`n'" + ($exportedCmdlets -join "', `n'").Replace('-', "-$cmdletPrefix") + "'`n"
+$cmdletsToExport = "`n'" + ($exportedCmdlets -join "', `n'") + "'`n"
 
 $newPsdContent = [regex]::Replace($psdContent, $regEx, '$1' + $cmdletsToExport + '$3')
 
