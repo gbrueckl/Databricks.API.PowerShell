@@ -8,7 +8,7 @@ $secretName = "MySecretPassword"
 
 try
 {
-	$x = New-DatabricksSecretScope -ScopeName $scopeName -Verbose
+	$x = Add-DatabricksSecretScope -ScopeName $scopeName -Verbose
 	Get-DatabricksSecretScope -Verbose
 
 	Add-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -StringValue "Pass@word1234!" -Verbose
