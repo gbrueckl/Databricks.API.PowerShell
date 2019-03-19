@@ -11,12 +11,16 @@ else {
 	$rootPath = (Get-Item $PSScriptRoot).Parent.FullName
 }
 
+Push-Location $rootPath
+
 function Process-TestScript([string]$TestScript)
 {
 	$TestScript = $TestScript.Replace("/myTestFolder/", $script:dbfsTestFolder)
 	
 	return $TestScript
 }
+
+
 
 $config = Get-Content "$rootPath\Tests\TestEnvironments.config.json" | ConvertFrom-Json
 

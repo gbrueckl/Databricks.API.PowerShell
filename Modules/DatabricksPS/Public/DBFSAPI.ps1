@@ -422,8 +422,10 @@ Function Upload-FSFile
 		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
 	)
 	
+	Write-Verbose "Creating new file in DBFS at $Path ..."
 	$dbfsFile = Add-DatabricksFSFile -Path $Path -Overwrite $Overwrite
 	
+	Write-Verbose "Reading content from $LocalPath ..."
 	$localFile = [System.IO.File]::ReadAllBytes($LocalPath)
 	$totalSize = $localFile.Length
 	
@@ -504,7 +506,7 @@ Function Download-FSFile
 		$dbfsFileContent = Get-DatabricksFSContent -Path $dbfsFile.path -Offset $offset -Length $BatchSize
 		$dbfsByteContent = [System.Convert]::FromBase64String($dbfsFilecontent.data)
 		
-		$dbfsByteContent | Add-Content -Path $LocalPath -Encoding Byte -ErrorAction Stop
+		Add-Content -Path $LocalPath -Value $dbfsByteContent -Encoding Byte -ErrorAction Stop
 		
 		$offset = $offset + $BatchSize
 	} while ($offset -lt $totalSize)	

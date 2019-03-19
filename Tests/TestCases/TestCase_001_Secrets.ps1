@@ -1,5 +1,5 @@
 # Set-DatabricksEnvironment is already done by the caller!
-Write-Information "TestCase_001"
+Write-Information "TestCase_001_Secrets"
 
 
 Write-Information "Testing Secrets API ..."
