@@ -142,7 +142,8 @@ Function Add-Property
 		[Parameter(Mandatory = $true, Position = 2)] [string] $Name,
 		[Parameter(Mandatory = $true, Position = 3)] [object][AllowNull()] $Value,
 		[Parameter(Mandatory = $false, Position = 4)] [bool] $AllowEmptyValue = $false,
-		[Parameter(Mandatory = $false, Position = 5)] [object] $NullValue = $null
+		[Parameter(Mandatory = $false, Position = 5)] [object] $NullValue = $null,
+		[Parameter(Mandatory = $false, Position = 6)] [switch] $Force
 	)
 	
 	if($Value -eq $null -or $Value -eq $NullValue)
@@ -151,7 +152,7 @@ Function Add-Property
 		if($AllowEmptyValue)
 		{
 			Write-Verbose "Adding null-value  ..."
-			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value 
+			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 		else
 		{
@@ -164,7 +165,7 @@ Function Add-Property
 		Write-Verbose "Found an Array-Property to add as $Name ..."
 		if($Value.Count -gt 0 -or $AllowEmptyValue)
 		{
-			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
+			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
 	elseif($Value.GetType().Name -eq 'Hashtable') # hashtable
@@ -172,7 +173,7 @@ Function Add-Property
 		Write-Verbose "Found a Hashtable-Property to add as $Name ..."
 		if($Value.Count -gt 0 -or $AllowEmptyValue)
 		{
-			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
+			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
 	elseif($Value.GetType().Name -eq 'String') # String
@@ -180,20 +181,20 @@ Function Add-Property
 		Write-Verbose "Found a String-Property to add as $Name ..."
 		if(-not [string]::IsNullOrEmpty($Value) -or $AllowEmptyValue)
 		{
-			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
+			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
 	elseif($Value.GetType().Name -eq 'Boolean') # Boolean
 	{
 		Write-Verbose "Found a Boolean-Property to add as $Name ..."
 
-		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value.ToString().ToLower()
+		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value.ToString().ToLower() -Force:$Force
 	}
 	else
 	{
 		Write-Verbose "Found a $($Value.GetType().Name)-Property to add as $Name ..."
 
-		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value
+		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 	}
 }
 
@@ -318,7 +319,7 @@ function ConvertFrom-Base64
 	#>
 	[CmdletBinding()]
 	param(
-		[Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+		[Parameter(Mandatory = $true,ValueFromPipeline = $true)]
 		[AllowNull()]
 		[AllowEmptyString()]
 		[string[]]
@@ -352,6 +353,56 @@ function ConvertFrom-Base64
 }
 
 
+
+function ConvertTo-Hashtable
+{
+	<# 
+			.SYNOPSIS 
+			Converts a PowerShell object to a generic hashtable 
+			.DESCRIPTION 
+			Converts a PowerShell object to a generic hashtable 
+			.PARAMETER InputObject
+			The object to convert to a hashtable
+			.EXAMPLE 
+			'RW5jb2RlIG1lIQ==' | ConvertTo-Base64 
+			Shows how you can pipeline input into `ConvertFrom-Base64`. 
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipeline = $true)] $InputObject
+	)
+
+	process
+	{
+		if ($InputObject -is [Hashtable]) { return $InputObject }
+		
+		if ($null -eq $InputObject) { return $null }
+
+		if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string])
+		{
+			$collection = @(
+				foreach ($object in $InputObject) { ConvertTo-Hashtable $object }
+			)
+
+			Write-Output -NoEnumerate $collection
+		}
+		elseif ($InputObject -is [PSCustomObject])
+		{
+			$hash = @{}
+
+			foreach ($property in $InputObject.PSObject.Properties)
+			{
+				$hash[$property.Name] = ConvertTo-Hashtable $property.Value
+			}
+
+			$hash
+		}
+		else
+		{
+			$InputObject
+		}
+	}
+}
 # TRY/CATCH with proper Error message on APIs
 #try { Invoke-RestMethod -Uri $Uri -Headers $Headers }
 #catch { ([System.IO.StreamReader]$_.Exception.Response.GetResponseStream()).ReadToEnd() }

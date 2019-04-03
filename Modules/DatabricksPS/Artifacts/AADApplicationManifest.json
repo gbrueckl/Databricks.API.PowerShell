@@ -1,0 +1,54 @@
+{
+  "appId": "99ba3d40-1d1e-4cf8-983e-d51fbc814c99",
+  "appRoles": [],
+  "availableToOtherTenants": true,
+  "displayName": "Databricks AAD Authentication",
+  "errorUrl": null,
+  "groupMembershipClaims": null,
+  "optionalClaims": null,
+  "acceptMappedClaims": null,
+  "homepage": null,
+  "informationalUrls": {
+    "privacy": null,
+    "termsOfService": null
+  },
+  "identifierUris": [],
+  "keyCredentials": [],
+  "knownClientApplications": [],
+  "logoutUrl": null,
+  "oauth2AllowImplicitFlow": false,
+  "oauth2AllowUrlPathMatching": false,
+  "oauth2Permissions": [],
+  "oauth2RequirePostResponse": false,
+  "objectId": "b7e10d81-a7f6-478c-9ba6-dad7ab029288",
+  "parentalControlSettings": {
+    "countriesBlockedForMinors": [],
+    "legalAgeGroupRule": "Allow"
+  },
+  "passwordCredentials": [],
+  "publicClient": true,
+  "replyUrls": [
+    "https://databricks.com"
+  ],
+  "requiredResourceAccess": [
+    {
+      "resourceAppId": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d",
+      "resourceAccess": [
+        {
+          "id": "739272be-e143-11e8-9f32-f2801f1b9fd1",
+          "type": "Scope"
+        }
+      ]
+    },
+    {
+      "resourceAppId": "00000002-0000-0000-c000-000000000000",
+      "resourceAccess": [
+        {
+          "id": "311a71cc-e848-46a1-bdf8-97ff7156d8e6",
+          "type": "Scope"
+        }
+      ]
+    }
+  ],
+  "samlMetadataUrl": null
+}

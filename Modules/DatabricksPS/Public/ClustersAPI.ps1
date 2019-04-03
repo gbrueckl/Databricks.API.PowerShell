@@ -4,9 +4,13 @@ Function Add-Cluster
 	<#
 			.SYNOPSIS
 			Creates a new Spark cluster. This method acquires new instances from the cloud provider if necessary. This method is asynchronous; the returned cluster_id can be used to poll the cluster state. When this method returns, the cluster is in a PENDING state. The cluster is usable once it enters a RUNNING state. See ClusterState.
+			You can either specify all single properties of the cluster on your own or provide a cluster object that contains all the properties.
+			Single properties will overwrite the values in the cluster object!
 			.DESCRIPTION
 			Creates a new Spark cluster. This method acquires new instances from the cloud provider if necessary. This method is asynchronous; the returned cluster_id can be used to poll the cluster state. When this method returns, the cluster is in a PENDING state. The cluster is usable once it enters a RUNNING state. See ClusterState.
 			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#create
+			.PARAMETER ClusterObject
+			A PowerShell object representing the definition of a cluster according to Databricks documentation.
 			.PARAMETER NumWorkers
 			Number of worker nodes that this cluster should have. A cluster has one Spark Driver and num_workers Executors for a total of num_workers + 1 Spark nodes.
 			Note: When reading the properties of a cluster, this field reflects the desired number of workers rather than the actual current number of workers. For instance, if a cluster is resized from 5 to 10 workers, this field will immediately be updated to reflect the target size of 10 workers, whereas the workers listed in spark_info will gradually increase from 5 to 10 as the new nodes are provisioned.
@@ -52,21 +56,22 @@ Function Add-Cluster
 	param
 	(
 		[Parameter(ParameterSetName = "FixedSize", Mandatory = $true, Position = 1)] [int32] $NumWorkers,
-		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MinWorkers, 
-		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 3)] [int32] $MaxWorkers, 
+		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 1)] [int32] $MinWorkers, 
+		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MaxWorkers, 
 		
-		[Parameter(Mandatory = $true, Position = 3)] [string] $ClusterName, 
-		[Parameter(Mandatory = $true, Position = 3)] [string] $SparkVersion, 
+		[Parameter(Mandatory = $false, Position = 3)] [object] $ClusterObject,
+		[Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
+		[Parameter(Mandatory = $false, Position = 3)] [string] $SparkVersion, 
 		[Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
 		[Parameter(Mandatory = $false, Position = 5)] [hashtable] $AwsAttributes, 
-		[Parameter(Mandatory = $true, Position = 6)] [string] $NodeTypeId, 
+		[Parameter(Mandatory = $false, Position = 6)] [string] $NodeTypeId, 
 		[Parameter(Mandatory = $false, Position = 7)] [string] $DriverNodeTypeId, 
 		[Parameter(Mandatory = $false, Position = 8)] [string[]] $SshPublicKeys, 
 		[Parameter(Mandatory = $false, Position = 9)] [hashtable] $CustomTags, 
 		[Parameter(Mandatory = $false, Position = 10)] [object] $ClusterLogConf, 
 		[Parameter(Mandatory = $false, Position = 11)] [string[]] $InitScripts, 
 		[Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
-		[Parameter(Mandatory = $true, Position = 13)] [int32] $AutoterminationMinutes, 
+		[Parameter(Mandatory = $false, Position = 13)] [int32] $AutoterminationMinutes, 
 		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk,
 		[Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion
 	)
@@ -76,12 +81,15 @@ Function Add-Cluster
 
 	#Set parameters
 	Write-Verbose "Building Body/Parameters for final API call ..."
-	$parameters = @{
-		cluster_name = $ClusterName 
-		spark_version = $SparkVersion 
-		node_type_id = $NodeTypeId 
+	if($ClusterObject)
+	{
+		$parameters = $ClusterObject | ConvertTo-Hashtable
 	}
-
+	else
+	{
+		$parameters = @{}
+	}
+	
 	if($PythonVersion) # check if a PythonVersion was explicitly specified
 	{
 		if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
@@ -90,27 +98,30 @@ Function Add-Cluster
 		}
 		switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
 		{ 
-			'2 (2.7)'  { $SparkEnvVars | Add-PropertyIfNotExists -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python'  } 
-			'3 (3.5)'  { $SparkEnvVars | Add-PropertyIfNotExists -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' }
+			'2 (2.7)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+			'3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
 		}
-		Write-Verbose "PythonVersion set to "
+		Write-Verbose "PythonVersion set to $PythonVersion"
 	}
 
-	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf
-	$parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes
-	$parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId
-	$parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys
-	$parameters | Add-Property -Name "custom_tags" -Value $CustomTags
-	$parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf
-	$parameters | Add-Property -Name "init_scripts" -Value $InitScripts
-	$parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars
-	$parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes
-	$parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk
+	$parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
+	$parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
+	$parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
+	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf -Force
+	$parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
+	$parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
+	$parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -Force
+	$parameters | Add-Property -Name "custom_tags" -Value $CustomTags -Force
+	$parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
+	$parameters | Add-Property -Name "init_scripts" -Value $InitScripts -Force
+	$parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars -Force
+	$parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
+	$parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
 	
 	switch($PSCmdlet.ParameterSetName) 
 	{ 
-		"FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers  } 
-		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers  } }
+		"FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
 	} 
 
 	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -122,10 +133,21 @@ Function Update-Cluster
 {
 	<#
 			.SYNOPSIS
-			Creates a new Spark cluster. This method acquires new instances from the cloud provider if necessary. This method is asynchronous; the returned cluster_id can be used to poll the cluster state. When this method returns, the cluster is in a PENDING state. The cluster is usable once it enters a RUNNING state. See ClusterState.
+			Edit the configuration of a cluster to match the provided attributes and size.
+			You can edit a cluster if it is in a RUNNING or TERMINATED state. If you edit a cluster while it is in a RUNNING state, it will be restarted so that the new attributes can take effect. If you edit a cluster while it is in a TERMINATED state, it will remain TERMINATED. The next time it is started using the clusters/start API, the new attributes will take effect. An attempt to edit a cluster in any other state will be rejected with an INVALID_STATE error code.
+			Clusters created by the Databricks Jobs service cannot be edited.
+			You can either specify all single properties of the cluster on your own or provide a cluster object that contains all the properties.
+			Single properties will overwrite the values in the cluster object!
 			.DESCRIPTION
-			Creates a new Spark cluster. This method acquires new instances from the cloud provider if necessary. This method is asynchronous; the returned cluster_id can be used to poll the cluster state. When this method returns, the cluster is in a PENDING state. The cluster is usable once it enters a RUNNING state. See ClusterState.
-			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#create
+			Edit the configuration of a cluster to match the provided attributes and size.
+			You can edit a cluster if it is in a RUNNING or TERMINATED state. If you edit a cluster while it is in a RUNNING state, it will be restarted so that the new attributes can take effect. If you edit a cluster while it is in a TERMINATED state, it will remain TERMINATED. The next time it is started using the clusters/start API, the new attributes will take effect. An attempt to edit a cluster in any other state will be rejected with an INVALID_STATE error code.
+			Clusters created by the Databricks Jobs service cannot be edited.
+			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#edit
+			
+			.PARAMETER ClusterID 
+			The ID of the cluster to be edited. 
+			.PARAMETER ClusterObject
+			A PowerShell object representing the definition of a cluster according to Databricks documentation.
 			.PARAMETER NumWorkers
 			Number of worker nodes that this cluster should have. A cluster has one Spark Driver and num_workers Executors for a total of num_workers + 1 Spark nodes.
 			Note: When reading the properties of a cluster, this field reflects the desired number of workers rather than the actual current number of workers. For instance, if a cluster is resized from 5 to 10 workers, this field will immediately be updated to reflect the target size of 10 workers, whereas the workers listed in spark_info will gradually increase from 5 to 10 as the new nodes are provisioned.
@@ -133,8 +155,6 @@ Function Update-Cluster
 			The minimum number of workers to provision for this autoscale-enabled cluster.
 			.PARAMETER MaxWorkers 
 			The maximum number of workers to provision for this autoscale-enabled cluster.
-			.PARAMETER ClusterID 
-			The ID of the cluster to be edited. 
 			.PARAMETER ClusterName 
 			Cluster name requested by the user. This doesn't have to be unique. If not specified at creation, the cluster name will be an empty string.
 			.PARAMETER SparkVersion 
@@ -169,24 +189,27 @@ Function Update-Cluster
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(ParameterSetName = "FixedSize", Mandatory = $false, Position = 1)] [int32] $NumWorkers,
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
+
+		[Parameter(ParameterSetName = "FixedSize", Mandatory = $false, Position = 2)] [int32] $NumWorkers,
 		[Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 2)] [int32] $MinWorkers, 
 		[Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 3)] [int32] $MaxWorkers, 
 		
-		[Parameter(Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
+		[Parameter(Mandatory = $false, Position = 3)] [object] $ClusterObject,
 		[Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
-		[Parameter(Mandatory = $true, Position = 3)] [string] $SparkVersion, 
+		[Parameter(Mandatory = $false, Position = 3)] [string] $SparkVersion, 
 		[Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
 		[Parameter(Mandatory = $false, Position = 5)] [hashtable] $AwsAttributes, 
-		[Parameter(Mandatory = $true, Position = 6)] [string] $NodeTypeId, 
+		[Parameter(Mandatory = $false, Position = 6)] [string] $NodeTypeId, 
 		[Parameter(Mandatory = $false, Position = 7)] [string] $DriverNodeTypeId, 
 		[Parameter(Mandatory = $false, Position = 8)] [string[]] $SshPublicKeys, 
-		[Parameter(Mandatory = $false, Position = 9)] [string[]] $CustomTags, 
+		[Parameter(Mandatory = $false, Position = 9)] [hashtable] $CustomTags, 
 		[Parameter(Mandatory = $false, Position = 10)] [object] $ClusterLogConf, 
 		[Parameter(Mandatory = $false, Position = 11)] [string[]] $InitScripts, 
 		[Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
 		[Parameter(Mandatory = $false, Position = 13)] [int32] $AutoterminationMinutes, 
-		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk
+		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk,
+		[Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion
 	)
 	
 	$requestMethod = "POST"
@@ -194,30 +217,50 @@ Function Update-Cluster
 
 	#Set parameters
 	Write-Verbose "Building Body/Parameters for final API call ..."
-	$parameters = @{
-		cluster_id = $ClusterID
+	if($ClusterObject)
+	{
+		$parameters = $ClusterObject | ConvertTo-Hashtable
+	}
+	else
+	{
+		$parameters = @{}
+	}
+	
+	if($PythonVersion) # check if a PythonVersion was explicitly specified
+	{
+		if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
+		{
+			$SparkEnvVars = @{}
+		}
+		switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
+		{ 
+			'2 (2.7)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+			'3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+		}
+		Write-Verbose "PythonVersion set to $PythonVersion"
 	}
 
-	$parameters | Add-Property -Name "cluster_name" -Value $ClusterName
-	$parameters | Add-Property -Name "spark_version" -Value $SparkVersion
-	$parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId
-	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf
-	$parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes
-	$parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId
-	$parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys
-	$parameters | Add-Property -Name "custom_tags" -Value $CustomTags
-	$parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf
-	$parameters | Add-Property -Name "init_scripts" -Value $InitScripts
-	$parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars
-	$parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes
-	$parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk
+	$parameters | Add-Property -Name "cluster_id" -Value $ClusterID -Force
+	$parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
+	$parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
+	$parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
+	$parameters | Add-Property -Name "spark_conf" -Value $SparkConf -Force
+	$parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
+	$parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
+	$parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -Force
+	$parameters | Add-Property -Name "custom_tags" -Value $CustomTags -Force
+	$parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
+	$parameters | Add-Property -Name "init_scripts" -Value $InitScripts -Force
+	$parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars -Force
+	$parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
+	$parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
 	
 	switch($PSCmdlet.ParameterSetName) 
 	{ 
-		"FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers  } 
-		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers  } }
+		"FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
 	}
-
+	
 	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
@@ -594,9 +637,15 @@ Function Get-Zone
 	#>
 	[CmdletBinding()]
 	param() 
-
+	
 	$requestMethod = "GET"
 	$apiEndpoint = "/2.0/clusters/list-zones"
+	
+	if($script:dbCloudProvider -in  @("Azure"))
+	{
+		Write-Warning "API call '$requestMethod $apiEndpoint' is not supported on Cloud Provider '$script:dbCloudProvider'"
+		return
+	}
 
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters

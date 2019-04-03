@@ -76,60 +76,17 @@ Function Set-Environment
 			.PARAMETER CloudProvider
 			The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
 			If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
-			.PARAMETER Credential
-			The Powershell credential to use when using AAD authentication.
-			.PARAMETER ClientID
-			The ID of the Azure Active Directory (AAD) application that was deployed to use AAD authentication with Databricks.
-			.PARAMETER TenantID
-			The ID of the Azure Active Directory (AAD). (optional)
 			
-			.PARAMETER AzureResourceID
-			This is the ID of the workspace appliance resource in Azure. You must​ provide this ID if the Databricks workspace is not provisioned yet (such that there is no effective workspace org ID). It can be composed using the Azure subscription ID, resource group name, and workspace resource name. 
-			Example: /subscriptions/<<SubscriptionID>>/resourceGroups/<<ResourceGroupName>>/providers/Microsoft.Databricks/workspaces/<<WorkspaceName>>
-			.PARAMETER OrgID
-			The organization ID of the Databricks workspace.
-			You can find the workspace org ID in the Databricks URL, for example: https://<region>.azuredatabricks.net/?o=<​org_id​> 
-			.PARAMETER SubscriptionID
-			The Azure subscription ID in which the Databricks workspace resides.
-			A GUID, e.g. 058a2e1e-1234-1234-1234-5c4c3e31e36e
-			.PARAMETER ResourceGroupName
-			The name of the ResourceGroup in which the Databricks workspace resides.
-			.PARAMETER WorkspaceName
-			The name of the Databricks workspace.
 			.EXAMPLE
 			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
-
-			.EXAMPLE
-			$azureResourceId = '/subscriptions/fb1e20c4-1234-1234-1234-f92a9ac35db4/resourceGroups/myResourceGroupName/providers/Microsoft.Databricks/workspaces/myDatabricksResource'
-			$cred = Get-Credential
-			Set-DatabricksEnvironment -ClientID '058a2e1e-1234-1234-1234-5c4c3e31e36e' -Credential $cred -AzureResourceID $azureResourceId -ApiRootUrl "https://westeurope.azuredatabricks.net"
-
+.EXAMPLE
+			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://westeurope.azuredatabricks.net"
 	#>
 	[CmdletBinding()]
 	param
 	(
 		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
-		<#
-		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
-		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 1)][PSCredential] $Credential,
-		
-		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 2)]
-		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 2)]
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 2)][string] $ClientID,
-		
-		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 4)]
-		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 4)]
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 4)] [string] $TenantID = "common",
-		
-		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 3)] [string] $AzureResourceID,
-		
-		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 3)] [string] $OrgID,
-		
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 3)] [string] $SubscriptionID,
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 5)] [string] $ResourceGroupName,
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 6)] [string] $WorkspaceName,
-		#>
+
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl,
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("Azure","AWS")] $CloudProvider = $null
 	)
@@ -193,70 +150,6 @@ Function Set-Environment
 		}
 	}
 	#endregion
-	#region AAD Authentication using Resource
-	elseif($PSCmdlet.ParameterSetName -ilike "AADAuthenticationResource*")
-	{
-		$script:dbAuthenticationProvider = "AADAuthentication" 
-		
-		if($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceDetails")
-		{
-			Write-Verbose "Using AAD authentication with Azure Resource Details ..."
-			$AzureResourceID = "/subscriptions/$SubscriptionID/resourceGroups/$ResourceGroupName/providers/Microsoft.Databricks/workspaces/$WorkspaceName"
-		}
-		elseif($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceID")
-		{
-			Write-Verbose "Using AAD authentication with Azure ResourceID ..."
-			
-			$paramToCheck = 'ApiRootUrl'
-			$wildCardPattern = '/subscriptions/*/resourceGroups/*/providers/Microsoft.Databricks/workspaces/*'
-			Write-Verbose "Checking format of -$paramToCheck ..."
-			
-			if(-not ($AzureResourceID -ilike $wildCardPattern))
-			{
-				Write-Error "Invalid -$paramToCheck provided! it has to match the following pattern: $wildCardPattern"
-			}
-			
-			Write-Verbose "Parameter -$paramToCheck has a valid format!"
-		}
-			
-		$script:dbAuthenticationHeader = @{
-			"X-Databricks-Azure-Workspace-Resource-Id" = $AzureResourceID
-		}
-	}
-	#endregion
-	#region AAD Authentication using Org ID
-	elseif($PSCmdlet.ParameterSetName -eq "AADAuthenticationOrgID")
-	{
-		Write-Verbose "Using AAD authentication with Databricks Org ID ..." 
-		$script:dbAuthenticationProvider = "AADAuthentication" 
-			
-		$script:dbAuthenticationHeader = @{
-			"X-Databricks-Org-Id" = $OrgID
-		}
-	}
-	#endregion
-	#region AAD Authentication General
-	if($PSCmdlet.ParameterSetName.StartsWith("AADAuthentication"))
-	{
-		Write-Verbose "Getting AAD access token ..."
-		$authUrl = "https://login.windows.net/$TenantID/oauth2/token/"
-		$body = @{
-			"resource" = "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d" # Resource ID for AzureDatabricks, this is fixed!
-			"client_id" = $ClientId
-			"grant_type" = "password"
-			"username" = $Credential.UserName
-			"password" = $Credential.GetNetworkCredential().Password
-			"scope" = "openid"
-		}
-		Write-Verbose "API Call: POST $authUrl"
-		Write-Verbose "Body: `n$($Body | Out-String)"
-		
-		$authResult = Invoke-RestMethod -Uri $authUrl -Method POST -Body $body
-		
-		$script:dbAuthenticationHeader["Authorization"] = "$($authResult.token_type) $($authResult.access_token)"
-		$script:dbCloudProvider = "Azure"
-	} 
-	#endregion	
 	
 	$script:dbInitialized = $true
 }

@@ -11,10 +11,7 @@ Function Add-SecretScope
 			.PARAMETER InitialManagePrincipal 
 			The principal that is initially granted MANAGE permission to the created scope.
 			.EXAMPLE
-			New-DatabricksSecretScope -Name "MyScope" -InitialManagePrincipal <initial_manage_principal>
-			.EXAMPLE
-			#AUTOMATED_TEST:Add secret scope
-			Add-DatabricksSecretScope -Name "DatabricksPS_TEST"
+			New-DatabricksSecretScope -ScopeName "MySecretScope" -InitialManagePrincipal "users"
 	#>
 	[CmdletBinding()]
 	param
@@ -54,10 +51,7 @@ Function Remove-SecretScope
 			.PARAMETER ScopeName 
 			Name of the scope to delete. This field is required.
 			.EXAMPLE
-			Remove-DatabricksSecretScope -Name "MyScope"
-			.EXAMPLE
-			#AUTOMATED_TEST:Add secret scope
-			Remove-DatabricksSecretScope -Name "DatabricksPS_TEST"
+			Remove-DatabricksSecretScope -ScopeName "MyScope"
 	#>
 	[CmdletBinding()]
 	param
@@ -127,7 +121,7 @@ Function Add-Secret
 			.PARAMETER SecretName 
 			A unique name to identify the secret. This field is required.
 			.EXAMPLE
-			Add-Secret -ScopeName "MyScope" -SecretName "MyKey" -StringValue "MySecretValue"
+			Add-DatabricksSecret -ScopeName "MyScope" -SecretName "MyKey" -StringValue "MySecretValue"
 	#>
 	[CmdletBinding()]
 	param

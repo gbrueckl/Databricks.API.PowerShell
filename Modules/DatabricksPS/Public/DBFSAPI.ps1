@@ -285,7 +285,7 @@ Function Add-FSDirectory
 	return $result
 }
 
-Function Move-FSFile
+Function Move-FSItem
 {
 	<#
 			.SYNOPSIS
@@ -298,14 +298,15 @@ Function Move-FSFile
 			.PARAMETER DestinationPath 
 			The destination path of the file or directory. The path should be the absolute DBFS path (e.g. "/mnt/bar/"). This field is required.
 			.EXAMPLE
-			Move-DatabricksFSFile -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
+			Move-DatabricksFSItem -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
 			.EXAMPLE
 			#AUTOMATED_TEST:Move single file
 			$sourcePath = "/myTestFolder/myFile1.txt"
 			$targetPath = "/myTestFolder/myMovedFile.txt"
 			$newFile = Add-DatabricksFSFile -Path $sourcePath -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
-			Move-DatabricksFSFile -SourcePath $sourcePath -DestinationPath $targetPath
+			Remove-DatabricksFSItem -Path $targetPath -ErrorAction SilentlyContinue
+			Move-DatabricksFSItem -SourcePath $sourcePath -DestinationPath $targetPath
 	#>
 	[CmdletBinding()]
 	param

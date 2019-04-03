@@ -1,10 +1,17 @@
 # Set-DatabricksEnvironment is already done by the caller!
-Write-Information "TestCase_001_Secrets"
+$testCaseName = "TestCase_001_Secrets"
+Write-Information "Starting Testcase $testCaseName ..."
 
 
 Write-Information "Testing Secrets API ..."
 $scopeName = "MyTestScope"
 $secretName = "MySecretPassword"
+
+$currentScope = Get-DatabricksSecretScope | Where-Object ($_.name -eq $scopeName)
+if($currentScope)
+{
+	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
+}
 
 try
 {
@@ -20,10 +27,10 @@ try
 }
 finally
 {
-	Write-Information "Starting Cleanup ..."
+	Write-Information "Starting Cleanup for testcase $testCaseName ..."
 	Remove-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -ErrorAction SilentlyContinue
 	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
-	Write-Information "Finished Cleanup"
+	Write-Information "Finished Cleanup for testcase $testCaseName"
 }
 
 

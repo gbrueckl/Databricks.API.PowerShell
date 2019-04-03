@@ -33,52 +33,60 @@ $regEx = "\s*\.EXAMPLE\s+#AUTOMATED_TEST:(.*)\n((?:.|\r|\n)+?)\s+(?=\.EXAMPLE|#>
 $activeEnvironments = $config.environments | Where-Object { $_.isActive }
 foreach($environment in $activeEnvironments)
 {
-	Write-Information "Testing Environment $($environment.name) ..."
-	$accessToken = $environment.accessToken
-	$apiUrl = $environment.apiRootUrl
-	
-	Set-DatabricksEnvironment -AccessToken "$accessToken" -ApiRootUrl "$apiUrl" -Verbose
-	
-	$script:dbfsTestFolder = '/' + $environment.dbfsTestFolder.Trim('/') + '/'
-	Add-DatabricksFSDirectory -Path $script:dbfsTestFolder
-	
-	$moduleCommands = Get-Command -Module "DatabricksPS"
-	
-
-	foreach($moduleCommand in $moduleCommands)
+	try
 	{
-		Write-Information "Testing Command $($moduleCommand.Name) ..."
-		$definition = $moduleCommand.Definition
+		Write-Information "Testing Environment $($environment.name) ..."
+		$accessToken = $environment.accessToken
+		$apiUrl = $environment.apiRootUrl
 	
-		$matches = [regex]::Matches($definition, $regEx)
-		Write-Information "Found $($matches.Count) Tests!"
+		Set-DatabricksEnvironment -AccessToken "$accessToken" -ApiRootUrl "$apiUrl" -Verbose 
+	
+		$script:dbfsTestFolder = '/' + $environment.dbfsTestFolder.Trim('/') + '/'
+		Add-DatabricksFSDirectory -Path $script:dbfsTestFolder
+	
+		$moduleCommands = Get-Command -Module "DatabricksPS"
+	
 
-		foreach($match in $matches)
+		foreach($moduleCommand in $moduleCommands)
 		{
-			$testCaseName = $match.Groups[1].Value.Trim()
-			$testScript = $match.Groups[2].Value.TrimEnd()
-			
-			$testScript = Process-TestScript -TestScript $testScript
-			
-			Write-Information "Running Test '$testCaseName' ..."
-			Write-Information $testScript
-			$finalScript = $ExecutionContext.InvokeCommand.NewScriptBlock($testScript)
-			& $finalscript
-			Write-Information "Success!"
-		}	
-	}
+			Write-Information "Testing Command $($moduleCommand.Name) ..."
+			$definition = $moduleCommand.Definition
 	
-	$testCases = Get-ChildItem -Path "$rootPath\Tests\TestCases" -Recurse -Filter "*.ps1"
-	foreach($testCase in $testCases)
-	{
-		Write-Information "------------------------------------------------------------"
-		Write-Information "Running TestCase file $($testCase.Name) ..."
-		. $testCase.FullName
+			$matches = [regex]::Matches($definition, $regEx)
+			Write-Information "Found $($matches.Count) Tests!"
+
+			foreach($match in $matches)
+			{
+				$testCaseName = $match.Groups[1].Value.Trim()
+				$testScript = $match.Groups[2].Value.TrimEnd()
+			
+				$testScript = Process-TestScript -TestScript $testScript
+			
+				Write-Information "Running Test '$testCaseName' ..."
+				Write-Information $testScript
+				$finalScript = $ExecutionContext.InvokeCommand.NewScriptBlock($testScript)
+				& $finalscript
+				Write-Information "Success!"
+			}	
+		}
+	
+		$testCases = Get-ChildItem -Path "$rootPath\Tests\TestCases" -Recurse -Filter "*.ps1"
+		foreach($testCase in $testCases)
+		{
+			Write-Information "------------------------------------------------------------"
+			Write-Information "Running TestCase file $($testCase.Name) ..."
+			. $testCase.FullName
 		
-		Write-Information "Finished TestCase file $($testCase.Name)!"
-		Write-Information "------------------------------------------------------------"
-		Write-Information ""
-		Write-Information ""
+			Write-Information "Finished TestCase file $($testCase.Name)!"
+			Write-Information "------------------------------------------------------------"
+			Write-Information ""
+			Write-Information ""
+		}
 	}
-	Remove-DatabricksFSItem -Path $script:dbfsTestFolder -Recursive $true
+	finally
+	{
+		Write-Information "Starting Cleanup for Environment $($environment.name) ..."
+		Remove-DatabricksFSItem -Path $script:dbfsTestFolder -Recursive $true
+		Write-Information "Finished Cleanup for Environment $($environment.name) ..."
+	}
 }

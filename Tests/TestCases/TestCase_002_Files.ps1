@@ -1,14 +1,16 @@
 # Set-DatabricksEnvironment is already done by the caller!
-Write-Information "TestCase_002_Files"
+# Current Directory is set by Test-Module.ps1 to the root of this repository!
+$testCaseName = "TestCase_002_Files"
+Write-Information "Starting Testcase $testCaseName ..."
 
 # if executed from PowerShell ISE
-if ($psise) { 
+if (-not $PSCommandPath) { 
 	$rootPath = Split-Path -Parent $psise.CurrentFile.FullPath | Split-Path -Parent | Split-Path -Parent
 }
 else {
-	$rootPath = (Get-Item $PSScriptRoot).Parent.Parent.FullName
+	# when executed as script (not via UI/ISE), the location was already set
+	$rootPath = Get-Location
 }
-
 
 Write-Information "Testing DBFS API ..."
 $fileName = "myFile.txt"
@@ -23,9 +25,10 @@ try
 }
 finally
 {
-	Write-Information "Starting Cleanup ..."
-	Remove-Item -Path $localTempFolder -Recurse -Force
-	Write-Information "Finished Cleanup"
+	Write-Information "Starting Cleanup for testcase $testCaseName ..."
+	Remove-Item -Path $localTempFolder -Recurse -Force -ErrorAction SilentlyContinue
+	Remove-DatabricksFSItem $dbfsPath -ErrorAction SilentlyContinue
+	Write-Information "Finished Cleanup for testcase $testCaseName"
 }
 
 

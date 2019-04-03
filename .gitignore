@@ -5,3 +5,5 @@ UpgradeLog.htm
 *.suo
 PublishConfig.json
 TestEnvironments.config.json
+*-DEV.ps1
+*-PREVIEW.ps1
