@@ -1,4 +1,4 @@
-Function Add-SecretScope
+Function Add-DatabricksSecretScope
 {
 	<#
 			.SYNOPSIS
@@ -33,14 +33,14 @@ Function Add-SecretScope
 	
 		$parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Remove-SecretScope
+Function Remove-DatabricksSecretScope
 {
 	<#
 			.SYNOPSIS
@@ -70,14 +70,14 @@ Function Remove-SecretScope
 			scope = $ScopeName 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Get-SecretScope
+Function Get-DatabricksSecretScope
 {
 	<#
 			.SYNOPSIS
@@ -98,13 +98,13 @@ Function Get-SecretScope
 	#Set parameters
 	$parameters = @{}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.scopes
 }
 
 
-Function Add-Secret
+Function Add-DatabricksSecret
 {
 	<#
 			.SYNOPSIS
@@ -158,13 +158,13 @@ Function Add-Secret
 		$parameters | Add-Property -Name "scope" -Value $ScopeName
 		$parameters | Add-Property -Name "key" -Value $SecretName
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Remove-Secret
+Function Remove-DatabricksSecret
 {
 	<#
 			.SYNOPSIS
@@ -198,14 +198,14 @@ Function Remove-Secret
 			key = $SecretName 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Get-Secret
+Function Get-DatabricksSecret
 {
 	<#
 			.SYNOPSIS
@@ -235,14 +235,14 @@ Function Get-Secret
 			scope = $ScopeName 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.secrets
 	}
 }
 
 
-Function Add-SecretScopeACL
+Function Add-DatabricksSecretScopeACL
 {
 	<#
 			.SYNOPSIS
@@ -280,14 +280,14 @@ Function Add-SecretScopeACL
 			permission = $Permission 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Remove-SecretScopeACL
+Function Remove-DatabricksSecretScopeACL
 {
 	<#
 			.SYNOPSIS
@@ -321,14 +321,14 @@ Function Remove-SecretScopeACL
 			principal = $Principal 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Get-SecretScopeACL
+Function Get-DatabricksSecretScopeACL
 {
 	<#
 			.SYNOPSIS
@@ -369,7 +369,7 @@ Function Get-SecretScopeACL
 	
 		$parameters | Add-Property -Name "principal" -Value $Principal
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		if($Principal)
 		{

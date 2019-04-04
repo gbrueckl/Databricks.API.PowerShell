@@ -83,6 +83,6 @@ foreach($import in $PublicFunctions)
 	Write-Verbose "$($matches.Count) functions found! Importing them ..."
 	$matches | ForEach-Object { 
 						#Write-Host "Exporting function '$($_.Groups[1]) ..."
-						Export-ModuleMember -Function  $_.Groups[1] 
+						#Export-ModuleMember -Function  $_.Groups[1] 
 					}
 }

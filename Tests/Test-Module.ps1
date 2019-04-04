@@ -20,8 +20,6 @@ function Process-TestScript([string]$TestScript)
 	return $TestScript
 }
 
-
-
 $config = Get-Content "$rootPath\Tests\TestEnvironments.config.json" | ConvertFrom-Json
 
 Remove-Module -Name "DatabricksPS" -ErrorAction SilentlyContinue -Force

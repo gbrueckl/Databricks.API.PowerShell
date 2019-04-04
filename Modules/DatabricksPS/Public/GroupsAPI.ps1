@@ -1,4 +1,4 @@
-Function Add-GroupMember
+Function Add-DatabricksGroupMember
 {
 	<#
 			.SYNOPSIS
@@ -40,13 +40,13 @@ Function Add-GroupMember
 			"AddGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Add-Group
+Function Add-DatabricksGroup
 {
 	<#
 			.SYNOPSIS
@@ -77,13 +77,13 @@ Function Add-Group
 			group_name = $GroupName 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Get-GroupMember
+Function Get-DatabricksGroupMember
 {
 	<#
 			.SYNOPSIS
@@ -114,13 +114,13 @@ Function Get-GroupMember
 			group_name = $GroupName 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 		
 		return $result.members
 	}
 }
 
-Function Get-Group
+Function Get-DatabricksGroup
 {
 	<#
 			.SYNOPSIS
@@ -144,13 +144,13 @@ Function Get-Group
 		#Set parameters
 		$parameters = @{}
 		
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.group_names
 	}
 }
 
-Function Get-Membership
+Function Get-DatabricksMembership
 {
 	<#
 			.SYNOPSIS
@@ -188,13 +188,13 @@ Function Get-Membership
 			"GroupMemberships" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
 		}
 		
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.group_names
 	}
 }
 
-Function Remove-GroupMember
+Function Remove-DatabricksGroupMember
 {
 	<#
 			.SYNOPSIS
@@ -237,13 +237,13 @@ Function Remove-GroupMember
 			"RemoveGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
 		}
 		
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.group_names
 	}
 }
 
-Function Remove-Group
+Function Remove-DatabricksGroup
 {
 	<#
 			.SYNOPSIS
@@ -274,7 +274,7 @@ Function Remove-Group
 			group_name = $GroupName 
 		}
 		
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.group_names
 	}

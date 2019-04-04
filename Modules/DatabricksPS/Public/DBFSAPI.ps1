@@ -1,5 +1,5 @@
 #requires -Version 3.0
-Function Add-FSFile
+Function Add-DatabricksFSFile
 {
 	<#
 			.SYNOPSIS
@@ -41,12 +41,12 @@ Function Add-FSFile
 		overwrite = $Overwrite 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Add-FSFileBlock
+Function Add-DatabricksFSFileBlock
 {
 	<#
 			.SYNOPSIS
@@ -90,12 +90,12 @@ Function Add-FSFileBlock
 		data = $Data 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Close-FSFile
+Function Close-DatabricksFSFile
 {
 	<#
 			.SYNOPSIS
@@ -131,12 +131,12 @@ Function Close-FSFile
 		handle = $Handle 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Remove-FSItem
+Function Remove-DatabricksFSItem
 {
 	<#
 			.SYNOPSIS
@@ -179,12 +179,12 @@ Function Remove-FSItem
 		recursive = $Recursive 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Get-FSItem
+Function Get-DatabricksFSItem
 {
 	<#
 			.SYNOPSIS
@@ -235,7 +235,7 @@ Function Get-FSItem
 		path = $Path 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if($ChildItems){
 		# if -ChildItems was specified, we return the files as an array
@@ -248,7 +248,7 @@ Function Get-FSItem
 	}
 }
 
-Function Add-FSDirectory
+Function Add-DatabricksFSDirectory
 {
 	<#
 			.SYNOPSIS
@@ -280,12 +280,12 @@ Function Add-FSDirectory
 		path = $Path 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Move-FSItem
+Function Move-DatabricksFSItem
 {
 	<#
 			.SYNOPSIS
@@ -325,12 +325,12 @@ Function Move-FSItem
 		destination_path = $DestinationPath 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Get-FSContent
+Function Get-DatabricksFSContent
 {
 	<#
 			.SYNOPSIS
@@ -379,7 +379,7 @@ Function Get-FSContent
 	$parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1
 	$parameters | Add-Property -Name "length" -Value $Length -NullValue -1
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if($Decode)
 	{
@@ -395,7 +395,7 @@ Function Get-FSContent
 
 
 
-Function Upload-FSFile
+Function Upload-DatabricksFSFile
 {
 	<#
 			.SYNOPSIS
@@ -456,7 +456,7 @@ Function Upload-FSFile
 
 
 
-Function Download-FSFile
+Function Download-DatabricksFSFile
 {
 	<#
 			.SYNOPSIS

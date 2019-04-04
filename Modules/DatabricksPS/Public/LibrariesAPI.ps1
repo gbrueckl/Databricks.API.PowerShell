@@ -1,5 +1,5 @@
 #requires -Version 3.0
-Function Get-ClusterLibraries
+Function Get-DatabricksClusterLibraries
 {
 	<#
 			.SYNOPSIS
@@ -11,9 +11,9 @@ Function Get-ClusterLibraries
 			.PARAMETER ClusterID 
 			Unique identifier of the cluster whose status should be retrieved. This field is not required.
 			.EXAMPLE
-			Get-ClusterLibraries -ClusterID "1234-211320-brick1"
+			Get-DatabricksClusterLibraries -ClusterID "1234-211320-brick1"
 			.EXAMPLE
-			Get-ClusterLibraries
+			Get-DatabricksClusterLibraries
 	#>
 	[CmdletBinding()]
 	param
@@ -34,7 +34,7 @@ Function Get-ClusterLibraries
 	$parameters = @{}
 	$parameters | Add-Property  -Name "cluster_id" -Value $ClusterID
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	if($ClusterID)
 	{
@@ -48,7 +48,7 @@ Function Get-ClusterLibraries
 	}
 }
 
-Function Add-ClusterLibraries
+Function Add-DatabricksClusterLibraries
 {
 	<#
 			.SYNOPSIS
@@ -95,12 +95,12 @@ Function Add-ClusterLibraries
 		libraries = $Libraries 
 	}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Remove-ClusterLibraries
+Function Remove-DatabricksClusterLibraries
 {
 	<#
 			.SYNOPSIS
@@ -147,7 +147,7 @@ Function Remove-ClusterLibraries
 		libraries = $Libraries 
 	}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }

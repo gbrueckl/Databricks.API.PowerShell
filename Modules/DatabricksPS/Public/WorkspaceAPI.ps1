@@ -1,4 +1,4 @@
-Function Remove-WorkspaceItem 
+Function Remove-DatabricksWorkspaceItem 
 {
 	<#
 			.SYNOPSIS
@@ -30,12 +30,12 @@ Function Remove-WorkspaceItem
 		recursive = $Recursive 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 				
-Function Export-WorkspaceItem
+Function Export-DatabricksWorkspaceItem
 {
 	<#
 			.SYNOPSIS
@@ -75,7 +75,7 @@ Function Export-WorkspaceItem
 			format = $Format  
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 				
 		Write-Verbose "Converting Base64 encoded content to Byte-Array ..."
 		$exportBytes = [Convert]::FromBase64String($result.content)
@@ -97,7 +97,7 @@ Function Export-WorkspaceItem
 }
 
 
-Function Import-WorkspaceItem
+Function Import-DatabricksWorkspaceItem
 {
 	<#
 			.SYNOPSIS
@@ -148,14 +148,14 @@ Function Import-WorkspaceItem
 			overwrite = $Overwrite 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Get-WorkspaceItem
+Function Get-DatabricksWorkspaceItem
 {
 	<#
 			.SYNOPSIS
@@ -190,7 +190,7 @@ Function Get-WorkspaceItem
 			path = $Path 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		if($ChildItems)
 		{
@@ -204,7 +204,7 @@ Function Get-WorkspaceItem
 }
 
 
-Function Add-WorkspaceDirectory
+Function Add-DatabricksWorkspaceDirectory
 {
 	<#
 			.SYNOPSIS
@@ -235,7 +235,7 @@ Function Add-WorkspaceDirectory
 			path = $Path 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}

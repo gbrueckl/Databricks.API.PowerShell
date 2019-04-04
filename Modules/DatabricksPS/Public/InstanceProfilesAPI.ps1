@@ -1,5 +1,5 @@
 #requires -Version 3.0
-Function Add-InstanceProfile
+Function Add-DatabricksInstanceProfile
 {
 	<#
 			.SYNOPSIS
@@ -38,13 +38,13 @@ Function Add-InstanceProfile
 			$parameters | Add-Property -Name "skip_validation" -Value $true
 		}
 			
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Get-InstanceProfile
+Function Get-DatabricksInstanceProfile
 {
 	<#
 			.SYNOPSIS
@@ -68,13 +68,13 @@ Function Get-InstanceProfile
 		#Set parameters
 		$parameters = @{}
 			
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.instance_profiles
 	}
 }
 
-Function Remove-InstanceProfile
+Function Remove-DatabricksInstanceProfile
 {
 	<#
 			.SYNOPSIS
@@ -104,7 +104,7 @@ Function Remove-InstanceProfile
 			instance_profile_arn = $InstanceProfileARN 
 		}
 			
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.instance_profiles
 	}

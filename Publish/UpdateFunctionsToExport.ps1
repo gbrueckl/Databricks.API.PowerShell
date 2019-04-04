@@ -9,7 +9,8 @@ else {
 $moduleName = $ModuleName = (Get-ChildItem "$rootPath\Modules")[0].Name
 $psdFilePath = "$rootPath\Modules\$moduleName\$moduleName.psd1"
 
-$PublicFunctions  = @( Get-ChildItem -Path "$rootPath\Modules\$moduleName\Public\*.ps1" -ErrorAction SilentlyContinue )
+$PublicFunctions = @( Get-ChildItem -Path "$rootPath\Modules\$moduleName\Public\*.ps1" -ErrorAction SilentlyContinue )
+$PublicFunctions = $PublicFunctions | Where-Object { $_.Name -inotlike "*-PREVIEW.ps1" }
 
 $exportedCmdlets = @()
 foreach($import in $PublicFunctions)
@@ -39,7 +40,7 @@ if($matches.Groups[1])
 	Write-Information "DefaultCommandPrefix: $cmdletPrefix"
 }
 
-# find "cmdletsToExport" and replace them with currently existing functions
+# find "FunctionsToExport" and replace them with currently existing functions
 $regEx = '(FunctionsToExport\s*=\s*@\()([^\)]*)(\))' # use 3 groups of which the second is replaced using Regex-Replace
 $matches = [regex]::Matches($psdContent, $regEx)
 

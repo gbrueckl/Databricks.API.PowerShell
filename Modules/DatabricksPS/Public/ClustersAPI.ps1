@@ -1,5 +1,5 @@
 #requires -Version 3.0
-Function Add-Cluster
+Function Add-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -124,12 +124,12 @@ Function Add-Cluster
 		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
 	} 
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 	
 	return $result
 }
 
-Function Update-Cluster
+Function Update-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -261,12 +261,12 @@ Function Update-Cluster
 		"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Start-Cluster
+Function Start-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -296,13 +296,13 @@ Function Start-Cluster
 			cluster_id = $ClusterID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Restart-Cluster
+Function Restart-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -332,13 +332,13 @@ Function Restart-Cluster
 			cluster_id = $ClusterID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Stop-Cluster
+Function Stop-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -368,13 +368,13 @@ Function Stop-Cluster
 			cluster_id = $ClusterID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Remove-Cluster
+Function Remove-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -404,13 +404,13 @@ Function Remove-Cluster
 			cluster_id = $ClusterID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Get-Cluster
+Function Get-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -462,7 +462,7 @@ Function Get-Cluster
 	}
 }
 
-Function Pin-Cluster			
+Function Pin-DatabricksCluster			
 {
 	<#
 			.SYNOPSIS
@@ -492,13 +492,13 @@ Function Pin-Cluster
 			cluster_id = $ClusterID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Unpin-Cluster
+Function Unpin-DatabricksCluster
 {
 	<#
 			.SYNOPSIS
@@ -528,13 +528,13 @@ Function Unpin-Cluster
 			cluster_id = $ClusterID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Get-ClusterEvent
+Function Get-DatabricksClusterEvent
 {
 	<#
 			.SYNOPSIS
@@ -589,13 +589,13 @@ Function Get-ClusterEvent
 		$parameters | Add-Property  -Name "offset" -Value $Offset -NullValue -1
 		$parameters | Add-Property  -Name "limit" -Value $Limit -NullValue -1
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Get-NodeType
+Function Get-DatabricksNodeType
 {
 	<#
 			.SYNOPSIS
@@ -617,12 +617,12 @@ Function Get-NodeType
 	#Set parameters
 	$parameters = @{}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.node_types
 }
 
-Function Get-Zone
+Function Get-DatabricksZone
 {
 	<#
 			.SYNOPSIS
@@ -651,12 +651,12 @@ Function Get-Zone
 	#Set parameters
 	$parameters = @{}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
-Function Get-SparkVersion
+Function Get-DatabricksSparkVersion
 {
 	<#
 			.SYNOPSIS
@@ -678,7 +678,7 @@ Function Get-SparkVersion
 	#Set parameters
 	$parameters = @{}
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.versions
 }

@@ -1,4 +1,4 @@
-Function Add-ApiToken
+Function Add-DatabricksApiToken
 {
 	<#
 			.SYNOPSIS
@@ -32,14 +32,14 @@ Function Add-ApiToken
 		$parameters | Add-Property -Name "lifetime_seconds" -Value $LifetimeSeconds -NullValue -1
 		$parameters | Add-Property -Name "comment" -Value $Comment 
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Get-ApiToken
+Function Get-DatabricksApiToken
 {
 	<#
 			.SYNOPSIS
@@ -62,14 +62,14 @@ Function Get-ApiToken
 		#Set parameters
 		$parameters = @{}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.token_infos
 	}
 }
 
 
-Function Remove-ApiToken
+Function Remove-DatabricksApiToken
 {
 	<#
 			.SYNOPSIS
@@ -99,7 +99,7 @@ Function Remove-ApiToken
 			token_id = $TokenID 
 		}
 	
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}

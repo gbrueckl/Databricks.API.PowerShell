@@ -1,6 +1,6 @@
 ﻿#requires -Version 3.0
 
-Function Invoke-ApiRequest
+Function Invoke-DatabricksApiRequest
 {
 	<#
 			.SYNOPSIS
@@ -16,7 +16,7 @@ Function Invoke-ApiRequest
 			.PARAMETER Body
 			Some endpoints also support a body to supply additional information. This can be specified here. For POST requests, this is usually a JSON-string whereas for GET it is usually a hashtable which is then converted to URL parameters
 			.EXAMPLE
-			Invoke-ApiRequest -Method GET -EndPoint "/2.0/jobs/list"
+			Invoke-DatabricksApiRequest -Method GET -EndPoint "/2.0/jobs/list"
 	#>
 	[CmdletBinding()]
 	param 
@@ -57,7 +57,7 @@ Function Invoke-ApiRequest
 	return $result
 }
 
-Function Set-Environment 
+Function Set-DatabricksEnvironment 
 {
 	<#
 			.SYNOPSIS
@@ -79,7 +79,7 @@ Function Set-Environment
 			
 			.EXAMPLE
 			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
-.EXAMPLE
+			.EXAMPLE
 			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://westeurope.azuredatabricks.net"
 	#>
 	[CmdletBinding()]
@@ -154,7 +154,7 @@ Function Set-Environment
 	$script:dbInitialized = $true
 }
 
-Function Test-Environment
+Function Test-DatabricksEnvironment
 {
 	<#
 			.SYNOPSIS
@@ -177,7 +177,7 @@ Function Test-Environment
 		path = "/" 
 	}
 	
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result.files
 }

@@ -1,5 +1,5 @@
 #requires -Version 3.0
-Function Add-Job
+Function Add-DatabricksJob
 {
 	<#
 			.SYNOPSIS
@@ -177,11 +177,11 @@ Function Add-Job
 	$parameters | Add-Property -Name "schedule" -Value $Schedule
 	$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
-Function Get-Job
+Function Get-DatabricksJob
 {
 	<#
 			.SYNOPSIS
@@ -218,7 +218,7 @@ Function Get-Job
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		$parameters = @{}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		if($JobID -ne -1)
 		{
@@ -233,7 +233,7 @@ Function Get-Job
 	}
 }
 
-Function Remove-Job
+Function Remove-DatabricksJob
 {
 	<#
 			.SYNOPSIS
@@ -263,13 +263,13 @@ Function Remove-Job
 			job_id = $JobID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Update-Job
+Function Update-DatabricksJob
 {
 	<#
 			.SYNOPSIS
@@ -305,13 +305,13 @@ Function Update-Job
 			new_settings = $NewSettings 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function Start-Job
+Function Start-DatabricksJob
 {
 	<#
 			.SYNOPSIS
@@ -361,13 +361,13 @@ Function Start-Job
 		$parameters | Add-Property  -Name "python_params" -Value $PythonParams
 		$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
-Function New-JobRun
+Function New-DatabricksJobRun
 {
 	<#
 			.SYNOPSIS
@@ -533,13 +533,13 @@ Function New-JobRun
 	$parameters | Add-Property -Name "libraries" -Value $Libraries
 	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds
 
-	$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
 }
 
 
-Function Get-JobRun
+Function Get-DatabricksJobRun
 {
 	<#
 			.SYNOPSIS
@@ -603,7 +603,7 @@ Function Get-JobRun
 			}
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		switch ($PSCmdlet.ParameterSetName) 
 		{ 
@@ -614,7 +614,7 @@ Function Get-JobRun
 }
 
 
-Function Export-JobRun
+Function Export-DatabricksJobRun
 {
 	<#
 			.SYNOPSIS
@@ -648,14 +648,14 @@ Function Export-JobRun
 			views_to_export = $ViewsToExport 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result.views
 	}
 }
 
 
-Function Stop-JobRun
+Function Stop-DatabricksJobRun
 {
 	<#
 			.SYNOPSIS
@@ -685,14 +685,14 @@ Function Stop-JobRun
 			run_id = $JobRunID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Get-JobRunOutput
+Function Get-DatabricksJobRunOutput
 {
 	<#
 			.SYNOPSIS
@@ -722,14 +722,14 @@ Function Get-JobRunOutput
 			run_id = $JobRunID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
 }
 
 
-Function Remove-JobRun
+Function Remove-DatabricksJobRun
 {
 	<#
 			.SYNOPSIS
@@ -759,7 +759,7 @@ Function Remove-JobRun
 			run_id = $JobRunID 
 		}
 
-		$result = Invoke-ApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 		return $result
 	}
