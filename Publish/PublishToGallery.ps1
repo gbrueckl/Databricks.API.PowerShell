@@ -14,7 +14,7 @@ else {
 $config = Get-Content "$rootPath\Publish\PublishConfig.json" | ConvertFrom-Json
 $ModuleName = (Get-ChildItem "$rootPath\Modules")[0].Name
 
-# update "CmdletsToExport" in psd1 file with latest/current functions
+# update "FunctionsToExport" in psd1 file with latest/current functions
 . "$rootPath\Publish\UpdateFunctionsToExport.ps1"
 
 

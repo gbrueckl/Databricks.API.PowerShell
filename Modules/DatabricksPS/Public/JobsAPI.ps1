@@ -15,6 +15,11 @@ Function Add-DatabricksJob
 	
 			.PARAMETER Libraries 
 			An optional list of libraries to be installed on the cluster that will execute the job. The default value is an empty list.
+			Sample:
+			$libraries = @(
+				@{"jar" = "dbfs:/jars/sqldb.jar"},
+				@{"maven" = @{"coordinates" = "org.jsoup:jsoup:1.7.2"} }
+			)
 			.PARAMETER TimeoutSeconds 
 			An optional timeout applied to each run of this job. The default behavior is to have no timeout.
 			.PARAMETER MaxRetries 
@@ -31,39 +36,50 @@ Function Add-DatabricksJob
 
 			.PARAMETER EmailNotifications 
 			An optional set of email addresses notified when runs of this job begin and complete and when this job is deleted. The default behavior is to not send any emails.
-			sample: 
+			Sample: 
 			$emailNotifications = @{
-			"on_start" = @("me@home.com", "you@home.com")
-			"on_success" = @()
-			"on_failure" = @("me@home.com")
+				"on_start" = @("me@home.com", "you@home.com")
+				"on_success" = @()
+				"on_failure" = @("me@home.com")
 			}
 			.PARAMETER Schedule 
 			An optional periodic schedule for this job. The default behavior is that the job runs when triggered by clicking Run Now in the Jobs UI or sending an API request to runNow.
 			Sample:
 			$schedule = @{
-			"quartz_cron_expression" = "0 15 22 ? * *"
-			"timezone_id" = "America/Los_Angeles"
+				"quartz_cron_expression" = "0 15 22 ? * *"
+				"timezone_id" = "America/Los_Angeles"
 			}
 			.PARAMETER NotebookPath
 			The Path of the notebook to execute.
 			.PARAMETER NotebookParameters
 			A hashtable containing the parameters to pass to the notebook
-			
+			Sample:
+			$notebookParams: @{
+				"dry-run" = "true",
+				"oldest-time-to-consider" = "1457570074236"
+			}
 			.PARAMETER PythonURI
 			The URI of the Python file to be executed. DBFS and S3 paths are supported. This field is required.
 			.PARAMETER PythonParameters
 			Command line parameters that will be passed to the Python file.
+			Sample:
+			$pythonParameters = @("john doe","35")
 
 			.PARAMETER JarURI
 			Deprecated since 04/2016. Provide a jar through the libraries field instead. For an example, see Create.
 			.PARAMETER JarMainClassName
 			The full name of the class containing the main method to be executed. This class must be contained in a JAR provided as a library.
 			The code should use SparkContext.getOrCreate to obtain a Spark context; otherwise, runs of the job will fail.
+			Sample:
+			$jarMainClassName = @{"main_class_name" = "com.databricks.ComputeModels"}
 			.PARAMETER JarParameters
 			Parameters that will be passed to the main method.
-
+			Sample:
+			$jarParameters = @("john doe","35")
 			.PARAMETER SparkParameters 
 			Command line parameters passed to spark submit.
+
+			.EXAMPLE
 			Add-DatabricksJob -Name "DatabricksPSTest" -ClusterID '1234-123456-abc789' -TimeoutSeconds 60 -NotebookPath '/Users/me@home.com/myNotebook'
 	#>
 	[CmdletBinding()]
@@ -74,7 +90,7 @@ Function Add-DatabricksJob
 		[Parameter(Mandatory = $false)] [string] $ClusterID,
 		[Parameter(Mandatory = $false)] [object] $NewClusterDefinition, 
  
-		[Parameter(Mandatory = $false)] [string[]] $Libraries, 
+		[Parameter(Mandatory = $false)] [hashtable[]] $Libraries, 
 		[Parameter(Mandatory = $false)] [int32] $TimeoutSeconds,
 		[Parameter(Mandatory = $false)] [int32] $MaxRetries,
 		[Parameter(Mandatory = $false)] [int32] $MinRetryIntervalMilliseconds,

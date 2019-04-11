@@ -50,7 +50,7 @@ Function Add-DatabricksCluster
 			Allows you to explicitly set the Python version for the cluster by adding the entry 'PYSPARK_PYTHON' to the SparkEnvVars parameter. Default is Python 2 (2.7) 
 			For details please refer to https://docs.azuredatabricks.net/user-guide/clusters/python3.html
 			.EXAMPLE
-			Add-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id 'Standard_DS3_v2'
+			Add-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId 'Standard_DS3_v2'
 	#>
 	[CmdletBinding()]
 	param
@@ -73,7 +73,8 @@ Function Add-DatabricksCluster
 		[Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
 		[Parameter(Mandatory = $false, Position = 13)] [int32] $AutoterminationMinutes, 
 		[Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk,
-		[Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion
+		[Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion = "3 (3.5)",
+		[Parameter(Mandatory = $false, Position = 16)] [string] [ValidateSet("HighConcurrency", "Standard")] $ClusterMode
 	)
 
 	$requestMethod = "POST"
@@ -102,6 +103,20 @@ Function Add-DatabricksCluster
 			'3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
 		}
 		Write-Verbose "PythonVersion set to $PythonVersion"
+	}
+	
+	if($ClusterMode) # check if a ClusterMode was explicitly specified
+	{
+		if(-not $CustomTags) # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
+		{
+			$CustomTags = @{}
+		}
+		switch($ClusterMode) # set PYSPARK_PYTHON environment variable accordingly
+		{ 
+			'Standard'  { $CustomTags | Add-Property -Name "ResourceClass" -Value "Standard" -Force } 
+			'HighConcurrency'  { $CustomTags | Add-Property -Name "ResourceClass" -Value "Serverless" -Force }
+		}
+		Write-Verbose "ClusterMode set to $ClusterMode"
 	}
 
 	$parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
@@ -184,7 +199,7 @@ Function Update-DatabricksCluster
 			.PARAMETER EnableElasticDisk 
 			Autoscaling Local Storage: when enabled, this cluster will dynamically acquire additional disk space when its Spark workers are running low on disk space. This feature requires specific AWS permissions to function correctly - refer to Autoscaling local storage for details.
 			.EXAMPLE
-			Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -Node_Type_Id "i3.xlarge"
+			Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId "i3.xlarge"
 	#>
 	[CmdletBinding()]
 	param
