@@ -49,6 +49,9 @@ Function Add-DatabricksCluster
 			.PARAMETER PythonVersion 
 			Allows you to explicitly set the Python version for the cluster by adding the entry 'PYSPARK_PYTHON' to the SparkEnvVars parameter. Default is Python 2 (2.7) 
 			For details please refer to https://docs.azuredatabricks.net/user-guide/clusters/python3.html
+			.OUTPUTS
+			PsObject with property:
+			- cluster_id
 			.EXAMPLE
 			Add-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId 'Standard_DS3_v2'
 	#>
@@ -440,6 +443,33 @@ Function Get-DatabricksCluster
 			.EXAMPLE
 			#AUTOMATED_TEST:List existing clusters
 			Get-DatabricksCluster
+			.OUTPUTS
+			PsObject with property:
+			- autotermination_minutes
+			- cluster_cores
+			- cluster_id
+			- cluster_memory_mb
+			- cluster_name
+			- cluster_source
+			- creator_user_name
+			- default_tags
+			- driver
+			- driver_node_type_id
+			- enable_elastic_disk
+			- executors
+			- init_scripts_save_mode
+			- jdbc_port
+			- last_activity_time
+			- last_state_loss_time
+			- node_type_id
+			- num_workers
+			- spark_context_id
+			- spark_env_vars
+			- spart_version
+			- start_time
+			- state
+			- state_message
+			- terminated_time
 	#>
 	[CmdletBinding()]
 	param
