@@ -189,7 +189,9 @@ Function Add-DatabricksJob
 	$parameters | Add-Property -Name "max_retries" -Value $MaxRetries
 	$parameters | Add-Property -Name "min_retry_interval_millis" -Value $MinRetryIntervalMilliseconds
 	$parameters | Add-Property -Name "retry_on_timeout" -Value $RetryOnTimeout
-	$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns
+	if ( $MaxConcurrentRuns -ne $null ) {
+		$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns
+	}
 	$parameters | Add-Property -Name "schedule" -Value $Schedule
 	$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
 
