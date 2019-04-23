@@ -79,7 +79,7 @@ Function Add-DatabricksJob
 			.PARAMETER SparkParameters 
 			Command line parameters passed to spark submit.
 			.OUTPUT
-			PSObject:
+			PSObject with the following properties
 			- job_id
 			.EXAMPLE
 			Add-DatabricksJob -Name "DatabricksPSTest" -ClusterID '1234-123456-abc789' -TimeoutSeconds 60 -NotebookPath '/Users/me@home.com/myNotebook'
@@ -210,6 +210,10 @@ Function Get-DatabricksJob
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
 			.PARAMETER JobID 
 			The canonical identifier of the job retrieve. This field is optional and can be used as a filter on one particular job id.
+			.OUTPUT
+			List of PSObjects with the following properties
+			- job_id
+			- settings
 			.EXAMPLE
 			Get-DatabricksJob -JobID 123
 			.EXAMPLE
@@ -261,6 +265,8 @@ Function Remove-DatabricksJob
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#delete
 			.PARAMETER JobID 
 			The canonical identifier of the job to delete. This field is required.
+			.OUTPUT
+			None
 			.EXAMPLE
 			Remove-DatabricksJob -JobID <JobID>
 	#>
@@ -282,8 +288,9 @@ Function Remove-DatabricksJob
 		}
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-		return $result
+		
+		# This API call does not return any result
+		#return $result
 	}
 }
 
@@ -301,6 +308,8 @@ Function Update-DatabricksJob
 			The new settings of the job. These new settings replace the old settings entirely.
 			Changes to the following fields are not applied to active runs: JobSettings.cluster_spec or JobSettings.task.
 			Changes to the following fields are applied to active runs as well as future runs: JobSettings.timeout_second, JobSettings.email_notifications, or JobSettings.retry_policy. This field is required.
+			.OUTPUTS
+			None
 			.EXAMPLE
 			Update-DatabricksJob -JobID 1 -NewSettings <new_settings>
 	#>
@@ -325,7 +334,8 @@ Function Update-DatabricksJob
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# This API call does not return any result
+		# return $result 
 	}
 }
 
@@ -350,17 +360,21 @@ Function Start-DatabricksJob
 			A list of parameters for jobs with Python tasks, e.g. "python_params": ["john doe", "35"]. The parameters will be passed to Python file as command line parameters. If specified upon run-now, it would overwrite the parameters specified in job setting. The JSON representation of this field (i.e. {"python_params":["john doe","35"]}) cannot exceed 10,000 bytes.
 			.PARAMETER SparkSubmitParams 
 			A list of parameters for jobs with spark submit task, e.g. "spark_submit_params": ["--class", "org.apache.spark.examples.SparkPi"]. The parameters will be passed to spark-submit script as command line parameters. If specified upon run-now, it would overwrite the parameters specified in job setting. The JSON representation of this field cannot exceed 10,000 bytes.
+			.OUTPUTS
+			PSObject with the following properties:
+			- run_id
+			- number_in_job
 			.EXAMPLE
-			Start-DatabricksJob -JobID <JobID> -NotebookParams @{ param1 : 123, param2 : "MyTextParam" }
+			Start-DatabricksJob -JobID <JobID> -NotebookParams @{ param1 = 123; param2 = "MyTextParam" }
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(DefaultParametersetname="Jar")]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
-		[Parameter(Mandatory = $false, Position = 2)] [string[]] $JarParams = @(), 
-		[Parameter(Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @{}, 
-		[Parameter(Mandatory = $false, Position = 4)] [string[]] $PythonParams = @(), 
-		[Parameter(Mandatory = $false, Position = 5)] [string[]] $SparkSubmitParams = @()
+		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 2)] [string[]] $JarParams = @(), 
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @{}, 
+		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 4)] [string[]] $PythonParams = @(), 
+		[Parameter(ParameterSetName = "Spark", Mandatory = $false, Position = 5)] [string[]] $SparkSubmitParams = @()
 	)
 	begin {
 		$requestMethod = "POST"
@@ -374,10 +388,10 @@ Function Start-DatabricksJob
 			job_id = $JobID 
 		}
 	
-		$parameters | Add-Property  -Name "jar_params" -Value $JarParams
-		$parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams
-		$parameters | Add-Property  -Name "python_params" -Value $PythonParams
-		$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams
+		$parameters | Add-Property  -Name "jar_params" -Value $JarParams -NullValue @()
+		$parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams -NullValue @{}
+		$parameters | Add-Property  -Name "python_params" -Value $PythonParams -NullValue @()
+		$parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams -NullValue @()
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
@@ -423,19 +437,23 @@ Function New-DatabricksJobRun
 			An optional name for the run. The default value is Untitled.
 			.PARAMETER Libraries 
 			An optional list of libraries to be installed on the cluster that will execute the job. The default value is an empty list.
-			.PARAMETER Timeout_Seconds 
+			.PARAMETER TimeoutSeconds 
 			An optional timeout applied to each run of this job. The default behavior is to have no timeout.
+			.OUTPUTS
+			PSObject with the following properties:
+			- run_id
+			- number_in_job
 			.EXAMPLE
 			New-DatabricksJobRun -ClusterID "1234-asdfae-1234" -NotebookPath "/Shared/MyNotebook" -RunName "MyJobRun" -TimeoutSeconds 300
 	#>
 	
-	[CmdletBinding()]
+	[CmdletBinding(DefaultParametersetname="JarJob")]
 	param
 	(
 		[Parameter(ParameterSetName = "NotebookJob", Mandatory = $true)]
 		[Parameter(ParameterSetName = "PythonkJob", Mandatory = $true)]
 		[Parameter(ParameterSetName = "JarJob", Mandatory = $true)]
-		[Parameter(ParameterSetName = "SparkJob", Mandatory = $true)] [int32] $JobID,
+		[Parameter(ParameterSetName = "SparkJob", Mandatory = $true)] [int64] $JobID,
 		
 		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
 		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)]
@@ -455,20 +473,20 @@ Function New-DatabricksJobRun
 		
 		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1)] [object] $NewClusterDefinition, 
 		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)]
-		[Parameter(ParameterSetName = "SparkJob", Mandatory = $true, Position = 2)] [string] $SparkParameters, 
+		[Parameter(ParameterSetName = "SparkJob", Mandatory = $false, Position = 2)] [string] $SparkParameters, 
 		
 		# generic parameters
 		[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID, 
 		[Parameter(Mandatory = $false, Position = 4)] [string] $RunName, 
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $Libraries, 
-		[Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds
+		[Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds = -1
 	)
 	
 	$requestMethod = "POST"
 	$apiEndpoint = "/2.0/jobs/runs/submit"
 	if($PSCmdlet.ParameterSetName.EndsWith("Job"))
 	{
-		$apiEndpoint = "/2.0/jobs/runs/now"
+		$apiEndpoint = "/2.0/jobs/run-now"
 	}
 
 	Write-Verbose "Building Body/Parameters for final API call ..."
@@ -549,8 +567,9 @@ Function New-DatabricksJobRun
 	
 	$parameters | Add-Property -Name "run_name" -Value $RunName
 	$parameters | Add-Property -Name "libraries" -Value $Libraries
-	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds
+	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1
 
+	$parameters | convertto-json -Depth 100
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
@@ -579,6 +598,26 @@ Function Get-DatabricksJobRun
 			The offset of the first run to return, relative to the most recent run.
 			.PARAMETER Limit 
 			The number of runs to return. This value should be greater than 0 and less than 1000. The default value is 20. If a request specifies a limit of 0, the service will instead use the maximum limit.
+			.OUTPUTS
+			PSObject with the following properties:
+			- job_id
+			- run_id
+			- number_in_job
+			- original_attempt_run_id
+			- state 
+			- schedule
+			- task
+			- cluster_spec
+			- cluster_instance
+			- start_time
+			- setup_duration
+			- execution_duration
+			- cleanup_duration
+			- trigger
+			- creator_user_name
+			- run_name
+			- run_page_url
+			- run_type
 			.EXAMPLE
 			Get-DatabricksJobRun -Active_Only OR Completed_Only <active_only OR completed_only> -JobID <JobID> -Offset <offset> -Limit <limit>
 	#>
@@ -644,6 +683,11 @@ Function Export-DatabricksJobRun
 			The canonical identifier for the run. This field is required.
 			.PARAMETER Views_To_Export 
 			Which views to export (CODE, DASHBOARDS, or ALL). Defaults to CODE.
+			.OUTPUTS
+			List of PSObject with the following properties:
+			- content
+			- name
+			- type
 			.EXAMPLE
 			Export-DatabricksJobRun -JobRunID 1 -ViewsToExport All
 	#>
@@ -683,6 +727,8 @@ Function Stop-DatabricksJobRun
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-cancel
 			.PARAMETER JobRunID 
 			The canonical identifier for the run to cancel. This field is required.
+			.OUTPUTS
+			None
 			.EXAMPLE
 			Stop-DatabricksJobRun -JobRunID 1
 	#>
@@ -705,7 +751,8 @@ Function Stop-DatabricksJobRun
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# This API call does not return any result
+		# return $result 
 	}
 }
 
@@ -720,6 +767,10 @@ Function Get-DatabricksJobRunOutput
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-get-output
 			.PARAMETER JobRunID 
 			The canonical identifier for the run. This field is required.
+			.OUTPUTS
+			PSObject with the following properties:
+			- metadata
+			- notebook_output OR error
 			.EXAMPLE
 			Get-DatabricksJobRunOutput -JobRunID 1
 	#>
@@ -757,6 +808,8 @@ Function Remove-DatabricksJobRun
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#runs-delete
 			.PARAMETER JobRunID 
 			The canonical identifier of the run for which to retrieve the metadata.
+			.OUTPUTS
+			None
 			.EXAMPLE
 			Remove-DatabricksJobRun -JobRunID 1
 	#>
@@ -779,6 +832,7 @@ Function Remove-DatabricksJobRun
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# This API call does not return any result
+		# return $result 
 	}
 }
