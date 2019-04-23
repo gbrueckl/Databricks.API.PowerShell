@@ -356,7 +356,7 @@ Function Start-DatabricksJob
 	(
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
 		[Parameter(Mandatory = $false, Position = 2)] [string[]] $JarParams = @(), 
-		[Parameter(Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @(), 
+		[Parameter(Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @{}, 
 		[Parameter(Mandatory = $false, Position = 4)] [string[]] $PythonParams = @(), 
 		[Parameter(Mandatory = $false, Position = 5)] [string[]] $SparkSubmitParams = @()
 	)
