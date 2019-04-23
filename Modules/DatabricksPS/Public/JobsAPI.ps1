@@ -78,7 +78,9 @@ Function Add-DatabricksJob
 			$jarParameters = @("john doe","35")
 			.PARAMETER SparkParameters 
 			Command line parameters passed to spark submit.
-
+			.OUTPUT
+			PSObject:
+			- job_id
 			.EXAMPLE
 			Add-DatabricksJob -Name "DatabricksPSTest" -ClusterID '1234-123456-abc789' -TimeoutSeconds 60 -NotebookPath '/Users/me@home.com/myNotebook'
 	#>
@@ -91,11 +93,11 @@ Function Add-DatabricksJob
 		[Parameter(Mandatory = $false)] [object] $NewClusterDefinition, 
  
 		[Parameter(Mandatory = $false)] [hashtable[]] $Libraries, 
-		[Parameter(Mandatory = $false)] [int32] $TimeoutSeconds,
-		[Parameter(Mandatory = $false)] [int32] $MaxRetries,
-		[Parameter(Mandatory = $false)] [int32] $MinRetryIntervalMilliseconds,
+		[Parameter(Mandatory = $false)] [int32] $TimeoutSeconds = -1,
+		[Parameter(Mandatory = $false)] [int32] $MaxRetries = -1,
+		[Parameter(Mandatory = $false)] [int32] $MinRetryIntervalMilliseconds = -1,
 		[Parameter(Mandatory = $false)] [bool] $RetryOnTimeout,
-		[Parameter(Mandatory = $false)] [int32] $MaxConcurrentRuns,
+		[Parameter(Mandatory = $false)] [int32] $MaxConcurrentRuns = -1,
 				
 		[Parameter(Mandatory = $false)] [object] $Schedule,
 				
@@ -185,11 +187,11 @@ Function Add-DatabricksJob
 	}
 	
 	$parameters | Add-Property -Name "libraries" -Value $Libraries
-	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds
-	$parameters | Add-Property -Name "max_retries" -Value $MaxRetries
-	$parameters | Add-Property -Name "min_retry_interval_millis" -Value $MinRetryIntervalMilliseconds
+	$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1
+	$parameters | Add-Property -Name "max_retries" -Value $MaxRetries -NullValue -1
+	$parameters | Add-Property -Name "min_retry_interval_millis" -Value $MinRetryIntervalMilliseconds -NullValue -1
 	$parameters | Add-Property -Name "retry_on_timeout" -Value $RetryOnTimeout
-	$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns
+	$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns -NullValue -1
 	$parameters | Add-Property -Name "schedule" -Value $Schedule
 	$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
 
