@@ -619,7 +619,7 @@ Function Get-DatabricksJobRun
 			- run_page_url
 			- run_type
 			.EXAMPLE
-			Get-DatabricksJobRun -Active_Only OR Completed_Only <active_only OR completed_only> -JobID <JobID> -Offset <offset> -Limit <limit>
+			Get-DatabricksJobRun -Filter ActiveOnly -JobID <JobID> -Offset <offset> -Limit <limit>
 	#>
 	[CmdletBinding(DefaultParametersetName = "ByJobId")]
 	param

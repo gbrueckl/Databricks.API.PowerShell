@@ -420,7 +420,7 @@ Function Upload-DatabricksFSFile
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath,
 		[Parameter(Mandatory = $false, Position = 3)] [bool] $Overwrite = $false,
-		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
+		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048000
 	)
 	
 	Write-Verbose "Creating new file in DBFS at $Path ..."

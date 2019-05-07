@@ -363,9 +363,6 @@ function ConvertTo-Hashtable
 			Converts a PowerShell object to a generic hashtable 
 			.PARAMETER InputObject
 			The object to convert to a hashtable
-			.EXAMPLE 
-			'RW5jb2RlIG1lIQ==' | ConvertTo-Base64 
-			Shows how you can pipeline input into `ConvertFrom-Base64`. 
 	#>
 	[CmdletBinding()]
 	param (
@@ -403,6 +400,36 @@ function ConvertTo-Hashtable
 		}
 	}
 }
+
+function ConvertTo-PSObject 
+{
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipeline = $true)] [hashtable] $InputObject, 
+		[Parameter()] [bool] $Recursive = $true
+	)
+
+	process
+	{
+		$output = New-Object PSCustomObject
+		foreach ($k in $InputObject.Keys)
+		{
+			if ($InputObject[$k] -is [hashtable] -and $Recursive)
+			{
+				Write-Host "Recursion! $k"
+				$value = ConvertTo-PSObject -InputObject $InputObject[$k] -Recursive $Recursive
+			}
+			else
+			{
+				$value = $InputObject[$k] 
+			}
+		
+			Add-Member -InputObject $output -MemberType NoteProperty -Name $k -Value $value 
+		}
+		return [PSCustomObject]$output
+	}
+}
+	
 # TRY/CATCH with proper Error message on APIs
 #try { Invoke-RestMethod -Uri $Uri -Headers $Headers }
 #catch { ([System.IO.StreamReader]$_.Exception.Response.GetResponseStream()).ReadToEnd() }

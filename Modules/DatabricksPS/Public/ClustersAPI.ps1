@@ -28,7 +28,7 @@ Function Add-DatabricksCluster
 			Attributes related to clusters running on Amazon Web Services. If not specified at cluster creation, a set of default values will be used.
 			.PARAMETER NodeTypeId 
 			This field encodes, through a single value, the resources available to each of the Spark nodes in this cluster. For example, the Spark nodes can be provisioned and optimized for memory or compute intensive workloads A list of available node types can be retrieved by using the List Node Types API call. This field is required.
-			.PARAMETER Drive_NodeTypeId 
+			.PARAMETER DriverNodeTypeId 
 			The node type of the Spark driver. Note that this field is optional; if unset, the driver node type will be set as the same value as node_type_id defined above.
 			.PARAMETER SshPublicKeys 
 			SSH public key contents that will be added to each Spark node in this cluster. The corresponding private keys can be used to login with the user name ubuntu on port 2200. Up to 10 keys can be specified.
@@ -40,6 +40,7 @@ Function Add-DatabricksCluster
 			The configuration for delivering Spark logs to a long-term storage destination. Only one destination can be specified for one cluster. If the conf is given, the logs will be delivered to the destination every 5 mins. The destination of driver logs is <destination>/<cluster-id>/driver, while the destination of executor logs is <destination>/<cluster-id>/executor.
 			.PARAMETER InitScripts 
 			The configuration for storing init scripts. Any number of destinations can be specified. The scripts are executed sequentially in the order provided. If cluster_log_conf is specified, init script logs are sent to <destination>/<cluster-id>/init_scripts.
+			$init_scripts = @( @{ "dbfs" = @{ "destination" = "dbfs:/databricks/my-init-script.sh"; }; } )
 			.PARAMETER SparkEnvVars 
 			An object containing a set of optional, user-specified environment variable key-value pairs. Key-value pairs of the form (X,Y) are exported as is (i.e., export X='Y') while launching the driver and workers. In order to specify an additional set of SPARK_DAEMON_JAVA_OPTS, we recommend appending them to $SPARK_DAEMON_JAVA_OPTS as shown in the example below. This ensures that all default databricks managed environmental variables are included as well. Example Spark environment variables: {"SPARK_WORKER_MEMORY": "28000m", "SPARK_LOCAL_DIRS": "/local_disk0"} or {"SPARK_DAEMON_JAVA_OPTS": "$SPARK_DAEMON_JAVA_OPTS -Dspark.shuffle.service.enabled=true"}
 			.PARAMETER AutoterminationMinutes 
@@ -192,6 +193,7 @@ Function Update-DatabricksCluster
 			The configuration for delivering Spark logs to a long-term storage destination. Only one destination can be specified for one cluster. If the conf is given, the logs will be delivered to the destination every 5 mins. The destination of driver logs is <destination>/<cluster-id>/driver, while the destination of executor logs is <destination>/<cluster-id>/executor.
 			.PARAMETER InitScripts 
 			The configuration for storing init scripts. Any number of destinations can be specified. The scripts are executed sequentially in the order provided. If cluster_log_conf is specified, init script logs are sent to <destination>/<cluster-id>/init_scripts.
+			$init_scripts = @( @{ "dbfs" = @{ "destination" = "dbfs:/databricks/my-init-script.sh"; }; } )
 			.PARAMETER SparkEnvVars 
 			An object containing a set of optional, user-specified environment variable key-value pairs. Key-value pairs of the form (X,Y) are exported as is (i.e., export X='Y') while launching the driver and workers. In order to specify an additional set of SPARK_DAEMON_JAVA_OPTS, we recommend appending them to $SPARK_DAEMON_JAVA_OPTS as shown in the example below. This ensures that all default databricks managed environmental variables are included as well. Example Spark environment variables: {"SPARK_WORKER_MEMORY": "28000m", "SPARK_LOCAL_DIRS": "/local_disk0"} or {"SPARK_DAEMON_JAVA_OPTS": "$SPARK_DAEMON_JAVA_OPTS -Dspark.shuffle.service.enabled=true"}
 			.PARAMETER AutoterminationMinutes 
@@ -201,7 +203,7 @@ Function Update-DatabricksCluster
 			.EXAMPLE
 			Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId "i3.xlarge"
 	#>
-	[CmdletBinding()]
+	[CmdletBinding(DefaultParametersetName = "FixedSize")]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
@@ -278,7 +280,7 @@ Function Update-DatabricksCluster
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+	return (ConvertTo-PSObject -InputObject $parameters)
 }
 
 Function Start-DatabricksCluster
