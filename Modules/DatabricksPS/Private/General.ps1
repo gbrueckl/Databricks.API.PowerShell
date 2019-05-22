@@ -416,7 +416,6 @@ function ConvertTo-PSObject
 		{
 			if ($InputObject[$k] -is [hashtable] -and $Recursive)
 			{
-				Write-Host "Recursion! $k"
 				$value = ConvertTo-PSObject -InputObject $InputObject[$k] -Recursive $Recursive
 			}
 			else
