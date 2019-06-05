@@ -375,13 +375,16 @@ function ConvertTo-Hashtable
 		
 		if ($null -eq $InputObject) { return $null }
 
-		if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string])
+		if (($InputObject -is [System.Collections.IEnumerable]) -and $InputObject -isnot [string])
 		{
-			$collection = @(
-				foreach ($object in $InputObject) { ConvertTo-Hashtable $object }
-			)
+			$collection = @()
+			
+			foreach ($object in $InputObject) 
+			{ 
+				$collection += ConvertTo-Hashtable $object 
+			}
 
-			Write-Output -NoEnumerate $collection
+			return $collection
 		}
 		elseif ($InputObject -is [PSCustomObject])
 		{
@@ -392,11 +395,11 @@ function ConvertTo-Hashtable
 				$hash[$property.Name] = ConvertTo-Hashtable $property.Value
 			}
 
-			$hash
+			return $hash
 		}
 		else
 		{
-			$InputObject
+			return $InputObject
 		}
 	}
 }

@@ -88,7 +88,11 @@ Function Add-DatabricksJob
 	param
 	(
 		# generic parameters
-		[Parameter(Mandatory = $true, Position = 1)] [string] $Name,
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 1)] 
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1)] [string] $Name,
+
 		[Parameter(Mandatory = $false)] [string] $ClusterID,
 		[Parameter(Mandatory = $false)] [object] $NewClusterDefinition, 
  
@@ -96,12 +100,14 @@ Function Add-DatabricksJob
 		[Parameter(Mandatory = $false)] [int32] $TimeoutSeconds = -1,
 		[Parameter(Mandatory = $false)] [int32] $MaxRetries = -1,
 		[Parameter(Mandatory = $false)] [int32] $MinRetryIntervalMilliseconds = -1,
-		[Parameter(Mandatory = $false)] [bool] $RetryOnTimeout,
+		[Parameter(Mandatory = $false)] [nullable[bool]] $RetryOnTimeout,
 		[Parameter(Mandatory = $false)] [int32] $MaxConcurrentRuns = -1,
 				
 		[Parameter(Mandatory = $false)] [object] $Schedule,
 				
 		[Parameter(Mandatory = $false)] [object] $EMailNotifications, 
+		
+		[Parameter(ParameterSetName = "JobDefinition", Mandatory = $true)] [object] $JobSettings,
 					
 		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
 		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
@@ -122,29 +128,37 @@ Function Add-DatabricksJob
 	$apiEndpoint = "/2.0/jobs/create"
 
 	#Set parameters
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	$parameters = @{}	
+	Write-Verbose "Building Body/Parameters for final API call ..."	
+	$parameters = @{}
 	
-	$parameters | Add-Property -Name "name" -Value $Name
+	$parameters | Add-Property -Name "name" -Value $Name -Force
 	
-			
-	if($NewClusterDefinition)
-	{
-		$parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
-	}
-	elseif($ClusterID)
-	{
-		$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
-	}
-	else
-	{
-		Write-Error "Either parameter NewClusterDefinition or parameter ClusterID have to be specified!"
+	if($PSCmdlet.ParameterSetName -ne "JobDefinition")
+	{		
+		if($NewClusterDefinition)
+		{
+			$parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
+		}
+		elseif($ClusterID)
+		{
+			$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+		}
+		else
+		{
+			Write-Error "Either parameter NewClusterDefinition or parameter ClusterID have to be specified!"
+		}
 	}
 			
 	switch ($PSCmdlet.ParameterSetName) 
 	{ 
+		"JobDefinition" {					
+			$parameters = $JobSettings | ConvertTo-Hashtable
+			
+			$parameters.email_notifications.on_success | ConvertTo-Hashtable
+		}
+		
 		"Notebook" {
-			$notebookTask =  @{ notebook_path = $NotebookPath }
+			$notebookTask = @{ notebook_path = $NotebookPath }
 			$notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
 
 			#Set parameters
@@ -153,7 +167,7 @@ Function Add-DatabricksJob
 		}
 		
 		"Jar" {
-			$jarTask =  @{ 
+			$jarTask = @{ 
 				jar_uri = $JarURI 
 				main_class_name = $JarMainClassName
 			}
@@ -165,7 +179,7 @@ Function Add-DatabricksJob
 		}
 		
 		"Python" {
-			$pythonTask =  @{ 
+			$pythonTask = @{ 
 				python_file = $PythonURI 
 			}
 			$pythonTask | Add-Property  -Name "parameters" -Value $PythonParameters
@@ -176,7 +190,7 @@ Function Add-DatabricksJob
 		}
 		
 		"Spark" {
-			$sparkTask =  @{ 
+			$sparkTask = @{ 
 				parameters = $SparkParameters 
 			}
 
@@ -194,7 +208,7 @@ Function Add-DatabricksJob
 	$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns -NullValue -1
 	$parameters | Add-Property -Name "schedule" -Value $Schedule
 	$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
-
+	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
 	return $result
@@ -367,7 +381,7 @@ Function Start-DatabricksJob
 			.EXAMPLE
 			Start-DatabricksJob -JobID <JobID> -NotebookParams @{ param1 = 123; param2 = "MyTextParam" }
 	#>
-	[CmdletBinding(DefaultParametersetname="Jar")]
+	[CmdletBinding(DefaultParametersetname = "Jar")]
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 

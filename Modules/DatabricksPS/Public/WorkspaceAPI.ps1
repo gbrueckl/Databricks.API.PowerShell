@@ -84,7 +84,7 @@ Function Export-DatabricksWorkspaceItem
 		{
 			$localFolder = Split-Path $LocalPath -Parent
 			Write-Verbose "Checking if Folder '$localFolder' exists ..."
-			If(-not (Test-Path $localFolder))
+			if(-not (Test-Path $localFolder))
 			{
 				Write-Verbose "Creating local folder '$localFolder' ..."
 				$x = New-Item -ItemType Directory -Force -Path $localFolder

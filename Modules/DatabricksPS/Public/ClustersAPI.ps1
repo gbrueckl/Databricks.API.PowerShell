@@ -60,7 +60,8 @@ Function Add-DatabricksCluster
 		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 1)] [int32] $MinWorkers, 
 		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MaxWorkers, 
 		
-		[Parameter(Mandatory = $false, Position = 3)] [object] $ClusterObject,
+		[Parameter(ParameterSetName = "ClusterObject", Mandatory = $false, Position = 3)] [object] $ClusterObject,
+		
 		[Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
 		[Parameter(Mandatory = $false, Position = 3)] [string] $SparkVersion, 
 		[Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
@@ -574,7 +575,11 @@ Function Get-DatabricksClusterEvent
 			.PARAMETER Limit 
 			The maximum number of events to include in a page of events. Defaults to 50, and maximum allowed value is 500.
 			.EXAMPLE
-			Get-ClusterEvent -Cluster_Id <cluster_id> -Start_Time <start_time> -End_Time <end_time> -Order <order> -Event_Types <event_types> -Offset <offset> -Limit <limit>
+			Get-ClusterEvent -ClusterID <cluster_id> -StartTime <start_time> -EndTime <end_time> -Order <order> -EventTypes <event_types> -Offset <offset> -Limit <limit>
+			.EXAMPLE
+			#AUTOMATED_TEST:Get cluster Events
+			$cluster = Get-DatabricksCluster
+			$cluster[0] | Get-DatabricksClusterEvent
 	#>
 	[CmdletBinding()]
 	param
@@ -588,7 +593,7 @@ Function Get-DatabricksClusterEvent
 		[Parameter(Mandatory = $false, Position = 7)] [int] $Limit = -1
 	)
 	begin {
-		$requestMethod = "GET"
+		$requestMethod = "POST"
 		$apiEndpoint = "/2.0/clusters/events"
 	}
 	

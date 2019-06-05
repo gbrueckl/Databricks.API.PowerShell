@@ -87,6 +87,10 @@ Function Get-DatabricksSecretScope
 			Official API Documentation: https://docs.databricks.com/api/latest/secrets.html#list-secret-scopes
 			.EXAMPLE
 			Get-DatabricksSecretScope
+			.EXAMPLE
+			#AUTOMATED_TEST:List Secret Scopes
+			Get-DatabricksSecretScope
+
 	#>
 	[CmdletBinding()]
 	param ()
@@ -217,6 +221,10 @@ Function Get-DatabricksSecret
 			The name of the scope whose secrets you want to list. This field is required.
 			.EXAMPLE
 			Get-DatabricksSecret -ScopeName "MyScope"
+			.EXAMPLE
+			#AUTOMATED_TEST:List cluster zones
+			$secretScopes = Get-DatabricksSecretScope
+			$secretScopes[0] | Get-DatabricksSecret
 	#>
 	[CmdletBinding()]
 	param
