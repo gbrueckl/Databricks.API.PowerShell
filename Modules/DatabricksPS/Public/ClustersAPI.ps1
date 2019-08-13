@@ -392,6 +392,58 @@ Function Stop-DatabricksCluster
 	}
 }
 
+Function Resize-DatabricksCluster
+{
+	<#
+			.SYNOPSIS
+			Resize a cluster to have a desired number of workers. This will fail unless the cluster is in a RUNNING state.
+			.DESCRIPTION
+			Resize a cluster to have a desired number of workers. This will fail unless the cluster is in a RUNNING state.
+			Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#resize
+			.PARAMETER ClusterID 
+			The cluster to be resized. This field is required.
+			.PARAMETER NumWorkers
+			Number of worker nodes that this cluster should have. A cluster has one Spark Driver and num_workers Executors for a total of num_workers + 1 Spark nodes.
+			Note: When reading the properties of a cluster, this field reflects the desired number of workers rather than the actual current number of workers. For instance, if a cluster is resized from 5 to 10 workers, this field will immediately be updated to reflect the target size of 10 workers, whereas the workers listed in spark_info will gradually increase from 5 to 10 as the new nodes are provisioned.
+			.PARAMETER MinWorkers 
+			The minimum number of workers to provision for this autoscale-enabled cluster.
+			.PARAMETER MaxWorkers 
+			The maximum number of workers to provision for this autoscale-enabled cluster.
+			.EXAMPLE
+			Resize-DatabricksCluster -ClusterID "1202-211320-brick1" -NumWorkers 10
+	#>
+	[CmdletBinding()]
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
+		[Parameter(ParameterSetName = "NumberOfWorkers", Mandatory = $true, Position = 2)] [int32] $NumWorkers,
+		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MinWorkers, 
+		[Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 3)] [int32] $MaxWorkers
+	)
+	begin {
+		$requestMethod = "POST"
+		$apiEndpoint = "/2.0/clusters/resize"
+	}
+	
+	process {
+		Write-Verbose "Building Body/Parameters for final API call ..."
+		#Set parameters
+		$parameters = @{
+			cluster_id = $ClusterID 
+		}
+		
+		switch($PSCmdlet.ParameterSetName) 
+		{ 
+			"NumberOfWorkers"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+			"Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
+		} 
+
+		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+		return $result
+	}
+}
+
 Function Remove-DatabricksCluster
 {
 	<#
