@@ -316,9 +316,9 @@ Function Update-DatabricksJob
 			.DESCRIPTION
 			Overwrites the settings of a job with the provided settings.
 			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#reset
-			.PARAMETER Job_Id 
+			.PARAMETER JobID 
 			The canonical identifier of the job to reset. This field is required.
-			.PARAMETER New_Settings 
+			.PARAMETER NewSettings 
 			The new settings of the job. These new settings replace the old settings entirely.
 			Changes to the following fields are not applied to active runs: JobSettings.cluster_spec or JobSettings.task.
 			Changes to the following fields are applied to active runs as well as future runs: JobSettings.timeout_second, JobSettings.email_notifications, or JobSettings.retry_policy. This field is required.

@@ -18,8 +18,8 @@ Function Add-DatabricksGroupMember
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(ParameterSetName = "AddUser", Mandatory = $true, Position = 1)] [string] $UserName,
-		[Parameter(ParameterSetName = "AddGroup", Mandatory = $true, Position = 1)] [string] $GroupName, 
+		[Parameter(ParameterSetName = "AddUser", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("user_name")] [string] $UserName,
+		[Parameter(ParameterSetName = "AddGroup", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("group_name")] [string] $GroupName, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $ParentGroupName
 	)
 	begin {
@@ -41,8 +41,9 @@ Function Add-DatabricksGroupMember
 		}
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-		return $result
+		
+		# this call does not return any results
+		#return $result
 	}
 }
 
@@ -93,13 +94,17 @@ Function Get-DatabricksGroupMember
 			Official API Documentation: https://docs.databricks.com/api/latest/groups.html#list-members
 			.PARAMETER GroupName 
 			The group whose members we want to retrieve. This field is required.
+			.PARAMETER LegacyOutput 
+			The legacy output only shows user_name or group_name (whatever appears first). However, the returned object still contains both properties!
+			The new (non-legacy) output is a hashtable showing all information/members.
 			.EXAMPLE
 			Get-DatabricksGroupMember -GroupName "Data Scientists"
 	#>
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name")] [string] $GroupName
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name")] [string] $GroupName,
+		[Parameter(Mandatory = $false)] [switch] $LegacyOutput
 	)
 	
 	begin {
@@ -115,8 +120,16 @@ Function Get-DatabricksGroupMember
 		}
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-		
-		return $result.members
+
+		if($LegacyOutput)
+		{
+			return $result.members
+		}
+		else
+		{
+			# we need to conver the result to a hash-table as otherwise the object does not show "group_name" even though groups would exist
+			return $result.members | ConvertTo-Hashtable
+		}
 	}
 }
 

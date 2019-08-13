@@ -16,8 +16,8 @@ Function Add-DatabricksSecretScope
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
-		[Parameter(Mandatory = $false, Position = 2)] [string] $InitialManagePrincipal = $null
+		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [string] [Alias("scope", "name", "scope_name")] $ScopeName, 
+		[Parameter(Mandatory = $false, Position = 2, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null
 	)
 	begin {
 		$requestMethod = "POST"
@@ -35,7 +35,8 @@ Function Add-DatabricksSecretScope
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 
@@ -72,7 +73,8 @@ Function Remove-DatabricksSecretScope
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 
@@ -131,11 +133,11 @@ Function Add-DatabricksSecret
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope")] [string] $ScopeName, 
-		[Parameter(Mandatory = $true, Position = 2)] [string] $SecretName,
+		[Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("key")] [string] $SecretName,
 		
-		[Parameter(ParameterSetName = "StringValue", Mandatory = $true, Position = 3)] [string] $StringValue, 
+		[Parameter(ParameterSetName = "StringValue", Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("string_value", "new_string_value")] [string] $StringValue, 
 		
-		[Parameter(ParameterSetName = "BytesValue", Mandatory = $true, Position = 3)] [byte[]] $BytesValue
+		[Parameter(ParameterSetName = "BytesValue", Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("bytes_value", "new_bytes_value")] [byte[]] $BytesValue
 	)
 	begin {
 		$requestMethod = "POST"
@@ -164,7 +166,8 @@ Function Add-DatabricksSecret
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 
@@ -204,7 +207,8 @@ Function Remove-DatabricksSecret
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 
@@ -271,8 +275,8 @@ Function Add-DatabricksSecretScopeACL
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
-		[Parameter(Mandatory = $true, Position = 2)] [string] $Principal, 
-		[Parameter(Mandatory = $true, Position = 3)] [string] [ValidateSet("Manage", "Read", "Write")] $Permission
+		[Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $Principal, 
+		[Parameter(Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [string] [ValidateSet("Manage", "Read", "Write")] $Permission
 	)
 	begin {
 		$requestMethod = "POST"
@@ -285,12 +289,13 @@ Function Add-DatabricksSecretScopeACL
 		$parameters = @{
 			scope = $ScopeName 
 			principal = $Principal 
-			permission = $Permission 
+			permission = $Permission.ToUpper() 
 		}
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 
@@ -331,7 +336,8 @@ Function Remove-DatabricksSecretScopeACL
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 

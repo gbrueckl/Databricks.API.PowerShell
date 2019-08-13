@@ -424,7 +424,8 @@ Function Remove-DatabricksCluster
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
+		# this call does not return any results
+		#return $result
 	}
 }
 
