@@ -1,6 +1,4 @@
-﻿#requires -Version 3.0
-
-Function Invoke-DatabricksApiRequest
+﻿Function Invoke-DatabricksApiRequest
 {
 	<#
 			.SYNOPSIS

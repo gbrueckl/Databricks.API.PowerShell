@@ -32,7 +32,7 @@ $psdContent = Get-Content $psdFilePath -Raw
 
 $cmdletPrefix = ''
 # find "DefaultCommandPrefix"
-$regEx = "DefaultCommandPrefix\s*=\s*[`"']{1}(\S*)[`"']{1}" # use 3 groups of which the second is replaced using Regex-Replace
+$regEx = "DefaultCommandPrefix\s*=\s*[`"']{1}(\S*)[`"']{1}" 
 $matches = [regex]::Matches($psdContent, $regEx)
 if($matches.Groups[1])
 {

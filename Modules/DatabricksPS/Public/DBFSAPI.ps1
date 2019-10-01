@@ -1,4 +1,3 @@
-#requires -Version 3.0
 Function Add-DatabricksFSFile
 {
 	<#

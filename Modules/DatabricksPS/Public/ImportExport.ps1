@@ -1,5 +1,3 @@
-#requires -Version 3.0
-
 $FolderNameWorkspace = "Workspace"
 $FolderNameClusters = "Clusters"
 $FolderNameJobs = "Jobs"
@@ -50,25 +48,30 @@ Function Export-DatabricksEnvironment
 {
 	<#
 			.SYNOPSIS
-			Deletes an object or a directory (and optionally recursively deletes all objects in the directory). If path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST. If path is a non-empty directory and recursive is set to false, this call returns an error DIRECTORY_NOT_EMPTY. Object deletion cannot be undone and deleting a directory recursively is not atomic.
+			Exports the selected items of the Databricks workspace to a local path from where it can be imported again to a different Databricks workspace using Import-DatabricksEnvironment.
 			.DESCRIPTION
-			Deletes an object or a directory (and optionally recursively deletes all objects in the directory). If path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST. If path is a non-empty directory and recursive is set to false, this call returns an error DIRECTORY_NOT_EMPTY. Object deletion cannot be undone and deleting a directory recursively is not atomic.
-			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#delete
-			.PARAMETER Path 
-			The absolute path of the notebook or directory. This field is required.
-			.PARAMETER Recursive 
-			The flag that specifies whether to delete the object recursively. It is false by default. Please note this deleting directory is not atomic. If it fails in the middle, some of objects under this directory may be deleted and cannot be undone.
+			Exports the selected items of the Databricks workspace to a local path from where it can be imported again to a different Databricks workspace using Import-DatabricksEnvironment.
+			.PARAMETER LocalPath 
+			The local path where the export should be stored.
+			.PARAMETER Artifacts
+			A list of objects that you want to export. The default is 'All' but you can also specify a list of artifacts like 'Clusters,Jobs,Secrets'
+			.PARAMETER CleanLocalPath 
+			The switch that can be used to clean the lcoal path before exporting the new content.
+			.PARAMETER WorkspaceRootPath 
+			The path of your workspace folder structure from which you want to start to recursivly export the files and folders in case you do not want to export all notebooks.
+			.PARAMETER WorkspaceExportFormat
+			The format in which the workspace items (=notebooks) should be exported. The default is 'DBC' which is also highly recommended if they are imported to another Databricks workspace again!
 			.EXAMPLE
-			Remove-DatabricksWorkspaceItem -Path <Path> -Recursive $false
+			Export-DatabricksEnvironment -LocalPath 'C:\MyExport\' -CleanLocalPath
 	#>
-	[CmdletBinding(DefaultParametersetname = "AllArtifacts")]
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
+		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets")] $Artifacts = @("All"),
 		[Parameter(Mandatory = $false)] [switch] $CleanLocalPath,
 		[Parameter(Mandatory = $false)] [string] $WorkspaceRootPath = "/",
 		[Parameter(Mandatory = $false)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $WorkspaceExportFormat = "DBC",
-		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets")] $Artifacts = @("All")
+		[Parameter(Mandatory = $false)] [switch] $ExportJobClusters
 	)
 	
 	if($Artifacts -ne @("Workspace"))
@@ -156,6 +159,11 @@ Function Export-DatabricksEnvironment
 		}
 	
 		$clusters = Get-DatabricksCluster
+		
+		if(-not $ExportJobClusters)
+		{
+			$clusters = $clusters | Where-Object { $_.cluster_source -ne "JOB" }
+		}
 	
 		foreach($cluster in $clusters)
 		{
@@ -266,25 +274,36 @@ Function Import-DatabricksEnvironment
 {
 	<#
 			.SYNOPSIS
-			Deletes an object or a directory (and optionally recursively deletes all objects in the directory). If path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST. If path is a non-empty directory and recursive is set to false, this call returns an error DIRECTORY_NOT_EMPTY. Object deletion cannot be undone and deleting a directory recursively is not atomic.
+			Imports Databricks content which was created using Export-DatabricksEnvironment from a local path into the Databricks service.
 			.DESCRIPTION
-			Deletes an object or a directory (and optionally recursively deletes all objects in the directory). If path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST. If path is a non-empty directory and recursive is set to false, this call returns an error DIRECTORY_NOT_EMPTY. Object deletion cannot be undone and deleting a directory recursively is not atomic.
-			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#delete
-			.PARAMETER Path 
-			The absolute path of the notebook or directory. This field is required.
-			.PARAMETER Recursive 
-			The flag that specifies whether to delete the object recursively. It is false by default. Please note this deleting directory is not atomic. If it fails in the middle, some of objects under this directory may be deleted and cannot be undone.
+			Imports Databricks content which was created using Export-DatabricksEnvironment from a local path into the Databricks service.
+			.PARAMETER LocalPath 
+			The local path where the export is located.
+			.PARAMETER Artifacts
+			A list of objects that you want to export. The default is 'All' but you can also specify a list of artifacts like 'Clusters,Jobs,Secrets'
+			.PARAMETER OverwriteExistingWorkspaceItems 
+			A switch that can be used to overwrite existing workspace items (=notebooks) during the import..
+			.PARAMETER UpdateExistingClusters 
+			A swicht that can be used to force an update of existing clusters. By default existing clusters will not be changed/updated! 
+			.PARAMETER UpdateExistingJobs
+			A switch that can be used to force an update of existing Jobs. By default existing jobs will not be changed/updated!
+			.PARAMETER PromptForMissingSecrets
+			A switch that can be used to prompt the user when a secret is missing in the target and no new values have been specified within the export using the properties "new_string_value" or "new_bytes_value".
+			.PARAMETER UpdateExistingSecrets
+			A switch that can be used to force an update of an existing secret's value. The new secret is specified in the JSON by adding one of the following new properties: "new_strign_value" or "new_bytes_value".
 			.EXAMPLE
-			Remove-DatabricksWorkspaceItem -Path <Path> -Recursive $false
+			Export-DatabricksEnvironment -LocalPath 'C:\MyExport\' -CleanLocalPath
 	#>
 	[CmdletBinding(DefaultParametersetname = "AllArtifacts")]
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
 		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets")] $Artifacts = @("All"),
-		[Parameter(Mandatory = $false)] [switch] $WorkspaceOverwriteExistingItems,
-		[Parameter(Mandatory = $false)] [switch] $ClusterUpdateExisting,
-		[Parameter(Mandatory = $false)] [switch] $JobUpdateExisting
+		[Parameter(Mandatory = $false)] [switch] $OverwriteExistingWorkspaceItems,
+		[Parameter(Mandatory = $false)] [switch] $UpdateExistingClusters,
+		[Parameter(Mandatory = $false)] [switch] $UpdateExistingJobs,
+		[Parameter(Mandatory = $false)] [switch] $PromptForMissingSecrets,
+		[Parameter(Mandatory = $false)] [switch] $UpdateExistingSecrets
 	)
 
 	if($Artifacts -ne @("Workspace"))
@@ -324,13 +343,13 @@ Function Import-DatabricksEnvironment
 					if($workspaceItem.BaseName -eq 'users')
 					{
 						Write-Warning "The folder '/users' is protected and cannot be created during imported!"
-						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -WorkspaceOverwriteExistingItems:$WorkspaceOverwriteExistingItems -ClusterUpdateExisting:$ClusterUpdateExisting -JobUpdateExisting:$JobUpdateExisting
+						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -WorkspaceOverwriteExistingItems:$OverwriteExistingWorkspaceItems -ClusterUpdateExisting:$UpdateExistingClusters -JobUpdateExisting:$UpdateExistingJobs
 					}
 					else
 					{ 
 						Write-Information "Importing Workspace item $($workspaceItem.Name) ..."
 						$x = Add-DatabricksWorkspaceDirectory -Path $dbPath -ErrorAction Ignore
-						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -WorkspaceOverwriteExistingItems:$WorkspaceOverwriteExistingItems -ClusterUpdateExisting:$ClusterUpdateExisting -JobUpdateExisting:$JobUpdateExisting
+						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -WorkspaceOverwriteExistingItems:$OverwriteExistingWorkspaceItems -ClusterUpdateExisting:$UpdateExistingClusters -JobUpdateExisting:$UpdateExistingJobs
 					}
 				}
 				elseif($workspaceItem -is [System.IO.FileInfo])
@@ -341,7 +360,7 @@ Function Import-DatabricksEnvironment
 					if($language) { $importParams.Add("Language", $language.Key) }
 					$format = $ExportFormatToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq $workspaceItem.Extension }
 					if($format) { $importParams.Add("Format", $format.Key) }
-					if((Get-DatabricksWorkspaceItem -Path $dbPathItem -ErrorAction SilentlyContinue) -and $WorkspaceOverwriteExistingItems) 
+					if((Get-DatabricksWorkspaceItem -Path $dbPathItem -ErrorAction SilentlyContinue) -and $OverwriteExistingWorkspaceItems) 
 					{ 
 						Write-Verbose "Removing existing item $dbPathItem ..."
 						Remove-DatabricksWorkspaceItem -Path $dbPathItem -Recursive $false
@@ -385,13 +404,13 @@ Function Import-DatabricksEnvironment
 				}
 				else
 				{
-					if($ClusterUpdateExisting)
+					if($UpdateExistingClusters)
 					{
 						$x = Update-DatabricksCluster -ClusterObject $clusterObject
 					}
 					else
 					{
-						Write-Information "    Cluster '$($clusterObject.cluster_name)' already exists. Use parameter -ClusterUpdateExisting to udpate existing clusters!"
+						Write-Information "    Cluster '$($clusterObject.cluster_name)' already exists. Use parameter -UpdateExistingClusters to udpate existing clusters!"
 					}
 				}
 			}
@@ -434,13 +453,13 @@ Function Import-DatabricksEnvironment
 				}
 				else
 				{
-					if($JobUpdateExisting)
+					if($UpdateExistingJobs)
 					{
 						$x = Update-DatabricksJob -NewSettingsbject $jobSettings
 					}
 					else
 					{
-						Write-Information "    Job '$($jobSettings.name)' already exists. Use parameter -JobUpdateExisting to udpate existing jobs!"
+						Write-Information "    Job '$($jobSettings.name)' already exists. Use parameter -UpdateExistingJobs to udpate existing jobs!"
 					}
 				}
 			}
@@ -490,24 +509,73 @@ Function Import-DatabricksEnvironment
 		{
 			$secretScopeDefinitions = Get-ChildItem $LocalSecretsPath
 	
+			$existingScopes = Get-DatabricksSecretScope
 			foreach($secretScopeDefinition in $secretScopeDefinitions)
 			{
-				Write-Information "Adding secret scope $($secretScopeDefinition.Name) ..."
 				$secretScope = Get-Content $secretScopeDefinition.FullName | ConvertFrom-Json
+				Write-Information "Adding secret scope $($secretScope.scope) ..."
 			
 				if($secretScope.backend_type -eq 'DATABRICKS')
 				{
-					Add-DatabricksSecretScope -ScopeName $secretScope.scope -InitialManagePrincipal $secretScope.initial_manage_principal -ErrorAction Continue
-				
+					if($secretScope.scope -in $existingScopes.name)
+					{
+						Write-Information "Secret scope $($secretScope.scope) already exists!"
+					}
+					else
+					{
+						Add-DatabricksSecretScope -ScopeName $secretScope.scope -InitialManagePrincipal $secretScope.initial_manage_principal -ErrorAction Continue
+					}
+					
 					$secretScope.acls | Add-DatabricksSecretScopeACL -ScopeName $secretScope.scope
 				
 					$currentSecrets = Get-DatabricksSecret -ScopeName $secretScope.scope
 				
-					$missingSecrets = $secretScope.secrets | Where-Object { $_.key -cnotin $currentSecrets.key -and [string]::IsNullOrEmpty($_.new_string_value) -and [string]::IsNullOrEmpty($_.new_byte_value) } | ForEach-Object {
-						Write-Warning "The secret $($_.key) of scope $($secretScope.scope) is missing in the target - please add it manually!"
+					foreach($secret in $secretScope.secrets)
+					{
+						$isMissingInTarget = $secret.key -cnotin $currentSecrets.key
+						$newValueProvided = -not ([string]::IsNullOrEmpty($secret.new_string_value) -and [string]::IsNullOrEmpty($secret.new_bytes_value))
+						
+						if($isMissingInTarget)
+						{
+							if($newValueProvided)
+							{
+								Write-Information "A new Secret '$($secret.key)' is added"
+								$secret | Add-DatabricksSecret -ScopeName $secretScope.scope
+							}
+							else
+							{
+								if($PromptForMissingSecrets)
+								{
+									Write-Host "Please enter a value for secret '$($secret.key)': "
+									$newSecretValue = Read-Host -Prompt "$($secret.key)"
+									Add-DatabricksSecret -ScopeName $secretScope.scope -SecretName $secret.key -StringValue $newSecretValue
+								}
+								else
+								{
+									Write-Warning "The secret '$($secret.key)' of scope $($secretScope.scope) is missing in the target - please add it manually or use parameter -PromptForMissingSecrets"
+								}
+							}							
+						}
+						else
+						{
+							if($newValueProvided)
+							{
+								if($UpdateExistingSecrets)
+								{
+									Write-Information "Secret '$($secret.key)' is updated uing the provided value in the JSON file."
+									$secret | Add-DatabricksSecret -ScopeName $secretScope.scope
+								}
+								else
+								{
+									Write-Information "Secret '$($secret.key)' already exists. Use -UpdateExistingSecrets to update its value with the one specified in the JSON."
+								}
+							}
+							else
+							{
+								Write-Information "Secret '$($secret.key)' already exists and no update was requested."
+							}
+						}
 					}
-					
-					$secretScope.secrets | Where-Object { -not [string]::IsNullOrEmpty($_.new_string_value) -or -not [string]::IsNullOrEmpty($_.new_byte_value) } | Add-DatabricksSecret -ScopeName $secretScope.scope
 				}
 				else
 				{
