@@ -48,7 +48,7 @@ Function Get-DatabricksApiToken
 			List all the valid tokens for a user-workspace pair.
 			Official API Documentation: https://docs.databricks.com/api/latest/tokens.html#list
 			.EXAMPLE
-			Get-DatabricksApiToken -Token_Infos <token_infos>
+			Get-DatabricksApiToken
 	#>
 	[CmdletBinding()]
 	param ()
@@ -71,36 +71,49 @@ Function Get-DatabricksApiToken
 
 Function Remove-DatabricksApiToken
 {
-	<#
-			.SYNOPSIS
-			Revoke an access token. This call returns the error RESOURCE_DOES_NOT_EXIST if a token with the specified ID is not valid.
-			.DESCRIPTION
-			Revoke an access token. This call returns the error RESOURCE_DOES_NOT_EXIST if a token with the specified ID is not valid.
-			Official API Documentation: https://docs.databricks.com/api/latest/tokens.html#revoke
-			.PARAMETER TokenID 
-			The ID of the token to be revoked.
-			.EXAMPLE
-			Remove-DatabricksApiToken -TokenID 1234
-	#>
-	[CmdletBinding()]
-	param
-	(
-		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("token_id")] [string] $TokenID
-	)
-	begin {
-		$requestMethod = "POST"
-		$apiEndpoint = "/2.0/token/delete"
-	}
+  <#
+      .SYNOPSIS
+      Revoke an access token. This call returns the error RESOURCE_DOES_NOT_EXIST if a token with the specified ID is not valid.
+      .DESCRIPTION
+      Revoke an access token. This call returns the error RESOURCE_DOES_NOT_EXIST if a token with the specified ID is not valid.
+      Official API Documentation: https://docs.databricks.com/api/latest/tokens.html#revoke
+      .PARAMETER TokenID 
+      The ID of the token to be revoked.
+      .EXAMPLE
+      Remove-DatabricksApiToken -TokenID 1234
+  #>
+  [CmdletBinding()]
+  param
+  (
+    #[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("token_id")] [string] $TokenID
+  )
+  DynamicParam
+  {
+    #Create the RuntimeDefinedParameterDictionary
+    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+      
+    $tokenIDValues = (Get-DynamicParamValues { Get-DatabricksApiToken }).token_id
+    New-DynamicParam -Name TokenID -ValidateSet $tokenIDValues -Alias 'token_id' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
+       
+    #return RuntimeDefinedParameterDictionary
+    return $Dictionary
+  }
+  begin {
+    $requestMethod = "POST"
+    $apiEndpoint = "/2.0/token/delete"
+    
+    $TokenID = $PSBoundParameters.TokenID
+  }
 
-	process {
-		Write-Verbose "Building Body/Parameters for final API call ..."
-		#Set parameters
-		$parameters = @{
-			token_id = $TokenID 
-		}
+  process {
+    Write-Verbose "Building Body/Parameters for final API call ..."
+    #Set parameters
+    $parameters = @{
+      token_id = $TokenID 
+    }
 	
-		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		return $result
-	}
+    return $result
+  }
 }
