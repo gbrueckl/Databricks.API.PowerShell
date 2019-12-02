@@ -343,13 +343,13 @@ Function Import-DatabricksEnvironment
 					if($workspaceItem.BaseName -eq 'users')
 					{
 						Write-Warning "The folder '/users' is protected and cannot be created during imported!"
-						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -WorkspaceOverwriteExistingItems:$OverwriteExistingWorkspaceItems -ClusterUpdateExisting:$UpdateExistingClusters -JobUpdateExisting:$UpdateExistingJobs
+						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -OverwriteExistingWorkspaceItems:$OverwriteExistingWorkspaceItems -UpdateExistingClusters:$UpdateExistingClusters -UpdateExistingJobs:$UpdateExistingJobs
 					}
 					else
 					{ 
 						Write-Information "Importing Workspace item $($workspaceItem.Name) ..."
 						$x = Add-DatabricksWorkspaceDirectory -Path $dbPath -ErrorAction Ignore
-						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -WorkspaceOverwriteExistingItems:$OverwriteExistingWorkspaceItems -ClusterUpdateExisting:$UpdateExistingClusters -JobUpdateExisting:$UpdateExistingJobs
+						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -OverwriteExistingWorkspaceItems:$OverwriteExistingWorkspaceItems -UpdateExistingClusters:$UpdateExistingClusters -UpdateExistingJobs:$UpdateExistingJobs
 					}
 				}
 				elseif($workspaceItem -is [System.IO.FileInfo])
