@@ -78,8 +78,8 @@ Function Set-DatabricksEnvironment
       .PARAMETER CloudProvider
       The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
       If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
-			.PARAMETER UseDynamicParameterValueCaching
-      Enable caching of dynamic parameter values like ClusterID or JobID to support better IntelliSense/AutoComplete
+      .PARAMETER DynamicParameterCacheTimeout
+      Time in seconds how long dynamic parameter values are cached (e.g. ClusterID, JobID, ...)
       .EXAMPLE
       Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
       .EXAMPLE
@@ -89,86 +89,78 @@ Function Set-DatabricksEnvironment
   param
   (
     [Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
-
-    [Parameter(Mandatory = $true, Position = 2)] [string] $ApiRootUrl,
-    [Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("Azure","AWS")] $CloudProvider = $null,
-    [Parameter(Mandatory = $false, Position = 4)] [switch] $UseDynamicParameterValueCaching
+    [Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5
   )
-
-  Write-Verbose "Setting [System.Net.ServicePointManager]::SecurityProtocol to [System.Net.SecurityProtocolType]::Tls12 ..."
-  [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-  Write-Verbose "Done!"
-	
-  Clear-ScriptVariables
-
-  #region check CloudProvider
-  $paramToCheck = 'CloudProvider'
-  Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
-  if($CloudProvider)
+  DynamicParam
   {
-    Write-Verbose "Parameter -$paramToCheck provided! Setting global $paramToCheck ..."
-    $script:dbCloudProvider = $CloudProvider
-    Write-Verbose "Done!"
-
-    Write-Warning "Parameter -$paramToCheck is deprecated! The value for -$paramToCheck will be derived from the ApiRootUrl automatically instead!"
+    #Create the RuntimeDefinedParameterDictionary
+    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+      
+    New-DynamicParam -Name ApiRootUrl -ValidateSet $script:dbApiRootUrls -Mandatory -DPDictionary $Dictionary
+        
+    #return RuntimeDefinedParameterDictionary
+    return $Dictionary
   }
-  #endregion
-
-  #region check ApiRootUrl
-  $paramToCheck = 'ApiRootUrl'
-  Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
-  if($ApiRootUrl -ne $null)
-  {
-    Write-Verbose "$paramToCheck provided! Setting global $paramToCheck ..."
-    $script:dbApiRootUrl = $ApiRootUrl.Trim('/') + "/api"
-    Write-Verbose "Done!"
-  }
-  else
-  {
-    Write-Warning "Parameter -$paramToCheck was not provided!"
-  }
-
-  Write-Verbose "Trying to derive CloudProvider from ApiRootUrl ..."
-  Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
-  if($ApiRootUrl -ilike "*.azuredatabricks.*")
-  {
-    Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
-    $script:dbCloudProvider = "Azure"
-  }
-  else
-  {
-    Write-Verbose "'.azuredatabricks.' not found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
-    $script:dbCloudProvider = "AWS"
-  }
-  Write-Verbose "Done!"
-  #endregion
-
-  #region Databricks API Key
-  if($PSCmdlet.ParameterSetName -eq "DatabricksApi")
-  {
-    Write-Verbose "Using Databricks API authentication via API Token ..."
-    $script:dbAuthenticationProvider = "DatabricksApi" 
-			
-    $script:dbAuthenticationHeader = @{
-      "Authorization" = "Bearer $AccessToken"
-    }
-  }
-  #endregion
   
-  #region Dynamic Parameter Caching
-  if($UseDynamicParameterValueCaching)
-  {
-    Write-Verbose "Enabling Dynamic Parameter Value Caching ..."
-    $script:dbUseCachedDynamicParamValues = $true
+  begin {
+    Write-Verbose "Setting [System.Net.ServicePointManager]::SecurityProtocol to [System.Net.SecurityProtocolType]::Tls12 ..."
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    Write-Verbose "Done!"
+    
+    $x = Clear-ScriptVariables
+    
+    $ApiRootUrl = $PSBoundParameters.ApiRootUrl
   }
-  else
+  process
   {
-    Write-Verbose "Disabling Dynamic Parameter Value Caching ..."
-    $script:dbUseCachedDynamicParamValues = $false
-  }
-  #endregion
+    #region check ApiRootUrl
+    $paramToCheck = 'ApiRootUrl'
+    Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
+    if($ApiRootUrl -ne $null)
+    {
+      Write-Verbose "$paramToCheck provided! Setting global $paramToCheck ..."
+      $script:dbApiRootUrl = $ApiRootUrl.Trim('/') + "/api"
+      Write-Verbose "Done!"
+    }
+    else
+    {
+      Write-Warning "Parameter -$paramToCheck was not provided!"
+    }
+
+    Write-Verbose "Trying to derive CloudProvider from ApiRootUrl ..."
+    Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
+    if($ApiRootUrl -ilike "*.azuredatabricks.*")
+    {
+      Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
+      $script:dbCloudProvider = "Azure"
+    }
+    else
+    {
+      Write-Verbose "'.azuredatabricks.' not found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
+      $script:dbCloudProvider = "AWS"
+    }
+    Write-Verbose "Done!"
+    #endregion
+
+    #region Databricks API Key
+    if($PSCmdlet.ParameterSetName -eq "DatabricksApi")
+    {
+      Write-Verbose "Using Databricks API authentication via API Token ..."
+      $script:dbAuthenticationProvider = "DatabricksApi" 
+			
+      $script:dbAuthenticationHeader = @{
+        "Authorization" = "Bearer $AccessToken"
+      }
+    }
+    #endregion
+  
+    #region Dynamic Parameter Caching
+    Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
+    $script:dbDynamicParameterCacheTimeout = $DynamicParameterCacheTimeout
+    #endregion
 	
-  $script:dbInitialized = $true
+    $script:dbInitialized = $true
+  }
 }
 
 Function Test-DatabricksEnvironment
@@ -241,36 +233,24 @@ Function Clear-DatabricksCachedDynamicParameterValue
   }
 }
 
-Function Enable-DatabricksCachedDynamicParameterValueCaching
+Function Set-DatabricksDynamicParameterCacheTimeout
 {
   <#
       .SYNOPSIS
-      Cache dynamic parameters to speed up development. CAUTION: This may lead to incomplete IntelliSense !
+      Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
       .DESCRIPTION
-      Cache dynamic parameters to speed up development. CAUTION: This may lead to incomplete IntelliSense !
+      Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
+      .PARAM Seconds
+      Number of seconds the Cached Dynamic PArameter Values are valid
       .EXAMPLE
-      Enable-DatabricksCachedDynamicParameterValueCaching
+      Set-DatabricksDynamicParameterCacheTimeout -Seconds 10
   #>
   [CmdletBinding()]
-  param ()
+  param (
+    [parameter(Mandatory = $true)] [int] $Seconds
+  )
 
-  $script:dbUseCachedDynamicParamValues = $true
-}
-
-Function Disable-DatabricksCachedDynamicParameterValueCaching
-{
-  <#
-      .SYNOPSIS
-      Disable caching of dynamic parameters to ensure the API is queried for the most recent values all the time
-      .DESCRIPTION
-      Disable caching of dynamic parameters to ensure the API is queried for the most recent values all the time
-      .EXAMPLE
-      Disable-DatabricksCachedDynamicParameterValueCaching
-  #>
-  [CmdletBinding()]
-  param ()
-
-  $script:dbUseCachedDynamicParamValues = $false
+  $script:dbDynamicParameterCacheTimeout = $Seconds
 }
 
 # Licensed under the Apache License, Version 2.0 (the "License");

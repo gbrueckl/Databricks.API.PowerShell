@@ -608,6 +608,8 @@ Function Get-DatabricksCluster
       The cluster about which to retrieve information. If left empty, a list of all clusters is returned.
       .PARAMETER List 
       Optional parameter to list the all clusters, which is also the default. 
+      .PARAMETER List 
+      Optional parameter to include Job clusters. By default Job clusters are not exported. 
       .EXAMPLE
       Get-DatabricksCluster -ClusterID "1202-211320-brick1"
       .EXAMPLE
@@ -616,7 +618,8 @@ Function Get-DatabricksCluster
   #>
   param
   (
-    [Parameter(Mandatory = $false)] [switch] $List
+    [Parameter(Mandatory = $false)] [switch] $List,
+    [Parameter(Mandatory = $false)] [switch] $IncludeJobClusters
     #[Parameter(ParameterSetName = "Single Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
   DynamicParam
@@ -662,7 +665,14 @@ Function Get-DatabricksCluster
     else
     {
       # if no ClusterID was specified, we return the clusters as an array
-      return $result.clusters
+      $clusters =  $result.clusters
+      
+      if(-not $IncludeJobClusters)
+      {
+        $clusters = $clusters | Where-Object { $_.cluster_source -ne "JOB" }
+      }
+      
+      return $clusters
     }
   }
 }

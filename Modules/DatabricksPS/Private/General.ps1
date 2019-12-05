@@ -29,6 +29,7 @@ Function Clear-ScriptVariables
   $script:dbAuthenticationProvider = $null
   $script:dbAuthenticationHeader = $null
   $script:dbUseCachedDynamicParamValues = $null
+  $script:dbCachedDynamicParamTimeout = $null
   $script:dbCachedDynamicParamValues = @{}
 }
 
@@ -656,30 +657,42 @@ Function Get-DynamicParamValues {
     [parameter(Mandatory = $true)] [scriptblock] $Command
   )
   Process {
-    $CommandText = $Command.ToString()
-    $CommandTextGeneric = (($commandText -split 'Get-')[1] -split ' ')[0].Trim()
+    if(-not $script:dbInitialized)
+    {
+      return $null
+    }
     
-    if($script:dbUseCachedDynamicParamValues -or $CommandTextGeneric -in ('DatabricksNodeType', 'DatabricksSparkVersion'))
+    $commandText = $Command.ToString()
+    $commandTextGeneric = (($commandText -split 'Get-')[1] -split ' ')[0].Trim()
+    
+    # some parameter values are dynamic but do not change
+    $hasFixedValues = $commandTextGeneric -in ('DatabricksNodeType', 'DatabricksSparkVersion')
+    
+    if($script:dbDynamicParameterCacheTimeout -gt 0 -or $hasFixedValues)
     {
-      Write-Information "Using cached Dynamic Parameter Values"
-      if($script:dbCachedDynamicParamValues[$CommandTextGeneric])
+      Write-Verbose "Trying to using cached Dynamic Parameter Values"
+      if($script:dbCachedDynamicParamValues[$commandTextGeneric])
       {
-        Write-Information "Cached Value found! Returning it ..."
-        return $script:dbCachedDynamicParamValues[$CommandTextGeneric]
-      }
-      else
-      {
-        Write-Information "Cached Value not found! Evaluating command, caching and returning results ..."
-        $result = Invoke-Command -ScriptBlock $Command
-        $script:dbCachedDynamicParamValues[$CommandTextGeneric] = $result
-        return $result
+        Write-Verbose "Cached Dynamic Parameter Values found for '$commandTextGeneric'!"
+        $cache = $script:dbCachedDynamicParamValues[$commandTextGeneric]
+        
+        $seconds = (New-TimeSpan -Start $cache.lastRefresh -End (Get-Date)).Seconds
+        
+        if($seconds -lt $script:dbDynamicParameterCacheTimeout -or $hasFixedValues)
+        {
+          Write-Verbose "Returning Cached Dynamic Parameter Values!"
+          return $cache.cachedValues
+        }
       }
     }
-    else
-    {
-      Write-Information "Not using cached Dynamic Parameter Values"
-      $result = Invoke-Command -ScriptBlock $Command
-      return $result
+    
+    Write-Verbose "Caching not enabled, Cached Value not found or timed out! Evaluating command, caching and returning results ..."
+    $values = Invoke-Command -ScriptBlock $Command
+    $cache = @{
+      "cachedValues" = $values
+      "lastRefresh" = Get-Date
     }
+    $script:dbCachedDynamicParamValues[$CommandTextGeneric] = $cache
+    return $values
   } 
 }
