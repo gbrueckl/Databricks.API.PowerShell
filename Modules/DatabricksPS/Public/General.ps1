@@ -163,6 +163,22 @@ Function Set-DatabricksEnvironment
   }
 }
 
+Function Clear-DatabricksEnvironment
+{
+  <#
+      .SYNOPSIS
+      Clears the current DatabricksPS environment and removes all settings and references
+      .DESCRIPTION
+      Clears the current DatabricksPS environment and removes all settings and references
+      .EXAMPLE
+      Clear-DatabricksEnvironment
+  #>
+  [CmdletBinding()]
+  param ()
+
+  Clear-ScriptVariables
+}
+
 Function Test-DatabricksEnvironment
 {
   <#

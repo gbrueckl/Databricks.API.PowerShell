@@ -272,24 +272,11 @@ Function Get-DatabricksSecret
   [CmdletBinding()]
   param
   (
-    #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName
   )
-  DynamicParam
-  {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $scopeValues = (Get-DynamicParamValues { Get-DatabricksSecretScope }).name
-    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
-
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/secrets/list"
-    
-    $ScopeName = $PSBoundParameters.ScopeName
   }
 	
   process {

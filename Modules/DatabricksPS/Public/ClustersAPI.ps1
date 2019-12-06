@@ -456,7 +456,7 @@ Function Stop-DatabricksCluster
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
-    New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+    New-DynamicParam -ParameterSetName DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -606,10 +606,6 @@ Function Get-DatabricksCluster
       Official API Documentation: https://docs.databricks.com/api/latest/clusters.html#get
       .PARAMETER ClusterID 
       The cluster about which to retrieve information. If left empty, a list of all clusters is returned.
-      .PARAMETER List 
-      Optional parameter to list the all clusters, which is also the default. 
-      .PARAMETER List 
-      Optional parameter to include Job clusters. By default Job clusters are not exported. 
       .EXAMPLE
       Get-DatabricksCluster -ClusterID "1202-211320-brick1"
       .EXAMPLE
@@ -618,29 +614,13 @@ Function Get-DatabricksCluster
   #>
   param
   (
-    [Parameter(Mandatory = $false)] [switch] $List,
-    [Parameter(Mandatory = $false)] [switch] $IncludeJobClusters
-    #[Parameter(ParameterSetName = "Single Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
+    [Parameter(Mandatory = $false)] [switch] $IncludeJobClusters,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
-    if(-not $List)
-    {
-      #Create the RuntimeDefinedParameterDictionary
-      $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-      $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster -List }).cluster_id
-      New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
 
-      #return RuntimeDefinedParameterDictionary
-      return $Dictionary
-    }
-  }
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/clusters/list"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
     
     if($ClusterID)
     {

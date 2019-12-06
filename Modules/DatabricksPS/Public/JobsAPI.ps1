@@ -241,8 +241,6 @@ Function Get-DatabricksJob
       Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
       .PARAMETER JobID 
       The canonical identifier of the job retrieve. This field is optional and can be used as a filter on one particular job id.
-      .PARAMETER List 
-      Optional parameter to list the all Jobs, which is also the default. 
       .OUTPUT
       List of PSObjects with the following properties
       - job_id
@@ -256,28 +254,11 @@ Function Get-DatabricksJob
   [CmdletBinding()]
   param 
   (	
-    [Parameter(Mandatory = $false)] [switch] $List
-    #[Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1
+    [Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1
   )
-  DynamicParam
-  {
-    if(-not $List)
-    {
-      #Create the RuntimeDefinedParameterDictionary
-      $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-      $jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -List }).job_id
-      New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -Type Int64 -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
-
-      #return RuntimeDefinedParameterDictionary
-      return $Dictionary
-    }
-  }
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/jobs/list"
-    
-    $JobID = $PSBoundParameters.JobID
     
     if($JobID -gt 0)
     {
@@ -706,7 +687,6 @@ Function Get-DatabricksJobRun
       Note: This field cannot be true when CompletedOnly is true.
       If CompletedOnly, if true, only completed runs will be included in the results; otherwise, lists both active and completed runs.
       Note: This field cannot be true when ActiveOnly is true.
-			
       .PARAMETER Offset 
       The offset of the first run to return, relative to the most recent run.
       .PARAMETER Limit 
@@ -737,41 +717,22 @@ Function Get-DatabricksJobRun
   [CmdletBinding(DefaultParametersetName = "ByJobId")]
   param
   (
-    [Parameter(Mandatory = $false)] [switch] $List,
-    #[Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1, 
+    [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1, 
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 2)] [string] [ValidateSet("ActiveOnly", "CompletedOnly", "All")] $Filter = "All",
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Offset = -1, 
-    [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Limit = -1
+    [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Limit = -1,
 		
-    #[Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName=$true)] [Alias("run_id")] [int64] $JobRunID
+    [Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName=$true)] [Alias("run_id")] [int64] $JobRunID
   )
-  DynamicParam
-  {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
-    New-DynamicParam -Name JobID -ParameterSetName ByJobId -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-    
-    if(-not $List)
-    {
-      $jobRunIDValues = (Get-DynamicParamValues { Get-DatabricksJobRun -List }).run_id
-      New-DynamicParam -Name JobRunID -ParameterSetName ByRunId -ValidateSet $jobRunIDValues -Alias 'run_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-    }
-    
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
+
   begin {
     $requestMethod = "GET"
     switch ($PSCmdlet.ParameterSetName) 
     { 
       "ByJobId"  { 
-                    $JobID = $PSBoundParameters.JobID
                     $apiEndpoint = "/2.0/jobs/runs/list" 
                  } 
       "ByRunId"  { 
-                    $JobRunID = $PSBoundParameters.JobRunID
                     $apiEndpoint = "/2.0/jobs/runs/get" } 
                  } 
   }
@@ -783,7 +744,7 @@ Function Get-DatabricksJobRun
     switch ($PSCmdlet.ParameterSetName) 
     { 
       "ByJobId" {
-        $parameters | Add-Property -Name "job_id" -Value $JobID -NullValue 0
+        $parameters | Add-Property -Name "job_id" -Value $JobID -NullValue -1
         $parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1 
         $parameters | Add-Property -Name "limit" -Value $Limit -NullValue -1
 			
