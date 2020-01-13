@@ -3,14 +3,13 @@ $ErrorActionPreference = "Stop"
 # print Information stream
 $InformationPreference = "Continue"
 
-# if executed from PowerShell ISE
-if ($psise) { 
-	$rootPath = Split-Path -Parent $psise.CurrentFile.FullPath | Split-Path -Parent
-}
-else {
-	$rootPath = (Get-Item $PSScriptRoot).Parent.FullName
+$rootPath = Switch ($Host.name){
+    'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
+    'Windows PowerShell ISE Host' {  Split-Path -Path $psISE.CurrentFile.FullPath }
+    'ConsoleHost' { $PSScriptRoot }
 }
 
+$rootPath = $rootPath | Split-Path -Parent
 Push-Location $rootPath
 
 function Process-TestScript([string]$TestScript)
