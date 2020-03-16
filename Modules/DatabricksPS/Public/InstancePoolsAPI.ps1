@@ -195,7 +195,7 @@ Function Update-DatabricksInstancePool
   }
 }
 
-Function Delete-DatabricksInstancePool
+Function Remove-DatabricksInstancePool
 {
   <#
       .SYNOPSIS
@@ -206,7 +206,7 @@ Function Delete-DatabricksInstancePool
       .PARAMETER InstancePoolID 
       The ID of the instance pool to delete.
       .EXAMPLE
-      Delete-DatabricksInstancePool -InstancePoolID <instance_pool_id>
+      Remove-DatabricksInstancePool -InstancePoolID <instance_pool_id>
   #>
   [CmdletBinding()]
   param

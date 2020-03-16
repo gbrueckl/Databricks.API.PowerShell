@@ -1,5 +1,4 @@
-﻿Function Invoke-DatabricksApiRequest
-{
+﻿Function Invoke-DatabricksApiRequest {
   <#
       .SYNOPSIS
       Lists all jobs or returns a specific job for a given JobID.
@@ -38,13 +37,11 @@
   $headers | Add-Property -Name "Accept" -Value $Accept -Force
   Write-Verbose "Headers: `n$($headers | Out-String)"
 	
-  if($Method -eq "GET")
-  {	
+  if ($Method -eq "GET") {	
     Write-Verbose "GET request - showing URL parameters as Key-Value pairs ..."
     Write-Verbose "Body: `n$($Body | Out-String)"
   }
-  else
-  {
+  else {
     # for POST requests we have to convert the body to JSON
     Write-Verbose "Non-GET request - converting Body to JSON ..."
     $Body = $Body | ConvertTo-Json -Depth 20
@@ -59,83 +56,131 @@
   return $result
 }
 
-Function Set-DatabricksEnvironment 
-{
+Function Set-DatabricksEnvironment {
   <#
-      .SYNOPSIS
-      Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
-      .DESCRIPTION
-      Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
-      .PARAMETER PBIAPIUrl
-      The url for the PBI API
-      .PARAMETER AccessToken
-      The AccessToken to use to access the Databricks API
-      For example: dapi1234abcd32101691ded20b53a1326285
-      .PARAMETER ApiRootUrl
-      The URL of the API. 
-      For Azure, this could be 'https://westeurope.azuredatabricks.net'
-      For AWS, this could be 'https://abc-12345-xaz.cloud.databricks.com'
-      .PARAMETER CloudProvider
-      The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
-      If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
-      .PARAMETER DynamicParameterCacheTimeout
-      Time in seconds how long dynamic parameter values are cached (e.g. ClusterID, JobID, ...)
-      .EXAMPLE
-      Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
-      .EXAMPLE
-      Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://westeurope.azuredatabricks.net" -UseDynamicParameterValueCaching
-  #>
+			.SYNOPSIS
+			Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
+			.DESCRIPTION
+			Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
+			.PARAMETER PBIAPIUrl
+			The url for the PBI API
+			.PARAMETER AccessToken
+			The AccessToken to use to access the Databricks API
+			For example: dapi1234abcd32101691ded20b53a1326285
+			.PARAMETER ApiRootUrl
+			The URL of the API. 
+			For Azure, this could be 'https://westeurope.azuredatabricks.net'
+			For AWS, this could be 'https://abc-12345-xaz.cloud.databricks.com'
+			.PARAMETER CloudProvider
+			The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
+			If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
+			.PARAMETER Credential
+			The Powershell credential to use when using AAD authentication.
+			.PARAMETER ClientID
+      The ID of the Azure Active Directory (AAD) application that was deployed to use AAD authentication with Databricks.
+      If used in combination with -ServicePrincipal this value does not have to be supplied but is overwritten using the Usernamen from -Credential.
+			.PARAMETER TenantID
+			The ID of the Azure Active Directory (AAD). (optional)
+			.PARAMETER AzureResourceID
+			This is the ID of the workspace appliance resource in Azure. You must​ provide this ID if the Databricks workspace is not provisioned yet (such that there is no effective workspace org ID). It can be composed using the Azure subscription ID, resource group name, and workspace resource name. 
+			Example: /subscriptions/<<SubscriptionID>>/resourceGroups/<<ResourceGroupName>>/providers/Microsoft.Databricks/workspaces/<<WorkspaceName>>
+			.PARAMETER OrgID
+			The organization ID of the Databricks workspace.
+			You can find the workspace org ID in the Databricks URL, for example: https://<region>.azuredatabricks.net/?o=<​org_id​> 
+			.PARAMETER SubscriptionID
+			The Azure subscription ID in which the Databricks workspace resides.
+			A GUID, e.g. 058a2e1e-1234-1234-1234-5c4c3e31e36e
+			.PARAMETER ResourceGroupName
+			The name of the ResourceGroup in which the Databricks workspace resides.
+			.PARAMETER WorkspaceName
+      The name of the Databricks workspace.
+      .PARAMETER ServicePrincipal
+			A switch indicating -Credential is a Service Principal which will be used for Authentication.
+			.EXAMPLE
+			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
+			.EXAMPLE
+			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://westeurope.azuredatabricks.net"
+			.EXAMPLE
+			$azureResourceId = '/subscriptions/fb1e20c4-1234-1234-1234-f92a9ac35db4/resourceGroups/myResourceGroupName/providers/Microsoft.Databricks/workspaces/myDatabricksResource'
+			$cred = Get-Credential
+			Set-DatabricksEnvironment -ClientID '058a2e1e-1234-1234-1234-5c4c3e31e36e' -Credential $cred -AzureResourceID $azureResourceId -ApiRootUrl "https://westeurope.azuredatabricks.net"
+			
+	#>
   [CmdletBinding()]
   param
   (
     [Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
-    [Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5
+    [Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
+		
+    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
+    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 1)][PSCredential] $Credential,
+		
+    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 2)]
+    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 2)]
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 2)][string] $ClientID,
+		
+    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 4)]
+    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 4)]
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 4)] [string] $TenantID = "common",
+		
+    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 3)] [string] $AzureResourceID,
+		
+    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 3)] [string] $OrgID,
+		
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 3)] [string] $SubscriptionID,
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 5)] [string] $ResourceGroupName,
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 6)] [string] $WorkspaceName,
+		
+    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 7)]
+    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 7)]
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 7)][switch] $ServicePrincipal
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
+		
     New-DynamicParam -Name ApiRootUrl -ValidateSet $script:dbApiRootUrls -Mandatory -DPDictionary $Dictionary
-        
+			
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
   }
-  
+
   begin {
     Write-Verbose "Setting [System.Net.ServicePointManager]::SecurityProtocol to [System.Net.SecurityProtocolType]::Tls12 ..."
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
     Write-Verbose "Done!"
-    
+		
     $x = Clear-ScriptVariables
-    
+
     $ApiRootUrl = $PSBoundParameters.ApiRootUrl
   }
-  process
-  {
+
+  process {
+    #region Dynamic Parameter Caching
+    Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
+    $script:dbDynamicParameterCacheTimeout = $DynamicParameterCacheTimeout
+    #endregion
+
     #region check ApiRootUrl
     $paramToCheck = 'ApiRootUrl'
     Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
-    if($ApiRootUrl -ne $null)
-    {
+    if ($ApiRootUrl -ne $null) {
       Write-Verbose "$paramToCheck provided! Setting global $paramToCheck ..."
       $script:dbApiRootUrl = $ApiRootUrl.Trim('/') + "/api"
       Write-Verbose "Done!"
     }
-    else
-    {
+    else {
       Write-Warning "Parameter -$paramToCheck was not provided!"
     }
 
     Write-Verbose "Trying to derive CloudProvider from ApiRootUrl ..."
     Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
-    if($ApiRootUrl -ilike "*.azuredatabricks.*")
-    {
+    if ($ApiRootUrl -ilike "*.azuredatabricks.*") {
       Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
       $script:dbCloudProvider = "Azure"
     }
-    else
-    {
+    else {
       Write-Verbose "'.azuredatabricks.' not found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
       $script:dbCloudProvider = "AWS"
     }
@@ -143,28 +188,113 @@ Function Set-DatabricksEnvironment
     #endregion
 
     #region Databricks API Key
-    if($PSCmdlet.ParameterSetName -eq "DatabricksApi")
-    {
+    if ($PSCmdlet.ParameterSetName -eq "DatabricksApi") {
       Write-Verbose "Using Databricks API authentication via API Token ..."
       $script:dbAuthenticationProvider = "DatabricksApi" 
-			
+				
       $script:dbAuthenticationHeader = @{
         "Authorization" = "Bearer $AccessToken"
       }
     }
     #endregion
-  
-    #region Dynamic Parameter Caching
-    Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
-    $script:dbDynamicParameterCacheTimeout = $DynamicParameterCacheTimeout
+    #region AAD Authentication using Resource
+    elseif ($PSCmdlet.ParameterSetName -ilike "AADAuthenticationResource*") {
+      $script:dbAuthenticationProvider = "AADAuthentication" 
+			
+      if ($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceDetails") {
+        Write-Verbose "Using AAD authentication with Azure Resource Details ..."
+        $AzureResourceID = "/subscriptions/$SubscriptionID/resourceGroups/$ResourceGroupName/providers/Microsoft.Databricks/workspaces/$WorkspaceName"
+      }
+      elseif ($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceID") {
+        Write-Verbose "Using AAD authentication with Azure ResourceID ..."
+				
+        $paramToCheck = 'ApiRootUrl'
+        $wildCardPattern = '/subscriptions/*/resourceGroups/*/providers/Microsoft.Databricks/workspaces/*'
+        Write-Verbose "Checking format of -$paramToCheck ..."
+				
+        if (-not ($AzureResourceID -ilike $wildCardPattern)) {
+          Write-Error "Invalid -$paramToCheck provided! it has to match the following pattern: $wildCardPattern"
+        }
+				
+        Write-Verbose "Parameter -$paramToCheck has a valid format!"
+      }
+				
+      $script:dbAuthenticationHeader = @{
+        "X-Databricks-Azure-Workspace-Resource-Id" = $AzureResourceID
+      }
+    }
     #endregion
-	
+    #region AAD Authentication using Org ID
+    elseif ($PSCmdlet.ParameterSetName -eq "AADAuthenticationOrgID") {
+      Write-Verbose "Using AAD authentication with Databricks Org ID ..." 
+      $script:dbAuthenticationProvider = "AADAuthentication" 
+				
+      $script:dbAuthenticationHeader = @{
+        "X-Databricks-Org-Id" = $OrgID
+      }
+    }
+    #endregion
+    #region AAD Authentication General
+    if ($PSCmdlet.ParameterSetName.StartsWith("AADAuthentication")) {
+      $script:dbCloudProvider = "Azure"
+      $authUrl = "https://login.windows.net/$TenantID/oauth2/token/"
+
+      Write-Verbose "Getting AAD access token ..."
+      if ($ServicePrincipal) {
+        Write-Verbose "Using Service Principal authentication flow ..."
+
+        $headers = @{
+          "Content-Type" = "application/x-www-form-urlencoded"
+        }
+				
+        $body = @{
+          "resource"      = "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d" # Resource ID for AzureDatabricks, this is fixed!
+          "grant_type"    = "client_credentials"
+          "client_id"     = $Credential.UserName
+          "client_secret" = $Credential.GetNetworkCredential().Password
+        }
+
+        Write-Verbose "API Call: POST $authUrl"
+        Write-Verbose "Body: `n$($Body | Out-String)"
+				
+        $authResultLoginApp = Invoke-RestMethod -Uri $authUrl -Method POST -Headers $headers -Body $body
+
+        $body["resource"] = "https://management.core.windows.net/" # Resource ID for AzureDatabricks, this is fixed!
+
+        Write-Verbose "API Call: POST $authUrl"
+        Write-Verbose "Body: `n$($Body | Out-String)"
+				
+        $authResultMgmt = Invoke-RestMethod -Uri $authUrl -Method POST -Headers $headers -Body $body
+
+        $script:dbAuthenticationHeader["Authorization"] = "$($AuthResultLoginApp.token_type) $($authResultLoginApp.access_token)"
+        $script:dbAuthenticationHeader["X-Databricks-Azure-SP-Management-Token"] = $authResultMgmt.access_token
+      }
+      else {
+        Write-Verbose "Using Username/Password authentication flow ..."
+				
+        $body = @{
+          "resource"   = "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d" # Resource ID for AzureDatabricks, this is fixed!
+          "grant_type" = "password"
+          "client_id"  = $ClientId
+          "username"   = $Credential.UserName
+          "password"   = $Credential.GetNetworkCredential().Password
+          "scope"      = "openid"
+        }
+        Write-Verbose "API Call: POST $authUrl"
+        Write-Verbose "Body: `n$($Body | Out-String)"
+				
+        $authResult = Invoke-RestMethod -Uri $authUrl -Method POST -Body $body
+				
+        $script:dbAuthenticationHeader["Authorization"] = "$($authResult.token_type) $($authResult.access_token)"
+      }
+    } 
+    #endregion	
+		
     $script:dbInitialized = $true
   }
 }
 
-Function Clear-DatabricksEnvironment
-{
+Function Clear-DatabricksEnvironment {
   <#
       .SYNOPSIS
       Clears the current DatabricksPS environment and removes all settings and references
@@ -179,17 +309,16 @@ Function Clear-DatabricksEnvironment
   Clear-ScriptVariables
 }
 
-Function Test-DatabricksEnvironment
-{
+Function Test-DatabricksEnvironment {
   <#
-      .SYNOPSIS
-      Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
-      .DESCRIPTION
-      Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
-      Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#list
-      .EXAMPLE
-      Test-DatabricksEnvironment
-  #>
+			.SYNOPSIS
+			Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
+			.DESCRIPTION
+			Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
+			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#list
+			.EXAMPLE
+			Test-DatabricksEnvironment
+	#>
   [CmdletBinding()]
   param ()
 
@@ -207,22 +336,20 @@ Function Test-DatabricksEnvironment
   return $result.files
 }
 
-Function Clear-DatabricksCachedDynamicParameterValue
-{
+Function Clear-DatabricksCachedDynamicParameterValue {
   <#
       .SYNOPSIS
       Clears all cached values for Dynamic Parameters if -UseDynamicParameterValueCaching was used during Set-DatabricksEnvironment
       .DESCRIPTION
       Clears all cached values for Dynamic Parameters if -UseDynamicParameterValueCaching was used during Set-DatabricksEnvironment
       .PARAMETER DynamicParameterName
-
+	  Unique Name of the Dynamic Parameter
       .EXAMPLE
       Clear-DatabricksCachedDynamicParameterValue
   #>
   [CmdletBinding()]
   param ()
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -232,25 +359,20 @@ Function Clear-DatabricksCachedDynamicParameterValue
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
   }
-  begin
-  {
+  begin {
     $DynamicParameterName = $PSBoundParameters.DynamicParameterName
   }
-  process
-  {
-    if($DynamicParameterName)
-    {
+  process {
+    if ($DynamicParameterName) {
       $script:dbCachedDynamicParamValues.Remove($DynamicParameterName)
     }
-    else
-    {
-      $script:dbCachedDynamicParamValues = @{}
+    else {
+      $script:dbCachedDynamicParamValues = @{ }
     }
   }
 }
 
-Function Set-DatabricksDynamicParameterCacheTimeout
-{
+Function Set-DatabricksDynamicParameterCacheTimeout {
   <#
       .SYNOPSIS
       Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
