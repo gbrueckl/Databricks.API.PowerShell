@@ -110,7 +110,6 @@ Function Set-DatabricksEnvironment {
   param
   (
     [Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
-    [Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
 		
     [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
     [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
@@ -120,9 +119,9 @@ Function Set-DatabricksEnvironment {
     [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 2)]
     [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 2)][string] $ClientID,
 		
-    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 4)]
-    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 4)]
-    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 4)] [string] $TenantID = "common",
+    [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 4)]
+    [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 4)]
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 4)] [string] $TenantID = "common",
 		
     [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 3)] [string] $AzureResourceID,
 		
@@ -134,7 +133,9 @@ Function Set-DatabricksEnvironment {
 		
     [Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 7)]
     [Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 7)]
-    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 7)][switch] $ServicePrincipal
+    [Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 7)][switch] $ServicePrincipal,
+
+    [Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5
   )
   DynamicParam {
     #Create the RuntimeDefinedParameterDictionary

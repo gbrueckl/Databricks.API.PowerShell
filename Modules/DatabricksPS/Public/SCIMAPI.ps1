@@ -68,8 +68,10 @@ Function Add-DatabricksSCIMUser
       Official API Documentation: https://docs.databricks.com/dev-tools/api/latest/scim.html#create-user
       .PARAMETER UserName
       The username of the user to add. Usually an email address.
-      .PARAMETER Groups
-       A list of existing Databricks group names
+      .PARAMETER GroupNames
+       A list of existing Databricks group names to which the SP is added
+       .PARAMETER GroupIDs
+       A list of existing Databricks group IDs to which the SP is added
       .PARAMETER Entitlements
       A list of Entitlements/Permissions the user should be assigned
       .EXAMPLE
@@ -78,25 +80,13 @@ Function Add-DatabricksSCIMUser
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $True)] [Alias("user_name")] [string] $UserName,
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements
-  )
-  DynamicParam
-  {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $groupValues = (Get-DynamicParamValues { Get-DatabricksSCIMGroup }).displayName
-    New-DynamicParam -Name Groups -ValidateSet $groupValues -Alias 'group_name' -Type string[] -DPDictionary $Dictionary
-        
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
-  
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
+  ) 
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/preview/scim/v2/Users"
-    
-    $Groups = $PSBoundParameters.Groups
   }
 	
   process {
@@ -104,12 +94,16 @@ Function Add-DatabricksSCIMUser
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{}
     
-    $groupIDs = @(((Get-DynamicParamValues { Get-DatabricksSCIMGroup }) | Where-Object { $_.displayName -in $Groups }).id | ForEach-Object { @{value = $_ } })
+    if ($PSCmdlet.ParameterSetName -eq "GroupNames") {
+      $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
+    }
+    
+    $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
     $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:User") -Force
     $parameters | Add-Property -Name "userName" -Value $UserName -Force
-    $parameters | Add-Property -Name "groups" -Value $groupIDs -Force
+    $parameters | Add-Property -Name "groups" -Value $groups -Force
     $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force
         
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
@@ -133,25 +127,10 @@ Function Remove-DatabricksSCIMUser
   #>
   [CmdletBinding()]
   param (
-    #[Parameter(Mandatory = $True)] [Alias("user_id")] [string] $UserID
-  )
-  DynamicParam
-  {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $userIdValues = (Get-DynamicParamValues { Get-DatabricksSCIMUser }).id
-    New-DynamicParam -Name UserID -ValidateSet $userIdValues -Alias 'user_id' -Mandatory -ValueFromPipelineByPropertyName -Type string -DPDictionary $Dictionary
-        
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
-  
+    [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $true)] [Alias("user_id")] [string] $UserID
+  ) 
   begin {
     $requestMethod = "DELETE"
-
-    $UserID = $PSBoundParameters.UserID
-    
     $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
   }
 	
@@ -241,25 +220,13 @@ Function Add-DatabricksSCIMGroup
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True)] [Alias("group_name")] [string] $GroupName
+    [Parameter(Mandatory = $True)] [Alias("group_name")] [string] $GroupName,
+    [Parameter(Mandatory = $False)] [string[]] $MemberUserIDs
   )
-  DynamicParam
-  {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $userIdValues = (Get-DynamicParamValues { Get-DatabricksSCIMUser }).id
-    New-DynamicParam -Name MemberUserIDs -ValidateSet $userIdValues -Type string[] -DPDictionary $Dictionary
-        
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
   
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/preview/scim/v2/Groups"
-    
-    $MemberUserIDs = $PSBoundParameters.MemberUserIDs
   }
 	
   process {
@@ -267,11 +234,11 @@ Function Add-DatabricksSCIMGroup
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{}
     
-    $MemberUserIDs = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
+    $groupMembers = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:Group") -Force
     $parameters | Add-Property -Name "displayName" -Value $GroupName -Force
-    $parameters | Add-Property -Name "members" -Value $MemberUserIDs -Force
+    $parameters | Add-Property -Name "members" -Value $groupMembers -Force
         
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
     
@@ -294,25 +261,10 @@ Function Remove-DatabricksSCIMGroup
   #>
   [CmdletBinding()]
   param (
-    #[Parameter(Mandatory = $True)] [Alias("group_id")] [string] $GroupID
-  )
-  DynamicParam
-  {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $groupIdValues = (Get-DynamicParamValues { Get-DatabricksSCIMGroup }).id
-    New-DynamicParam -Name GroupID -ValidateSet $groupIdValues -Alias 'group_id' -Mandatory -ValueFromPipelineByPropertyName -Type string -DPDictionary $Dictionary
-        
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
-  
+    [Parameter(Mandatory = $True)] [Alias("group_id")] [string] $GroupID
+  ) 
   begin {
     $requestMethod = "DELETE"
-
-    $GroupID = $PSBoundParameters.GroupID
-    
     $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
   }
 	
@@ -390,8 +342,10 @@ Function Add-DatabricksSCIMServicePrincipal {
       The application/client ID of the service principal to add. Usually a GUID.
       .PARAMETER DisplayName
       A user-friendly name that should be shown in the UI.
-      .PARAMETER Groups
+      .PARAMETER GroupNames
        A list of existing Databricks group names to which the SP is added
+       .PARAMETER GroupIDs
+       A list of existing Databricks group IDs to which the SP is added
       .PARAMETER Entitlements
       A list of Entitlements/Permissions the user should be assigned
       .EXAMPLE
@@ -401,24 +355,14 @@ Function Add-DatabricksSCIMServicePrincipal {
   param (
     [Parameter(Mandatory = $True)] [Alias("application_id", "client_id")] [string] $ApplicationID,
     [Parameter(Mandatory = $False)] [Alias("display_name")] [string] $DisplayName,
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
   )
-  DynamicParam {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $groupValues = (Get-DynamicParamValues { Get-DatabricksSCIMGroup }).displayName
-    New-DynamicParam -Name Groups -ValidateSet $groupValues -Alias 'group_name' -Mandatory -Type string[] -DPDictionary $Dictionary
-        
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
   
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "2.0/preview/scim/v2/ServicePrincipals"
-    
-    $Groups = $PSBoundParameters.Groups
   }
 	
   process {
@@ -426,13 +370,18 @@ Function Add-DatabricksSCIMServicePrincipal {
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
     
-    $groupIDs = @(((Get-DynamicParamValues { Get-DatabricksSCIMGroup }) | Where-Object { $_.displayName -in $Groups }).id | ForEach-Object { @{value = $_ } })
+    if ($PSCmdlet.ParameterSetName -eq "GroupNames")
+    {
+      $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
+    }
+    
+    $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
     $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:ServicePrincipal") -Force
     $parameters | Add-Property -Name "applicationId" -Value $ApplicationID -Force
     $parameters | Add-Property -Name "displayName" -Value $DisplayName -Force
-    $parameters | Add-Property -Name "groups" -Value $groupIDs -Force
+    $parameters | Add-Property -Name "groups" -Value $groups -Force
     $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force
         
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
@@ -455,24 +404,12 @@ Function Remove-DatabricksSCIMServicePrincipal {
   #>
   [CmdletBinding()]
   param (
-    #[Parameter(Mandatory = $True)] [Alias('service_principal_id', 'id')] [string] $ServicePrincipalID
+    [Parameter(Mandatory = $True)] [Alias('service_principal_id', 'id')] [string] $ServicePrincipalID
   )
-  DynamicParam {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $spIdValues = (Get-DynamicParamValues { Get-DatabricksSCIMServicePrincipal }).id
-    New-DynamicParam -Name ServicePrincipalID -ValidateSet $spIdValues -Alias 'service_principal_id', 'id' -Mandatory -ValueFromPipelineByPropertyName -Type int64 -DPDictionary $Dictionary
-        
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
   
   begin {
     $requestMethod = "DELETE"
 
-    $ServicePrincipalID = $PSBoundParameters.ServicePrincipalID
-    
     $apiEndpoint = "/2.0/preview/scim/v2/ServicePrincipals/$ServicePrincipalID"
   }
 	
@@ -496,8 +433,10 @@ Function Update-DatabricksSCIMServicePrincipal {
       The application/client ID of the service principal to update. Usually a GUID.
       .PARAMETER DisplayName
       A user-friendly name that should be shown in the UI.
-      .PARAMETER Groups
+      .PARAMETER GroupNames
        A list of existing Databricks group names to which the SP is added
+       .PARAMETER GroupIDs
+       A list of existing Databricks group IDs to which the SP is added
       .PARAMETER Entitlements
       A list of Entitlements/Permissions the user should be assigned
       .EXAMPLE
@@ -508,24 +447,12 @@ Function Update-DatabricksSCIMServicePrincipal {
     [Parameter(Mandatory = $True)] [Alias("service_principal_id")] [long] $ServicePrincipalID,
     [Parameter(Mandatory = $True)] [Alias("application_id", "client_id")] [string] $ApplicationID,
     [Parameter(Mandatory = $True)] [Alias("display_name")] [string] $DisplayName,
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements
-  )
-  DynamicParam {
-    #Create the RuntimeDefinedParameterDictionary
-    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-    $groupValues = (Get-DynamicParamValues { Get-DatabricksSCIMGroup }).displayName
-    New-DynamicParam -Name Groups -ValidateSet $groupValues -Alias 'group_name' -Mandatory -Type string[] -DPDictionary $Dictionary
-
-    #return RuntimeDefinedParameterDictionary
-    return $Dictionary
-  }
-  
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
+  )  
   begin {
     $requestMethod = "PUT"
-    
-    $Groups = $PSBoundParameters.Groups
-
     $apiEndpoint = "/2.0/preview/scim/v2/ServicePrincipals/$ServicePrincipalID"
   }
 	
@@ -534,13 +461,17 @@ Function Update-DatabricksSCIMServicePrincipal {
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
     
-    $groupIDs = @(((Get-DynamicParamValues { Get-DatabricksSCIMGroup }) | Where-Object { $_.displayName -in $Groups }).id | ForEach-Object { @{value = $_ } })
+    if ($PSCmdlet.ParameterSetName -eq "GroupNames") {
+      $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
+    }
+    
+    $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
     $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:ServicePrincipal") -Force
     $parameters | Add-Property -Name "applicationId" -Value $ApplicationID -Force
     $parameters | Add-Property -Name "displayName" -Value $DisplayName -Force
-    $parameters | Add-Property -Name "groups" -Value $groupIDs -Force
+    $parameters | Add-Property -Name "groups" -Value $groups -Force
     if ($Entitlements.Count -gt 0) { $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force }
         
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
