@@ -13,14 +13,14 @@ $ExportFormatToFileTypeMapping = @{
 	"HTML" = ".html"
 	"JUPYTER" = ".ipynb"
 	"DBC" = ".dbc"
-	}
+}
 
 $LanguageToFileTypeMapping = @{
 	"PYTHON" = ".py"
 	"SQL" = ".sql"
 	"SCALA" = ".scala"
 	"R" = ".r"
-	}
+}
 
 $ClusterPropertiesToKeep = @(       
 	"cluster_name"
@@ -44,6 +44,7 @@ $ClusterPropertiesToKeep = @(
 
 
 
+
 Function Export-DatabricksEnvironment
 {
 	<#
@@ -55,12 +56,16 @@ Function Export-DatabricksEnvironment
 			The local path where the export should be stored.
 			.PARAMETER Artifacts
 			A list of objects that you want to export. The default is 'All' but you can also specify a list of artifacts like 'Clusters,Jobs,Secrets'
-			.PARAMETER CleanLocalPath 
-			The switch that can be used to clean the lcoal path before exporting the new content.
+			.PARAMETER CleanLocalRootPath 
+			The switch that can be used to clean the lcoal root path before exporting the new content. This deletes all folders that were previously created for any artifact!
+			.PARAMETER CleanLocalArtifactPath 
+			The switch that can be used to clean the lcoal artifact path only before exporting the new content. If you only export artifact "Workspace", only the folder "Workspace" will be deleted from -LocalPath!
 			.PARAMETER WorkspaceRootPath 
 			The path of your workspace folder structure from which you want to start to recursivly export the files and folders in case you do not want to export all notebooks.
 			.PARAMETER WorkspaceExportFormat
 			The format in which the workspace items (=notebooks) should be exported. The default is 'DBC' which is also highly recommended if they are imported to another Databricks workspace again!
+			.PARAMETER ExportJobClusters
+			Allows you to also export job clusters. This is usually not necessary as job clusters are spawned on demand.
 			.EXAMPLE
 			Export-DatabricksEnvironment -LocalPath 'C:\MyExport\' -CleanLocalPath
 	#>
@@ -68,7 +73,8 @@ Function Export-DatabricksEnvironment
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
 		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets")] $Artifacts = @("All"),
-		[Parameter(Mandatory = $false)] [switch] $CleanLocalPath,
+		[Parameter(Mandatory = $false)] [Alias('CleanLocalPath')][switch] $CleanLocalRootPath,
+		[Parameter(Mandatory = $false)] [switch] $CleanLocalArtifactPath,
 		[Parameter(Mandatory = $false)] [string] $WorkspaceRootPath = "/",
 		[Parameter(Mandatory = $false)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $WorkspaceExportFormat = "DBC",
 		[Parameter(Mandatory = $false)] [switch] $ExportJobClusters
@@ -80,13 +86,7 @@ Function Export-DatabricksEnvironment
 	}	
 	$LocalPath = $LocalPath.Trim("\")
 	
-	#region CleanLocalPath
-	Write-Verbose "Checking if Folder '$LocalPath' exists ..."
-	if((Test-Path $LocalPath) -and $CleanLocalPath)
-	{
-		Write-Verbose "Local folder '$LocalPath' exists and -CleanLocalPath is specified - deleting folder..."
-		Remove-Item -Path $LocalPath -Recurse -Force -ErrorAction SilentlyContinue
-	}
+	Remove-LocalPath -LocalPath $LocalPath -Condition $CleanLocalRootPath
 	
 	Write-Verbose "Creating local folder '$LocalPath' ..."
 	$x = New-Item -ItemType Directory -Force -Path $LocalPath
@@ -100,6 +100,10 @@ Function Export-DatabricksEnvironment
 		{
 			Write-Verbose "Creating local folder '$LocalWorkspacePath' ..."
 			$x = New-Item -ItemType Directory -Force -Path $LocalWorkspacePath
+		}
+		else
+		{
+			Remove-LocalPath -LocalPath $LocalWorkspacePath -Condition $CleanLocalArtifactPath
 		}
 	
 		if($WorkspaceExportFormat -ne "SOURCE")
@@ -157,7 +161,11 @@ Function Export-DatabricksEnvironment
 			Write-Verbose "Creating local folder '$LocalClustersPath' ..."
 			$x = New-Item -ItemType Directory -Force -Path $LocalClustersPath
 		}
-	
+		else
+		{
+			Remove-LocalPath -LocalPath $LocalClustersPath -Condition $CleanLocalArtifactPath
+		}
+    
 		$clusters = Get-DatabricksCluster
 		
 		if(-not $ExportJobClusters)
@@ -192,6 +200,10 @@ Function Export-DatabricksEnvironment
 			Write-Verbose "Creating local folder '$LocalJobsPath' ..."
 			$x = New-Item -ItemType Directory -Force -Path $LocalJobsPath
 		}
+		else
+		{
+			Remove-LocalPath -LocalPath $LocalJobsPath -Condition $CleanLocalArtifactPath
+		}
 	
 		$jobs = Get-DatabricksJob
 	
@@ -218,6 +230,10 @@ Function Export-DatabricksEnvironment
 			Write-Verbose "Creating local folder '$LocalSecurityPath' ..."
 			$x = New-Item -ItemType Directory -Force -Path $LocalSecurityPath
 		}
+		else
+		{
+			Remove-LocalPath -LocalPath $LocalSecurityPath -Condition $CleanLocalArtifactPath
+		}
 	
 		$groups = Get-DatabricksGroup
 	
@@ -240,6 +256,10 @@ Function Export-DatabricksEnvironment
 		{
 			Write-Verbose "Creating local folder '$LocalSecretsPath' ..."
 			$x = New-Item -ItemType Directory -Force -Path $LocalSecretsPath
+		}
+		else
+		{
+			Remove-LocalPath -LocalPath $LocalSecretsPath -Condition $CleanLocalArtifactPath
 		}
 	
 		$secretScopes = Get-DatabricksSecretScope
@@ -348,7 +368,7 @@ Function Import-DatabricksEnvironment
 					else
 					{ 
 						Write-Information "Importing Workspace item $($workspaceItem.Name) ..."
-						$x = Add-DatabricksWorkspaceDirectory -Path $dbPath -ErrorAction Ignore
+						$x = Add-DatabricksWorkspaceDirectory -Path $dbPath -ErrorAction SilentlyContinue
 						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -OverwriteExistingWorkspaceItems:$OverwriteExistingWorkspaceItems -UpdateExistingClusters:$UpdateExistingClusters -UpdateExistingJobs:$UpdateExistingJobs
 					}
 				}
