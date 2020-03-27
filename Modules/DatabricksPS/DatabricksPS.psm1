@@ -42,6 +42,8 @@ $script:dbCloudProvider = $null
 $script:dbInitialized = $false
 $script:dbAuthenticationProvider = $null
 $script:dbAuthenticationHeader = $null
+$script:dbApiCallRetryCount = $null
+$script:dbApiCallRetryWait = $null
 
 #endregion
 

@@ -30,6 +30,8 @@ Function Clear-ScriptVariables
 	$script:dbAuthenticationHeader = $null
 	$script:dbUseCachedDynamicParamValues = $null
 	$script:dbCachedDynamicParamTimeout = $null
+	$script:dbApiCallRetryCount = $null
+	$script:dbApiCallRetryWait = $null
 	$script:dbCachedDynamicParamValues = @{}
 }
 
