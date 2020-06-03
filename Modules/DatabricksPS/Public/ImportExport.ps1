@@ -280,7 +280,6 @@ Function Import-DatabricksEnvironment {
 			.EXAMPLE
 			Export-DatabricksEnvironment -LocalPath 'C:\MyExport\' -CleanLocalPath
 	#>
-	[CmdletBinding(DefaultParametersetname = "AllArtifacts")]
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
@@ -316,6 +315,7 @@ Function Import-DatabricksEnvironment {
 		
 			foreach ($workspaceItem in $workspaceItems) {
 				$dbPath = $workspaceItem.FullName.Replace($LocalWorkspaceImportRootPath, "").Replace("\", "/")
+				Write-Verbose "Processing item $($workspaceItem.FullName) ..."
 
 				if ($workspaceItem -is [System.IO.DirectoryInfo]) {
 					if ($workspaceItem.BaseName -eq 'users') {
@@ -323,7 +323,7 @@ Function Import-DatabricksEnvironment {
 						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -OverwriteExistingWorkspaceItems:$OverwriteExistingWorkspaceItems -UpdateExistingClusters:$UpdateExistingClusters -UpdateExistingJobs:$UpdateExistingJobs
 					}
 					else { 
-						Write-Information "Importing Workspace item $($workspaceItem.Name) ..."
+						Write-Information "Importing Workspace Folder $($workspaceItem.Name) ..."
 						$x = Add-DatabricksWorkspaceDirectory -Path $dbPath -ErrorAction SilentlyContinue
 						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -OverwriteExistingWorkspaceItems:$OverwriteExistingWorkspaceItems -UpdateExistingClusters:$UpdateExistingClusters -UpdateExistingJobs:$UpdateExistingJobs
 					}
@@ -332,24 +332,39 @@ Function Import-DatabricksEnvironment {
 					$dbPathItem = $dbPath.Replace($workspaceItem.Extension, "")
 
 					if ($OverwriteExistingWorkspaceItems) { 
-						$existingItem = Get-DatabricksWorkspaceItem -Path $dbPathItem -ErrorAction SilentlyContinue
-						if ($existingItem) {
-							Write-Verbose "Removing existing item $dbPathItem ..."
-							$existingItem | Remove-DatabricksWorkspaceItem -Recursive $false
-							#$importParams.Add("Overwrite", $true) # cannot be used with DBC
+						try {
+							Write-Verbose "Checking if item $dbPathItem exists ..."
+							$existingItem = Get-DatabricksWorkspaceItem -Path $dbPathItem
+							
+							if ($existingItem) {
+								Write-Verbose "Removing existing item $dbPathItem ..."
+								$existingItem | Remove-DatabricksWorkspaceItem -Recursive $false
+							}
 						}
+						catch { }
 					}
 
 					$importParams = @{ }
 
-					$language = $LanguageToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq $workspaceItem.Extension }
-					if ($language) { $importParams.Add("Language", $language.Key) }
-
 					$format = $ExportFormatToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq $workspaceItem.Extension }
 					if ($format) { $importParams.Add("Format", $format.Key) }
-				
+
+					$tokens = $workspaceItem.Name.Split('.')
+					if ($format.Key -eq "JUPYTER") {
+						# for .ipynb files, check if the real language was also supplied - e.g. file.py.ipynb
+						$language = $LanguageToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq ".$($tokens[-2])" }
+						$dbPathItem = $tokens[0..($tokens.Length - 3)] -join "." # remove last two tokens
+					}
+					else {
+						$language = $LanguageToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq $workspaceItem.Extension }
+					}
+
+					$importParams.Add("Language", $language.Key) 
+
 					$importParams.Add("Path", $dbPathItem)
 					$importParams.Add("LocalPath", $workspaceItem.FullName)
+
+					Write-Verbose "Importing item $dbPathItem ..."
 					$x = Import-DatabricksWorkspaceItem @importParams
 				}
 			}
