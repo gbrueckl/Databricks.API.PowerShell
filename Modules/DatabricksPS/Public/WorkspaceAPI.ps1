@@ -1,5 +1,4 @@
-Function Remove-DatabricksWorkspaceItem 
-{
+Function Remove-DatabricksWorkspaceItem {
 	<#
 			.SYNOPSIS
 			Deletes an object or a directory (and optionally recursively deletes all objects in the directory). If path does not exist, this call returns an error RESOURCE_DOES_NOT_EXIST. If path is a non-empty directory and recursive is set to false, this call returns an error DIRECTORY_NOT_EMPTY. Object deletion cannot be undone and deleting a directory recursively is not atomic.
@@ -26,7 +25,7 @@ Function Remove-DatabricksWorkspaceItem
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
-		path = $Path 
+		path      = $Path 
 		recursive = $Recursive 
 	}
 	
@@ -35,8 +34,7 @@ Function Remove-DatabricksWorkspaceItem
 	return $result
 }
 				
-Function Export-DatabricksWorkspaceItem
-{
+Function Export-DatabricksWorkspaceItem {
 	<#
 			.SYNOPSIS
 			List the contents of a given path in a Databricks workspace
@@ -71,7 +69,7 @@ Function Export-DatabricksWorkspaceItem
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		#Set parameters
 		$parameters = @{
-			path = $Path 
+			path   = $Path 
 			format = $Format  
 		}
 	
@@ -80,12 +78,10 @@ Function Export-DatabricksWorkspaceItem
 		Write-Verbose "Converting Base64 encoded content to Byte-Array ..."
 		$exportBytes = [Convert]::FromBase64String($result.content)
 	
-		if($CreateFolder)
-		{
+		if ($CreateFolder) {
 			$localFolder = Split-Path $LocalPath -Parent
 			Write-Verbose "Checking if Folder '$localFolder' exists ..."
-			if(-not (Test-Path $localFolder))
-			{
+			if (-not (Test-Path $localFolder)) {
 				Write-Verbose "Creating local folder '$localFolder' ..."
 				$x = New-Item -ItemType Directory -Force -Path $localFolder
 			}
@@ -97,8 +93,7 @@ Function Export-DatabricksWorkspaceItem
 }
 
 
-Function Import-DatabricksWorkspaceItem
-{
+Function Import-DatabricksWorkspaceItem {
 	<#
 			.SYNOPSIS
 			List the contents of a given path in a Databricks workspace
@@ -141,10 +136,10 @@ Function Import-DatabricksWorkspaceItem
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		#Set parameters
 		$parameters = @{
-			path = $Path 
-			format = $Format 
-			language = $Language 
-			content = $Content 
+			path      = $Path 
+			format    = $Format 
+			language  = $Language 
+			content   = $Content 
 			overwrite = $Overwrite 
 		}
 	
@@ -155,8 +150,7 @@ Function Import-DatabricksWorkspaceItem
 }
 
 
-Function Get-DatabricksWorkspaceItem
-{
+Function Get-DatabricksWorkspaceItem {
 	<#
 			.SYNOPSIS
 			List the contents of a given path in a Databricks workspace
@@ -167,6 +161,8 @@ Function Get-DatabricksWorkspaceItem
 			The absolute path of the notebook or directory. This field is required.
 			.EXAMPLE
 			Get-DatabricksWorkspaceItem -Path "/"
+			.EXAMPLE
+			Get-DatabricksWorkspaceItem -Path "/" -ChildItems
 	#>
 	[CmdletBinding()]
 	param
@@ -177,8 +173,7 @@ Function Get-DatabricksWorkspaceItem
 	begin {
 		$requestMethod = "GET"
 		$apiEndpoint = "/2.0/workspace/get-status"
-		if($ChildItems)
-		{
+		if ($ChildItems) {
 			$apiEndpoint = "/2.0/workspace/list"
 		}
 	}
@@ -192,20 +187,17 @@ Function Get-DatabricksWorkspaceItem
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		if($ChildItems)
-		{
+		if ($ChildItems) {
 			return $result.objects
 		}
-		else
-		{
+		else {
 			return $result
 		}
 	}
 }
 
 
-Function Add-DatabricksWorkspaceDirectory
-{
+Function Add-DatabricksWorkspaceDirectory {
 	<#
 			.SYNOPSIS
 			List the contents of a given path in a Databricks workspace
@@ -217,7 +209,6 @@ Function Add-DatabricksWorkspaceDirectory
 			.EXAMPLE
 			Add-DatabricksWorkspaceDirectory -Path "/myNewDirectory"
 	#>
-	[Alias("New-WorkspaceDirectory")]
 	[CmdletBinding()]
 	param
 	(
