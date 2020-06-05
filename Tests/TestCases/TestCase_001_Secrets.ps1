@@ -1,5 +1,6 @@
 # Set-DatabricksEnvironment is already done by the caller!
-$testCaseName = "TestCase_001_Secrets"
+# Current Directory is set by Test-Module.ps1 to the root of this repository!
+$testCaseName = $myInvocation.MyCommand.Name
 Write-Information "Starting Testcase $testCaseName ..."
 
 
@@ -8,13 +9,11 @@ $scopeName = "MyTestScope"
 $secretName = "MySecretPassword"
 
 $currentScope = Get-DatabricksSecretScope | Where-Object ($_.name -eq $scopeName)
-if($currentScope)
-{
+if ($currentScope) {
 	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
 }
 
-try
-{
+try {
 	$x = Add-DatabricksSecretScope -ScopeName $scopeName -Verbose
 	Get-DatabricksSecretScope -Verbose
 
@@ -25,8 +24,7 @@ try
 	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes -Verbose
 	Get-DatabricksSecret -ScopeName $scopeName -Verbose
 }
-finally
-{
+finally {
 	Write-Information "Starting Cleanup for testcase $testCaseName ..."
 	Remove-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -ErrorAction SilentlyContinue
 	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue

@@ -1,0 +1,23 @@
+{
+    "num_workers": 1,
+    "cluster_name": "DatabricksPS_TestCluster",
+    "spark_version": "6.5.x-scala2.11",
+    "spark_conf": {
+        "spark.databricks.delta.optimizeWrite.enabled": "True",
+        "spark.databricks.service.server.enabled": "true",
+        "spark.databricks.delta.autoCompact.enabled": "True",
+        "spark.databricks.io.cache.enabled": "true"
+    },
+    "node_type_id": "Standard_F4s",
+    "driver_node_type_id": "Standard_F4s",
+    "ssh_public_keys": [],
+    "custom_tags": {},
+    "spark_env_vars": {
+        "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 30,
+    "enable_elastic_disk": true,
+    "cluster_source": "UI",
+    "init_scripts": [],
+    "cluster_id": "0604-064219-nouns916"
+}

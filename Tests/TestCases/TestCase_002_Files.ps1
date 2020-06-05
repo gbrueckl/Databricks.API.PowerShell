@@ -1,6 +1,6 @@
 # Set-DatabricksEnvironment is already done by the caller!
 # Current Directory is set by Test-Module.ps1 to the root of this repository!
-$testCaseName = "TestCase_002_Files"
+$testCaseName = $myInvocation.MyCommand.Name
 Write-Information "Starting Testcase $testCaseName ..."
 
 # if executed from PowerShell ISE
@@ -17,14 +17,12 @@ $fileName = "myFile.txt"
 $localFilePath = "$rootPath\Tests\Content\$fileName"
 $dbfsPath = "/myTestFolder/dbfs/$fileName"
 $localTempFolder = "$rootPath\Tests\Content\_TEMP"
-try
-{
+try {
 	Upload-DatabricksFSFile -Path $dbfsPath -LocalPath $localFilePath -Overwrite $true -BatchSize 10
 	New-Item -Path $localTempFolder -ItemType "directory" -Force
 	Download-DatabricksFSFile -Path $dbfsPath -LocalPath "$localTempFolder\$fileName" -Overwrite $true -BatchSize 10
 }
-finally
-{
+finally {
 	Write-Information "Starting Cleanup for testcase $testCaseName ..."
 	Remove-Item -Path $localTempFolder -Recurse -Force -ErrorAction SilentlyContinue
 	Remove-DatabricksFSItem $dbfsPath -ErrorAction SilentlyContinue
