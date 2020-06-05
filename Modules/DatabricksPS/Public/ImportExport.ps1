@@ -8,19 +8,50 @@ $NameIDSeparator = "__"
 $ExistingClusterNameTag = "existing_cluster_name"
 
 
-$ExportFormatToFileTypeMapping = @{
-	"SOURCE"  = "_DYNAMIC_" # this is also the default from the API
-	"HTML"    = ".html"
-	"JUPYTER" = ".ipynb"
-	"DBC"     = ".dbc"
+$ExportFormatToExtensionMapping = @{
+	"HTML"      = ".html"
+	"JUPYTER"   = ".ipynb"
+	"DBC"       = ".dbc"
+	"RMARKDOWN" = ".rmd"
 }
 
-$LanguageToFileTypeMapping = @{
+$LanguageToExtensionMapping = @{
 	"PYTHON" = ".py"
 	"SQL"    = ".sql"
 	"SCALA"  = ".scala"
 	"R"      = ".r"
 }
+
+$FileTypeMapping = @{
+	".py"    = @{
+		"Language" = "PYTHON"
+		"Format"   = "SOURCE"
+	}
+	".ipynb" = @{
+		"Format" = "JUPYTER"
+	}
+	".r"     = @{
+		"Language" = "R"
+		"Format"   = "SOURCE"
+	}
+	".rmd"   = @{
+		"Language" = "R"
+		"Format"   = "SOURCE"
+	}
+	".scala" = @{
+		"Language" = "SCALA"
+		"Format"   = "SOURCE"
+	}
+	".sql"   = @{
+		"Language" = "SQL"
+		"Format"   = "SOURCE"
+	}
+	".dbc"   = @{
+		"Format" = "DBC"
+	}
+}
+
+
 
 $ClusterPropertiesToKeep = @(       
 	"cluster_name"
@@ -102,7 +133,7 @@ Function Export-DatabricksEnvironment {
 		}
 	
 		if ($WorkspaceExportFormat -ne "SOURCE") {
-			$globalExtension = $ExportFormatToFileTypeMapping[$WorkspaceExportFormat]
+			$globalExtension = $ExportFormatToExtensionMapping[$WorkspaceExportFormat]
 		}
 	
 		$rootFolders = Get-DatabricksWorkspaceItem -Path $WorkspaceRootPath -ChildItems
@@ -119,7 +150,7 @@ Function Export-DatabricksEnvironment {
 					$extension = $globalExtension
 				}
 				else {
-					$extension = $LanguageToFileTypeMapping[$item.language]
+					$extension = $LanguageToExtensionMapping[$item.language]
 				}
 			
 				Export-DatabricksWorkspaceItem -LocalPath $($LocalWorkspacePath + $itemPath.Replace("/", "\") + $extension) -Path $itemPath -Format $WorkspaceExportFormat -CreateFolder
@@ -331,41 +362,38 @@ Function Import-DatabricksEnvironment {
 				elseif ($workspaceItem -is [System.IO.FileInfo]) {
 					$dbPathItem = $dbPath.Replace($workspaceItem.Extension, "")
 
-					if ($OverwriteExistingWorkspaceItems) { 
-						try {
-							Write-Verbose "Checking if item $dbPathItem exists ..."
-							$existingItem = Get-DatabricksWorkspaceItem -Path $dbPathItem
-							
-							if ($existingItem) {
-								Write-Verbose "Removing existing item $dbPathItem ..."
-								$existingItem | Remove-DatabricksWorkspaceItem -Recursive $false
-							}
-						}
-						catch { }
-					}
+					$mapping = $FileTypeMapping[$workspaceItem.Extension]
 
-					$importParams = @{ }
-
-					$format = $ExportFormatToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq $workspaceItem.Extension }
-					if ($format) { $importParams.Add("Format", $format.Key) }
-
-					$tokens = $workspaceItem.Name.Split('.')
-					if ($format.Key -eq "JUPYTER") {
-						# for .ipynb files, check if the real language was also supplied - e.g. file.py.ipynb
-						$language = $LanguageToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq ".$($tokens[-2])" }
-						$dbPathItem = $tokens[0..($tokens.Length - 3)] -join "." # remove last two tokens
+					if (-not $mapping) {
+						Write-Warning "File $($workspaceItem.FullName) has a wrong file extension and can not be imported! Skipping file!"
 					}
 					else {
-						$language = $LanguageToFileTypeMapping.GetEnumerator() | Where-Object { $_.Value -ieq $workspaceItem.Extension }
+						$importParams = @{ }
+						$mapping.GetEnumerator() | ForEach-Object { $importParams.Add( $_.Key, $_.Value) }
+
+						$importParams.Add("Path", $dbPathItem)
+						$importParams.Add("LocalPath", $workspaceItem.FullName)
+
+						if ($OverwriteExistingWorkspaceItems) { 
+							try {
+								Write-Verbose "Checking if item $dbPathItem exists ..."
+								$existingItem = Get-DatabricksWorkspaceItem -Path $dbPathItem
+							
+								if ($existingItem) {
+									Write-Verbose "Removing existing item $dbPathItem ..."
+									
+									$recursive = $false
+									if($mapping.Format -eq "DBC" -and $existingItem.object_type -eq "DIRECTORY") { $recursive = $true}
+
+									$existingItem | Remove-DatabricksWorkspaceItem -Recursive $recursive
+								}
+							}
+							catch { }
+						}
+
+						Write-Verbose "Importing item $dbPathItem ..."
+						$x = Import-DatabricksWorkspaceItem @importParams
 					}
-
-					$importParams.Add("Language", $language.Key) 
-
-					$importParams.Add("Path", $dbPathItem)
-					$importParams.Add("LocalPath", $workspaceItem.FullName)
-
-					Write-Verbose "Importing item $dbPathItem ..."
-					$x = Import-DatabricksWorkspaceItem @importParams
 				}
 			}
 		}
