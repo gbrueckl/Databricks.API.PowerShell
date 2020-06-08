@@ -50,8 +50,7 @@
 	}
 		
 	$retry = 0
-	do 
-	{
+	do {
 		try {
 			$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
 			# exit loop after successful execution
@@ -59,20 +58,18 @@
 		} 
 		catch {
 			$retry += 1
-			if($retry -le $script:dbApiCallRetryCount)
-			{
+			if ($retry -le $script:dbApiCallRetryCount) {
 				Write-Warning $_.Exception
 				Write-Warning $_
 				Write-Information "Retrying API call ($retry of $($script:dbApiCallRetryCount) retries) ..."
 				Start-Sleep -Seconds $script:dbApiCallRetryWait
 			}
-			else
-			{
+			else {
 				Write-Error  $_
 			}
 		}				
 	}
-	while($retry -le $script:dbApiCallRetryCount)	
+	while ($retry -le $script:dbApiCallRetryCount)	
 	
 	Write-Verbose "Response: $($result | ConvertTo-Json -Depth 10)"
 	
@@ -182,13 +179,13 @@ Function Set-DatabricksEnvironment {
 		Write-Verbose "Setting [System.Net.ServicePointManager]::SecurityProtocol to [System.Net.SecurityProtocolType]::Tls12 ..."
 		[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 		Write-Verbose "Done!"
-		
-		$x = Clear-ScriptVariables
-
-		$ApiRootUrl = $PSBoundParameters.ApiRootUrl
 	}
 
 	process {
+		$x = Clear-ScriptVariables
+
+		$ApiRootUrl = $PSBoundParameters.ApiRootUrl
+
 		#region Dynamic Parameter Caching
 		Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
 		$script:dbDynamicParameterCacheTimeout = $DynamicParameterCacheTimeout
@@ -394,7 +391,7 @@ Function Clear-DatabricksCachedDynamicParameterValue {
 	DynamicParam {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
+
 		$values = $script:dbCachedDynamicParamValues.Keys
 		New-DynamicParam -Name DynamicParameterName -ValidateSet $values -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
@@ -402,9 +399,11 @@ Function Clear-DatabricksCachedDynamicParameterValue {
 		return $Dictionary
 	}
 	begin {
-		$DynamicParameterName = $PSBoundParameters.DynamicParameterName
+		
 	}
 	process {
+		$DynamicParameterName = $PSBoundParameters.DynamicParameterName
+		
 		if ($DynamicParameterName) {
 			$script:dbCachedDynamicParamValues.Remove($DynamicParameterName)
 		}

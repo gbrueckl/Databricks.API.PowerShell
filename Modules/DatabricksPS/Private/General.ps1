@@ -590,7 +590,7 @@ Function New-DynamicParam {
 					$True
 		})]
 		$DPDictionary = $false
- 
+
 	)
 	#Create attribute object, add attributes, add to collection   
 	$ParamAttr = New-Object System.Management.Automation.ParameterAttribute
@@ -615,7 +615,7 @@ Function New-DynamicParam {
 	{
 		$ParamAttr.HelpMessage = $HelpMessage
 	}
-         
+
 	$AttributeCollection = New-Object 'Collections.ObjectModel.Collection[System.Attribute]'
 	$AttributeCollection.Add($ParamAttr)
     
@@ -637,7 +637,6 @@ Function New-DynamicParam {
 		$AttributeCollection.Add($ParamAlias)
 	}
 
- 
 	#Create the dynamic parameter
 	$Parameter = New-Object -TypeName System.Management.Automation.RuntimeDefinedParameter -ArgumentList @($Name, $Type, $AttributeCollection)
     
@@ -663,7 +662,7 @@ Function Get-DynamicParamValues {
 		{
 			return $null
 		}
-    
+    return $null
 		$commandText = $Command.ToString()
 		$commandTextGeneric = (($commandText -split 'Get-')[1] -split ' ')[0].Trim()
     

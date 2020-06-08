@@ -1,5 +1,4 @@
-﻿Function Get-DatabricksSCIMUser
-{
+﻿Function Get-DatabricksSCIMUser {
   <#
       .SYNOPSIS
       Admin users: Retrieve a list of all users in the Databricks workspace.
@@ -31,8 +30,7 @@
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/preview/scim/v2/Users"
     
-    if($PSCmdlet.ParameterSetName -eq "ByUserID")  
-    { 
+    if ($PSCmdlet.ParameterSetName -eq "ByUserID") { 
       $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
     }
   }
@@ -40,17 +38,15 @@
   process {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
 
-    if($PSCmdlet.ParameterSetName -eq 'List') 
-    {
+    if ($PSCmdlet.ParameterSetName -eq 'List') {
       $parameters | Add-Property -Name "filter" -Value $Filter -Force
     }
     
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json'
 
-    if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List")  
-    { 
+    if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List") { 
       return $result.Resources 
     }
     
@@ -58,8 +54,7 @@
   }
 }
 
-Function Add-DatabricksSCIMUser
-{
+Function Add-DatabricksSCIMUser {
   <#
       .SYNOPSIS
       Admin users: Create a user in the Databricks workspace.
@@ -92,7 +87,7 @@ Function Add-DatabricksSCIMUser
   process {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
     
     if ($PSCmdlet.ParameterSetName -eq "GroupNames") {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
@@ -112,8 +107,7 @@ Function Add-DatabricksSCIMUser
   }
 }
 
-Function Remove-DatabricksSCIMUser
-{
+Function Remove-DatabricksSCIMUser {
   <#
       .SYNOPSIS
       Admin users: Inactivate a user resource. A user that does not own or belong to a workspace in Databricks is automatically purged after 30 days.
@@ -141,8 +135,7 @@ Function Remove-DatabricksSCIMUser
   }
 }
 
-Function Get-DatabricksSCIMGroup
-{
+Function Get-DatabricksSCIMGroup {
   <#
       .SYNOPSIS
       Admin users: Retrieve a list of all groups in the Databricks workspace. 
@@ -174,8 +167,7 @@ Function Get-DatabricksSCIMGroup
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/preview/scim/v2/Groups"
     
-    if($PSCmdlet.ParameterSetName -eq "ByGroupID")  
-    { 
+    if ($PSCmdlet.ParameterSetName -eq "ByGroupID") { 
       $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
     }
   }
@@ -183,17 +175,15 @@ Function Get-DatabricksSCIMGroup
   process {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
 
-    if($PSCmdlet.ParameterSetName -eq 'List') 
-    {
+    if ($PSCmdlet.ParameterSetName -eq 'List') {
       $parameters | Add-Property -Name "filter" -Value $Filter -Force
     }
     
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json'
 
-    if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List")  
-    { 
+    if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List") { 
       return $result.Resources 
     }
     
@@ -201,8 +191,7 @@ Function Get-DatabricksSCIMGroup
   }
 }
 
-Function Add-DatabricksSCIMGroup
-{
+Function Add-DatabricksSCIMGroup {
   <#
       .SYNOPSIS
       Admin users: Create a group in Databricks.
@@ -232,7 +221,7 @@ Function Add-DatabricksSCIMGroup
   process {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
     
     $groupMembers = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
     
@@ -246,8 +235,7 @@ Function Add-DatabricksSCIMGroup
   }
 }
 
-Function Remove-DatabricksSCIMGroup
-{
+Function Remove-DatabricksSCIMGroup {
   <#
       .SYNOPSIS
       Admin users: Remove a group from Databricks. Users in the group are not removed.
@@ -370,8 +358,7 @@ Function Add-DatabricksSCIMServicePrincipal {
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
     
-    if ($PSCmdlet.ParameterSetName -eq "GroupNames")
-    {
+    if ($PSCmdlet.ParameterSetName -eq "GroupNames") {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
     }
     

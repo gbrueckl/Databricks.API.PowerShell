@@ -1,5 +1,4 @@
-Function Add-DatabricksJob
-{
+Function Add-DatabricksJob {
   <#
       .SYNOPSIS
       Creates a new job with the provided settings.
@@ -122,8 +121,7 @@ Function Add-DatabricksJob
 
     [Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)] [string] $SparkParameters
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -137,36 +135,30 @@ Function Add-DatabricksJob
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/create"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 
-  process
-  {
+  process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."	
-    $parameters = @{}
+    $parameters = @{ }
 	
     $parameters | Add-Property -Name "name" -Value $Name -Force
 	
-    if($PSCmdlet.ParameterSetName -ne "JobDefinition")
-    {		
-      if($NewClusterDefinition)
-      {
+    if ($PSCmdlet.ParameterSetName -ne "JobDefinition") {		
+      if ($NewClusterDefinition) {
         $parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
       }
-      elseif($ClusterID)
-      {
+      elseif ($ClusterID) {
         $parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
       }
-      else
-      {
+      else {
         Write-Error "Either parameter NewClusterDefinition or parameter ClusterID have to be specified!"
       }
     }
 			
-    switch ($PSCmdlet.ParameterSetName) 
-    { 
+    switch ($PSCmdlet.ParameterSetName) { 
       "JobDefinition" {					
         $parameters = $JobSettings | ConvertTo-Hashtable
 			
@@ -184,7 +176,7 @@ Function Add-DatabricksJob
 		
       "Jar" {
         $jarTask = @{ 
-          jar_uri = $JarURI 
+          jar_uri         = $JarURI 
           main_class_name = $JarMainClassName
         }
         $jarTask | Add-Property  -Name "parameters" -Value $JarParameters
@@ -230,8 +222,7 @@ Function Add-DatabricksJob
     return $result
   }
 }
-Function Get-DatabricksJob
-{
+Function Get-DatabricksJob {
   <#
       .SYNOPSIS
       Lists all jobs or returns a specific job for a given JobID.
@@ -259,36 +250,32 @@ Function Get-DatabricksJob
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/jobs/list"
-    
-    if($JobID -gt 0)
-    {
-      Write-Verbose "JobID specified ($JobID)- using Get-API instead of List-API..."
-      $apiEndpoint = "/2.0/jobs/get?job_id=$JobID"
-    }
   }
 	
   process {
+    if ($JobID -gt 0) {
+      Write-Verbose "JobID specified ($JobID)- using Get-API instead of List-API..."
+      $apiEndpoint = "/2.0/jobs/get?job_id=$JobID"
+    }
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    if($JobID -gt 0)
-    {
+    if ($JobID -gt 0) {
       # if a JobID was specified, we return the result as it is
       return $result
     }
-    else
-    {
+    else {
       # if no JobID was specified, we return the jobs as an array
       return $result.jobs
     }
   }
 }
 
-Function Remove-DatabricksJob
-{
+Function Remove-DatabricksJob {
   <#
       .SYNOPSIS
       Deletes the job and sends an email to the addresses specified in JobSettings.email_notifications. No action will occur if the job has already been removed. After the job is removed, neither its details or its run history will be visible via the Jobs UI or API. The job is guaranteed to be removed upon completion of this request. However, runs that were active before the receipt of this request may still be active. They will be terminated asynchronously.
@@ -307,8 +294,7 @@ Function Remove-DatabricksJob
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -321,11 +307,11 @@ Function Remove-DatabricksJob
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/delete"
-    
-    $JobID = $PSBoundParameters.JobID
   }
 	
   process {
+    $JobID = $PSBoundParameters.JobID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -339,8 +325,7 @@ Function Remove-DatabricksJob
   }
 }
 
-Function Update-DatabricksJob
-{
+Function Update-DatabricksJob {
   <#
       .SYNOPSIS
       Overwrites the settings of a job with the provided settings.
@@ -364,8 +349,7 @@ Function Update-DatabricksJob
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
     [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("settings")] [object] $NewSettings
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -378,15 +362,15 @@ Function Update-DatabricksJob
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/reset"
-    
-    $JobID = $PSBoundParameters.JobID
   }
 	
   process {
+    $JobID = $PSBoundParameters.JobID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
-      job_id = $JobID 
+      job_id       = $JobID 
       new_settings = $NewSettings 
     }
 
@@ -397,8 +381,7 @@ Function Update-DatabricksJob
   }
 }
 
-Function Start-DatabricksJob
-{
+Function Start-DatabricksJob {
   <#
       .SYNOPSIS
       Runs an existing job now, and returns the run_id of the triggered run.
@@ -430,12 +413,11 @@ Function Start-DatabricksJob
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
     [Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 2)] [string[]] $JarParams = @(), 
-    [Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @{}, 
+    [Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParams = @{ }, 
     [Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 4)] [string[]] $PythonParams = @(), 
     [Parameter(ParameterSetName = "Spark", Mandatory = $false, Position = 5)] [string[]] $SparkSubmitParams = @()
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -448,11 +430,11 @@ Function Start-DatabricksJob
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/run-now"
-    
-    $JobID = $PSBoundParameters.JobID
   }
 
   process {
+    $JobID = $PSBoundParameters.JobID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -460,7 +442,7 @@ Function Start-DatabricksJob
     }
 	
     $parameters | Add-Property  -Name "jar_params" -Value $JarParams -NullValue @()
-    $parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams -NullValue @{}
+    $parameters | Add-Property  -Name "notebook_params" -Value $NotebookParams -NullValue @{ }
     $parameters | Add-Property  -Name "python_params" -Value $PythonParams -NullValue @()
     $parameters | Add-Property  -Name "spark_submit_params" -Value $SparkSubmitParams -NullValue @()
 
@@ -470,8 +452,7 @@ Function Start-DatabricksJob
   }
 }
 
-Function New-DatabricksJobRun
-{
+Function New-DatabricksJobRun {
   <#
       .SYNOPSIS
       Submit a one-time run with the provided settings. This endpoint doesn't require a Databricks job to be created. You can directly submit your workload. Runs submitted via this endpoint don't show up in the UI. Once the run is submitted, you can use the jobs/runs/get API to check the run state.
@@ -518,7 +499,7 @@ Function New-DatabricksJobRun
       New-DatabricksJobRun -ClusterID "1234-asdfae-1234" -NotebookPath "/Shared/MyNotebook" -RunName "MyJobRun" -TimeoutSeconds 300
   #>
 	
-  [CmdletBinding(DefaultParametersetname="JarJob")]
+  [CmdletBinding(DefaultParametersetname = "JarJob")]
   param
   (
     #[Parameter(ParameterSetName = "NotebookJob", Mandatory = $true)]
@@ -552,13 +533,12 @@ Function New-DatabricksJobRun
     [Parameter(Mandatory = $false, Position = 5)] [string[]] $Libraries, 
     [Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds = -1
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $jobIDValues = (Get-DynamicParamValues { Get-Databricksjob }).job_id
-    New-DynamicParam -Name JobID -ParameterSetName NotebookJob,PythonkJob,JarJob,SparkJob -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+    New-DynamicParam -Name JobID -ParameterSetName NotebookJob, PythonkJob, JarJob, SparkJob -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 
     $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
     New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id'-DPDictionary $Dictionary
@@ -570,24 +550,22 @@ Function New-DatabricksJobRun
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/runs/submit"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
-    $JobID = $PSBoundParameters.JobID
-    
-    if($PSCmdlet.ParameterSetName.EndsWith("Job"))
-    {
-      $apiEndpoint = "/2.0/jobs/run-now"
-    }
   }
 
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+    $JobID = $PSBoundParameters.JobID
+    
+    if ($PSCmdlet.ParameterSetName.EndsWith("Job")) {
+      $apiEndpoint = "/2.0/jobs/run-now"
+    }
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
-    $parameters = @{}
-    switch ($PSCmdlet.ParameterSetName) 
-    { 
+    $parameters = @{ }
+    switch ($PSCmdlet.ParameterSetName) { 
       "Notebook" {
-        $notebookTask =  @{ notebook_path = $NotebookPath }
+        $notebookTask = @{ notebook_path = $NotebookPath }
         $notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
 
         #Set parameters
@@ -596,8 +574,8 @@ Function New-DatabricksJobRun
       }
 		
       "Jar" {
-        $jarTask =  @{ 
-          jar_uri = $JarURI 
+        $jarTask = @{ 
+          jar_uri         = $JarURI 
           main_class_name = $JarMainClassName
         }
         $jarTask | Add-Property  -Name "parameters" -Value $JarParameters
@@ -608,7 +586,7 @@ Function New-DatabricksJobRun
       }
 		
       "Python" {
-        $pythonTask =  @{ 
+        $pythonTask = @{ 
           python_file = $PythonURI 
         }
         $pythonTask | Add-Property  -Name "parameters" -Value $PythonParameters
@@ -619,7 +597,7 @@ Function New-DatabricksJobRun
       }
 		
       "Spark" {
-        $sparkTask =  @{ 
+        $sparkTask = @{ 
           parameters = $SparkParameters 
         }
 
@@ -668,8 +646,7 @@ Function New-DatabricksJobRun
 }
 
 
-Function Get-DatabricksJobRun
-{
+Function Get-DatabricksJobRun {
   <#
       .SYNOPSIS
       Lists runs from most recently started to least.
@@ -722,34 +699,33 @@ Function Get-DatabricksJobRun
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Offset = -1, 
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Limit = -1,
 		
-    [Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName=$true)] [Alias("run_id")] [int64] $JobRunID
+    [Parameter(ParameterSetName = "ByRunId", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
   )
 
   begin {
     $requestMethod = "GET"
-    switch ($PSCmdlet.ParameterSetName) 
-    { 
-      "ByJobId"  { 
-                    $apiEndpoint = "/2.0/jobs/runs/list" 
-                 } 
-      "ByRunId"  { 
-                    $apiEndpoint = "/2.0/jobs/runs/get" } 
-                 } 
+    switch ($PSCmdlet.ParameterSetName) { 
+      "ByJobId" { 
+        $apiEndpoint = "/2.0/jobs/runs/list" 
+      }
+      "ByRunId" { 
+        $apiEndpoint = "/2.0/jobs/runs/get" 
+      } 
+    } 
   }
 
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
-    $parameters = @{}
-    switch ($PSCmdlet.ParameterSetName) 
-    { 
+    $parameters = @{ }
+    switch ($PSCmdlet.ParameterSetName) { 
       "ByJobId" {
         $parameters | Add-Property -Name "job_id" -Value $JobID -NullValue -1
         $parameters | Add-Property -Name "offset" -Value $Offset -NullValue -1 
         $parameters | Add-Property -Name "limit" -Value $Limit -NullValue -1
 			
-        if($Filter -eq "ActiveOnly") { $parameters | Add-Property -Name "active_only" -Value $true }
-        if($Filter -eq "CompletedOnly") { $parameters | Add-Property -Name "completed_only" -Value $true }
+        if ($Filter -eq "ActiveOnly") { $parameters | Add-Property -Name "active_only" -Value $true }
+        if ($Filter -eq "CompletedOnly") { $parameters | Add-Property -Name "completed_only" -Value $true }
       }
 
       "ByRunId" {
@@ -759,17 +735,15 @@ Function Get-DatabricksJobRun
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    switch ($PSCmdlet.ParameterSetName) 
-    { 
-      "ByJobId"  { return $result.runs } 
-      "ByRunId"  { return $result } 
+    switch ($PSCmdlet.ParameterSetName) { 
+      "ByJobId" { return $result.runs } 
+      "ByRunId" { return $result } 
     } 
   }
 }
 
 
-Function Export-DatabricksJobRun
-{
+Function Export-DatabricksJobRun {
   <#
       .SYNOPSIS
       Exports and retrieves the job run task.
@@ -794,29 +768,28 @@ Function Export-DatabricksJobRun
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunId, 
     [Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("Code", "Dashboards", "All")] $ViewsToExport = "All"
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $jobRunIDValues = (Get-DynamicParamValues { Get-DatabricksJobRun }).run_id
     New-DynamicParam -Name JobRunId -ValidateSet $jobRunIDValues -Alias 'run_id' -Type Int64 -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-       
+
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
   }
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/jobs/runs/export"
-    
-    $JobRunId = $PSBoundParameters.JobRunId
   }
 	
   process {
+    $JobRunId = $PSBoundParameters.JobRunId
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
-      run_id = $JobRunID 
+      run_id          = $JobRunID 
       views_to_export = $ViewsToExport 
     }
 
@@ -827,8 +800,7 @@ Function Export-DatabricksJobRun
 }
 
 
-Function Stop-DatabricksJobRun
-{
+Function Stop-DatabricksJobRun {
   <#
       .SYNOPSIS
       Cancels a run. The run is canceled asynchronously, so when this request completes the run may be still be active. The run will be terminated as soon as possible.
@@ -847,25 +819,24 @@ Function Stop-DatabricksJobRun
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $jobRunIDValues = (Get-DynamicParamValues { Get-DatabricksJobRun }).run_id
     New-DynamicParam -Name JobRunId -ValidateSet $jobRunIDValues -Alias 'run_id' -Type Int64 -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-       
+
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
   }
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/runs/cancel"
-    
-    $JobRunId = $PSBoundParameters.JobRunId
   }
 	
   process {
+    $JobRunId = $PSBoundParameters.JobRunId
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -880,8 +851,7 @@ Function Stop-DatabricksJobRun
 }
 
 
-Function Get-DatabricksJobRunOutput
-{
+Function Get-DatabricksJobRunOutput {
   <#
       .SYNOPSIS
       Retrieves both the output and the metadata of a run.
@@ -902,25 +872,24 @@ Function Get-DatabricksJobRunOutput
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $jobRunIDValues = (Get-DynamicParamValues { Get-DatabricksJobRun }).run_id
     New-DynamicParam -Name JobRunId -ValidateSet $jobRunIDValues -Alias 'run_id' -Type Int64 -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-       
+
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
   }
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/jobs/runs/get-output"
-    
-    $JobRunId = $PSBoundParameters.JobRunId
   }
 	
   process {
+    $JobRunId = $PSBoundParameters.JobRunId
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -934,8 +903,7 @@ Function Get-DatabricksJobRunOutput
 }
 
 
-Function Remove-DatabricksJobRun
-{
+Function Remove-DatabricksJobRun {
   <#
       .SYNOPSIS
       Deletes a non-active run. Returns an error if the run is active.
@@ -954,8 +922,7 @@ Function Remove-DatabricksJobRun
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("run_id")] [int64] $JobRunID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -968,11 +935,11 @@ Function Remove-DatabricksJobRun
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/jobs/runs/delete"
-    
-    $JobRunId = $PSBoundParameters.JobRunId
   }
 	
   process {
+    $JobRunId = $PSBoundParameters.JobRunId
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{

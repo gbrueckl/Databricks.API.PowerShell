@@ -96,13 +96,13 @@ Function Add-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/create"
-
-    $NodeTypeId = $PSBoundParameters.NodeTypeId
-    $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
-    $SparkVersion = $PSBoundParameters.SparkVersion
   }
 
   process {
+    $NodeTypeId = $PSBoundParameters.NodeTypeId
+    $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
+    $SparkVersion = $PSBoundParameters.SparkVersion
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     if($ClusterObject)
@@ -252,86 +252,86 @@ Function Update-DatabricksCluster
     [Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion
   )
 	
-    DynamicParam
-    {
-        #Create the RuntimeDefinedParameterDictionary
-        $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-      
-        $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
-        New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+  DynamicParam
+  {
+      #Create the RuntimeDefinedParameterDictionary
+      $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
     
-        $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-        New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
-        New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
+      $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
+      New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+  
+      $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
+      New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
+      New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
 
-        $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-        New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
+      $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
+      New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
 
-        #return RuntimeDefinedParameterDictionary
-        return $Dictionary
+      #return RuntimeDefinedParameterDictionary
+      return $Dictionary
+  }
+
+  begin {
+    $requestMethod = "POST"
+    $apiEndpoint = "/2.0/clusters/edit"
+  }
+
+  process {
+    $ClusterID = $PSBoundParameters.ClusterID
+    $NodeTypeId = $PSBoundParameters.NodeTypeId
+    $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
+    $SparkVersion = $PSBoundParameters.SparkVersion
+
+    #Set parameters
+    Write-Verbose "Building Body/Parameters for final API call ..."
+    if($ClusterObject)
+    {
+      $parameters = $ClusterObject | ConvertTo-Hashtable
+    }
+    else
+    {
+      $parameters = @{}
     }
 
-    begin {
-      $requestMethod = "POST"
-      $apiEndpoint = "/2.0/clusters/edit"
-
-      $ClusterID = $PSBoundParameters.ClusterID
-      $NodeTypeId = $PSBoundParameters.NodeTypeId
-      $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
-      $SparkVersion = $PSBoundParameters.SparkVersion
-    }
-
-    process {
-      #Set parameters
-      Write-Verbose "Building Body/Parameters for final API call ..."
-      if($ClusterObject)
+    if($PythonVersion) # check if a PythonVersion was explicitly specified
+    {
+      if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
       {
-        $parameters = $ClusterObject | ConvertTo-Hashtable
+        $SparkEnvVars = @{}
       }
-      else
-      {
-        $parameters = @{}
-      }
-	
-      if($PythonVersion) # check if a PythonVersion was explicitly specified
-      {
-        if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
-        {
-          $SparkEnvVars = @{}
-        }
-        switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
-        { 
-          '2 (2.7)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-          '3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
-        }
-        Write-Verbose "PythonVersion set to $PythonVersion"
-      }
-
-      $parameters | Add-Property -Name "cluster_id" -Value $ClusterID -Force
-      $parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
-      $parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
-      $parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
-      $parameters | Add-Property -Name "spark_conf" -Value $SparkConf -Force
-      $parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
-      $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
-      $parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -Force
-      $parameters | Add-Property -Name "custom_tags" -Value $CustomTags -Force
-      $parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
-      $parameters | Add-Property -Name "init_scripts" -Value $InitScripts -Force
-      $parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars -Force
-      $parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
-      $parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
-	
-      switch($PSCmdlet.ParameterSetName) 
+      switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
       { 
-        "FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
-        "Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
+        '2 (2.7)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
       }
-	
-      $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-      return (ConvertTo-PSObject -InputObject $parameters)
+      Write-Verbose "PythonVersion set to $PythonVersion"
     }
+
+    $parameters | Add-Property -Name "cluster_id" -Value $ClusterID -Force
+    $parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
+    $parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
+    $parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
+    $parameters | Add-Property -Name "spark_conf" -Value $SparkConf -Force
+    $parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
+    $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
+    $parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -Force
+    $parameters | Add-Property -Name "custom_tags" -Value $CustomTags -Force
+    $parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
+    $parameters | Add-Property -Name "init_scripts" -Value $InitScripts -Force
+    $parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars -Force
+    $parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
+    $parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
+
+    switch($PSCmdlet.ParameterSetName) 
+    { 
+      "FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+      "Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
+    }
+
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+
+    return (ConvertTo-PSObject -InputObject $parameters)
+  }
 }
 
 Function Start-DatabricksCluster
@@ -366,11 +366,11 @@ Function Start-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/start"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+    
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{
@@ -415,11 +415,11 @@ Function Restart-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/restart"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -464,11 +464,11 @@ Function Stop-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/delete"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -523,11 +523,11 @@ Function Resize-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/resize"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -578,11 +578,11 @@ Function Remove-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/permanent-delete"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -621,15 +621,15 @@ Function Get-DatabricksCluster
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/clusters/list"
-    
+  }
+
+  process {
     if($ClusterID)
     {
       Write-Verbose "ClusterID specified ($ClusterID) - using get endpoint instead of list endpoint..."
       $apiEndpoint =  "/2.0/clusters/get"
     }
-  }
 
-  process {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{}
@@ -689,11 +689,11 @@ Function Pin-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/pin"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -738,11 +738,11 @@ Function Unpin-DatabricksCluster
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/unpin"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -809,11 +809,11 @@ Function Get-DatabricksClusterEvent
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/events"
-    
-    $ClusterID = $PSBoundParameters.ClusterID
   }
 	
   process {
+    $ClusterID = $PSBoundParameters.ClusterID
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{

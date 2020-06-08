@@ -1,5 +1,4 @@
-Function Add-DatabricksInstanceProfile
-{
+Function Add-DatabricksInstanceProfile {
 	<#
 			.SYNOPSIS
 			Registers an instance profile in Databricks. In the UI, you can then give users the permission to use this instance profile when launching clusters.
@@ -22,7 +21,7 @@ Function Add-DatabricksInstanceProfile
 	
 	begin {
 		$requestMethod = "POST"
-		$apiEndpoint =  "/2.0/instance-profiles/add"
+		$apiEndpoint = "/2.0/instance-profiles/add"
 	}
 	
 	process {
@@ -32,8 +31,7 @@ Function Add-DatabricksInstanceProfile
 			instance_profile_arn = $InstanceProfileARN
 		}
 	
-		if($SkipValidation)
-		{
+		if ($SkipValidation) {
 			$parameters | Add-Property -Name "skip_validation" -Value $true
 		}
 			
@@ -43,8 +41,7 @@ Function Add-DatabricksInstanceProfile
 	}
 }
 
-Function Get-DatabricksInstanceProfile
-{
+Function Get-DatabricksInstanceProfile {
 	<#
 			.SYNOPSIS
 			Lists the instance profiles that the calling user can use to launch a cluster.
@@ -59,13 +56,13 @@ Function Get-DatabricksInstanceProfile
 	
 	begin {
 		$requestMethod = "GET"
-		$apiEndpoint =  "/2.0/instance-profiles/list"
+		$apiEndpoint = "/2.0/instance-profiles/list"
 	}
 	
 	process {
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		#Set parameters
-		$parameters = @{}
+		$parameters = @{ }
 			
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
@@ -73,8 +70,7 @@ Function Get-DatabricksInstanceProfile
 	}
 }
 
-Function Remove-DatabricksInstanceProfile
-{
+Function Remove-DatabricksInstanceProfile {
 	<#
 			.SYNOPSIS
 			Removes the instance profile with the provided ARN. Existing clusters with this instance profile will continue to function.
@@ -93,7 +89,7 @@ Function Remove-DatabricksInstanceProfile
 	)
 	begin {
 		$requestMethod = "GET"
-		$apiEndpoint =  "/2.0/instance-profiles/remove"
+		$apiEndpoint = "/2.0/instance-profiles/remove"
 	}
 	
 	process {

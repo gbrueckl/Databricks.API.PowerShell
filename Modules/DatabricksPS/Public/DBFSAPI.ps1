@@ -1,5 +1,4 @@
-Function Add-DatabricksFSFile
-{
+Function Add-DatabricksFSFile {
 	<#
 			.SYNOPSIS
 			Opens a stream to write to a file and returns a handle to this stream. There is a 10 minute idle timeout on this handle. If a file or directory already exists on the given path and overwrite is set to false, this call will throw an exception with RESOURCE_ALREADY_EXISTS. A typical workflow for file upload would be:
@@ -11,15 +10,15 @@ Function Add-DatabricksFSFile
 			.PARAMETER Overwrite 
 			The flag that specifies whether to overwrite existing file/files.
 			.EXAMPLE
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			$newFile = Add-DatabricksFSFile -Path "/myDBFSTestFolder/myFile1.txt" -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
 			.EXAMPLE
 			#AUTOMATED_TEST:Add empty file
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			$newFile = Add-DatabricksFSFile -Path "/myDBFSTestFolder/myFile1.txt" -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
 			.EXAMPLE
 			#AUTOMATED_TEST:Add new file with content and close it
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
+			$newFile = Add-DatabricksFSFile -Path "/myDBFSTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
@@ -36,7 +35,7 @@ Function Add-DatabricksFSFile
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
-		path = $Path 
+		path      = $Path 
 		overwrite = $Overwrite 
 	}
 	
@@ -45,8 +44,7 @@ Function Add-DatabricksFSFile
 	return $result
 }
 
-Function Add-DatabricksFSFileBlock
-{
+Function Add-DatabricksFSFileBlock {
 	<#
 			.SYNOPSIS
 			Appends a block of data to the stream specified by the input handle. If the handle does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If the block of data exceeds 1 MB, this call will throw an exception with MAX_BLOCK_SIZE_EXCEEDED.
@@ -62,7 +60,7 @@ Function Add-DatabricksFSFileBlock
 			.EXAMPLE
 			Add-DatabricksFSFileBlock -Handle 7904256 -Data "ZGF0YWJyaWNrcwo="
 			#AUTOMATED_TEST:Add new file with content and close it
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
+			$newFile = Add-DatabricksFSFile -Path "/myDBFSTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
@@ -77,8 +75,7 @@ Function Add-DatabricksFSFileBlock
 	$requestMethod = "POST"
 	$apiEndpoint = "/2.0/dbfs/add-block"
 
-	if($AsPlainText)
-	{
+	if ($AsPlainText) {
 		$Data = $Data | ConvertTo-Base64 -Encoding ([Text.Encoding]::UTF8)
 	}
 	
@@ -86,7 +83,7 @@ Function Add-DatabricksFSFileBlock
 	#Set parameters
 	$parameters = @{
 		handle = $Handle 
-		data = $Data 
+		data   = $Data 
 	}
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -94,8 +91,7 @@ Function Add-DatabricksFSFileBlock
 	return $result
 }
 
-Function Close-DatabricksFSFile
-{
+Function Close-DatabricksFSFile {
 	<#
 			.SYNOPSIS
 			Closes the stream specified by the input handle. If the handle does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST.
@@ -107,11 +103,11 @@ Function Close-DatabricksFSFile
 			.EXAMPLE
 			Close-DatabricksFSFile -Handle 7904256
 			#AUTOMATED_TEST:Add and close empty file
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile1.txt" -Overwrite $true
+			$newFile = Add-DatabricksFSFile -Path "/myDBFSTestFolder/myFile1.txt" -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
 			.EXAMPLE
 			#AUTOMATED_TEST:Add new file with content and close it
-			$newFile = Add-DatabricksFSFile -Path "/myTestFolder/myFile2.txt" -Overwrite $true
+			$newFile = Add-DatabricksFSFile -Path "/myDBFSTestFolder/myFile2.txt" -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data "This is a plaintext!" -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
 	#>
@@ -135,8 +131,7 @@ Function Close-DatabricksFSFile
 	return $result
 }
 
-Function Remove-DatabricksFSItem
-{
+Function Remove-DatabricksFSItem {
 	<#
 			.SYNOPSIS
 			Delete the file or directory (optionally recursively delete all files in the directory). This call will throw an exception with IO_ERROR if the path is a non-empty directory and recursive is set to false or on other similar errors.
@@ -151,13 +146,13 @@ Function Remove-DatabricksFSItem
 			Remove-DatabricksFSItem -Path "/MyFolder" -Recursive $false
 			.EXAMPLE
 			#AUTOMATED_TEST:Add and remove File
-			$filePath = "/myTestFolder/myFile1.txt"
+			$filePath = "/myDBFSTestFolder/myFile1.txt"
 			$newFile = Add-DatabricksFSFile -Path $filePath -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
 			Remove-DatabricksFSItem -Path $filePath
 			.EXAMPLE
 			#AUTOMATED_TEST:Add and remove folder
-			$folderPath = "/myTestFolder/myFolder"
+			$folderPath = "/myDBFSTestFolder/myFolder"
 			Add-DatabricksFSDirectory -Path $folderPath
 			Remove-DatabricksFSItem -Path $folderPath
 	#>
@@ -174,7 +169,7 @@ Function Remove-DatabricksFSItem
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
-		path = $Path 
+		path      = $Path 
 		recursive = $Recursive 
 	}
 	
@@ -183,8 +178,7 @@ Function Remove-DatabricksFSItem
 	return $result
 }
 
-Function Get-DatabricksFSItem
-{
+Function Get-DatabricksFSItem {
 	<#
 			.SYNOPSIS
 			Gets the file information of a file or directory. If the file or directory does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST.
@@ -199,17 +193,17 @@ Function Get-DatabricksFSItem
 			Get-DatabricksFSItem -Path "/myFolder/myFile"
 			.EXAMPLE
 			#AUTOMATED_TEST:Get single file
-			$filePath = "/myTestFolder/myFile1.txt"
+			$filePath = "/myDBFSTestFolder/myFile1.txt"
 			$newFile = Add-DatabricksFSFile -Path $filePath -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
 			Get-DatabricksFSItem -Path $filePath
 			.EXAMPLE
 			#AUTOMATED_TEST:Get single folder
-			$folderPath = "/myTestFolder/"
+			$folderPath = "/myDBFSTestFolder/"
 			Get-DatabricksFSItem -Path $folderPath
 			.EXAMPLE
 			#AUTOMATED_TEST:Add and remove folder
-			$folderPath = "/myTestFolder/"
+			$folderPath = "/myDBFSTestFolder/"
 			Add-DatabricksFSDirectory -Path $folderPath
 			Get-DatabricksFSItem -Path $folderPath -ChildItems
 	#>
@@ -222,8 +216,7 @@ Function Get-DatabricksFSItem
 	
 	$requestMethod = "GET"
 	$apiEndpoint = "/2.0/dbfs/get-status"
-	if($ChildItems)
-	{
+	if ($ChildItems) {
 		$apiEndpoint = "/2.0/dbfs/list"
 	}
 		
@@ -236,19 +229,17 @@ Function Get-DatabricksFSItem
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if($ChildItems){
+	if ($ChildItems) {
 		# if -ChildItems was specified, we return the files as an array
 		return $result.files
 	}
-	else
-	{
+	else {
 		# if -ChildItems was not specified, we return the result as it is (a single file)
 		return $result
 	}
 }
 
-Function Add-DatabricksFSDirectory
-{
+Function Add-DatabricksFSDirectory {
 	<#
 			.SYNOPSIS
 			Creates the given directory and necessary parent directories if they do not exist. If there exists a file (not a directory) at any prefix of the input path, this call will throw an exception with RESOURCE_ALREADY_EXISTS. Note that if this operation fails it may have succeeded in creating some of the necessary parent directories.
@@ -261,7 +252,7 @@ Function Add-DatabricksFSDirectory
 			Add-DatabricksFSDirectory -Path "/myNewFolder"
 			.EXAMPLE
 			#AUTOMATED_TEST:Add a folder
-			$folderPath = "/myTestFolder/myFolder2"
+			$folderPath = "/myDBFSTestFolder/myFolder2"
 			Add-DatabricksFSDirectory -Path $folderPath
 	#>
 	[CmdletBinding()]
@@ -284,8 +275,7 @@ Function Add-DatabricksFSDirectory
 	return $result
 }
 
-Function Move-DatabricksFSItem
-{
+Function Move-DatabricksFSItem {
 	<#
 			.SYNOPSIS
 			Move a file from one location to another location within DBFS. If the source file does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If there already exists a file in the destination path, this call will throw an exception with RESOURCE_ALREADY_EXISTS. If the given source path is a directory, this call will always recursively move all files.
@@ -300,8 +290,8 @@ Function Move-DatabricksFSItem
 			Move-DatabricksFSItem -SourcePath "/myFile.csv" -DestinationPath "/myFiles/myCSV.csv"
 			.EXAMPLE
 			#AUTOMATED_TEST:Move single file
-			$sourcePath = "/myTestFolder/myFile1.txt"
-			$targetPath = "/myTestFolder/myMovedFile.txt"
+			$sourcePath = "/myDBFSTestFolder/myFile1.txt"
+			$targetPath = "/myDBFSTestFolder/myMovedFile.txt"
 			$newFile = Add-DatabricksFSFile -Path $sourcePath -Overwrite $true
 			Close-DatabricksFSFile -Handle $newFile.handle
 			Remove-DatabricksFSItem -Path $targetPath -ErrorAction SilentlyContinue
@@ -320,7 +310,7 @@ Function Move-DatabricksFSItem
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
 	$parameters = @{
-		source_path = $SourcePath 
+		source_path      = $SourcePath 
 		destination_path = $DestinationPath 
 	}
 	
@@ -329,8 +319,7 @@ Function Move-DatabricksFSItem
 	return $result
 }
 
-Function Get-DatabricksFSContent
-{
+Function Get-DatabricksFSContent {
 	<#
 			.SYNOPSIS
 			Returns the contents of a file. If the file does not exist, this call will throw an exception with RESOURCE_DOES_NOT_EXIST. If the path is a directory, the read length is negative, or if the offset is negative, this call will throw an exception with INVALID_PARAMETER_VALUE. If the read length exceeds 1 MB, this call will throw an exception with MAX_READ_SIZE_EXCEEDED. If offset + length exceeds the number of bytes in a file, we will read contents until the end of file.
@@ -350,7 +339,7 @@ Function Get-DatabricksFSContent
 			.EXAMPLE
 			#AUTOMATED_TEST:Get file content
 			$content = "This is my test content!"
-			$filePath = "/myTestFolder/myFile1.txt"
+			$filePath = "/myDBFSTestFolder/myFile1.txt"
 			$newFile = Add-DatabricksFSFile -Path $filePath -Overwrite $true
 			Add-DatabricksFSFileBlock -Handle $newFile.handle -Data $content -AsPlainText
 			Close-DatabricksFSFile -Handle $newFile.handle
@@ -380,8 +369,7 @@ Function Get-DatabricksFSContent
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if($Decode)
-	{
+	if ($Decode) {
 		Write-Verbose "Decoding data ..."
 		$decodedValue = $result.data | ConvertFrom-Base64 -Encoding ([Text.Encoding]::UTF8)
 		Write-Verbose "Adding decoded data to result ..."
@@ -394,8 +382,7 @@ Function Get-DatabricksFSContent
 
 
 
-Function Upload-DatabricksFSFile
-{
+Function Upload-DatabricksFSFile {
 	<#
 			.SYNOPSIS
 			Uploads a local file to the Databricks File System (DBFS)
@@ -431,11 +418,9 @@ Function Upload-DatabricksFSFile
 	
 	Write-Verbose "Starting upload of file in batches of size $BatchSize ..."
 	$offset = 0
-	do
-	{
+	do {
 		Write-Verbose "Adding new content from offset $offset ..."
-		if($offset + $BatchSize -gt $totalSize)
-		{
+		if ($offset + $BatchSize -gt $totalSize) {
 			$BatchSize = $totalSize - $offset
 		}
 		$content = $localFile[$offset..$($offset + $BatchSize)]
@@ -445,7 +430,7 @@ Function Upload-DatabricksFSFile
 		
 		$offset = $offset + $BatchSize + 1
 	}
-	while($offset -lt $totalSize)
+	while ($offset -lt $totalSize)
 	Write-Verbose "Finished uploading local file '$LocalPath' to DBFS '$Path'"
 	
 	Close-DatabricksFSFile -Handle $dbfsFile.handle
@@ -455,8 +440,7 @@ Function Upload-DatabricksFSFile
 
 
 
-Function Download-DatabricksFSFile
-{
+Function Download-DatabricksFSFile {
 	<#
 			.SYNOPSIS
 			Downloads a file from the Databricks File System (DBFS) to the local file system.
@@ -485,13 +469,11 @@ Function Download-DatabricksFSFile
 	
 	$dbfsFile = Get-DatabricksFSItem -Path $Path
 	
-	if($dbfsFile.is_dir)
-	{
+	if ($dbfsFile.is_dir) {
 		Write-Error "The specified path is a directory and not a file!"
 	}
 	
-	if((Test-Path $LocalPath) -and $Overwrite)
-	{
+	if ((Test-Path $LocalPath) -and $Overwrite) {
 		Remove-Item $LocalPath -Force
 	}
 	
@@ -500,8 +482,7 @@ Function Download-DatabricksFSFile
 	Write-Verbose "Starting download of file in batches of size $BatchSize ..."
 	Set-Content -Path $LocalPath -Value @() -Encoding Byte 
 	$offset = 0
-	do
-	{
+	do {
 		Write-Verbose "Downloading new content from offset $offset ..."
 		$dbfsFileContent = Get-DatabricksFSContent -Path $dbfsFile.path -Offset $offset -Length $BatchSize
 		$dbfsByteContent = [System.Convert]::FromBase64String($dbfsFilecontent.data)

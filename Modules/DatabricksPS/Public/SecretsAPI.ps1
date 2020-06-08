@@ -1,6 +1,5 @@
-Function Add-DatabricksSecretScope
-{
-	<#
+Function Add-DatabricksSecretScope {
+  <#
 			.SYNOPSIS
 			Creates a new secret scope.
 			.DESCRIPTION
@@ -13,36 +12,35 @@ Function Add-DatabricksSecretScope
 			.EXAMPLE
 			New-DatabricksSecretScope -ScopeName "MySecretScope" -InitialManagePrincipal "users"
 	#>
-	[CmdletBinding()]
-	param
-	(
-		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [string] [Alias("scope", "name", "scope_name")] $ScopeName, 
-		[Parameter(Mandatory = $false, Position = 2, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null
-	)
-	begin {
-		$requestMethod = "POST"
-		$apiEndpoint = "/2.0/secrets/scopes/create"
-	}
+  [CmdletBinding()]
+  param
+  (
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [string] [Alias("scope", "name", "scope_name")] $ScopeName, 
+    [Parameter(Mandatory = $false, Position = 2, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null
+  )
+  begin {
+    $requestMethod = "POST"
+    $apiEndpoint = "/2.0/secrets/scopes/create"
+  }
 	
-	process {
-		Write-Verbose "Building Body/Parameters for final API call ..."
-		#Set parameters
-		$parameters = @{
-			scope = $ScopeName 
-		}
+  process {
+    Write-Verbose "Building Body/Parameters for final API call ..."
+    #Set parameters
+    $parameters = @{
+      scope = $ScopeName 
+    }
 	
-		$parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
+    $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
 
-		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		# this call does not return any results
-		#return $result
-	}
+    # this call does not return any results
+    #return $result
+  }
 }
 
 
-Function Remove-DatabricksSecretScope
-{
+Function Remove-DatabricksSecretScope {
   <#
       .SYNOPSIS
       Deletes a secret scope.
@@ -59,8 +57,7 @@ Function Remove-DatabricksSecretScope
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("scope")] [string] $ScopeName
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -73,11 +70,11 @@ Function Remove-DatabricksSecretScope
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/secrets/scopes/delete"
-    
-    $ScopeName = $PSBoundParameters.ScopeName
   }
 	
   process {
+    $ScopeName = $PSBoundParameters.ScopeName
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -92,9 +89,8 @@ Function Remove-DatabricksSecretScope
 }
 
 
-Function Get-DatabricksSecretScope
-{
-	<#
+Function Get-DatabricksSecretScope {
+  <#
 			.SYNOPSIS
 			Lists all secret scopes available in the workspace.
 			.DESCRIPTION
@@ -107,24 +103,23 @@ Function Get-DatabricksSecretScope
 			Get-DatabricksSecretScope
 
 	#>
-	[CmdletBinding()]
-	param ()
+  [CmdletBinding()]
+  param ()
 	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/secrets/scopes/list"
+  $requestMethod = "GET"
+  $apiEndpoint = "/2.0/secrets/scopes/list"
 
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
+  Write-Verbose "Building Body/Parameters for final API call ..."
+  #Set parameters
+  $parameters = @{ }
 	
-	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+  $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.scopes
+  return $result.scopes
 }
 
 
-Function Add-DatabricksSecret
-{
+Function Add-DatabricksSecret {
   <#
       .SYNOPSIS
       Inserts a secret under the provided scope with the given name. If a secret already exists with the same name, this command overwrites the existing secret's value. The server encrypts the secret using the secret scope's encryption settings before storing it. You must have WRITE or MANAGE permission on the secret scope.
@@ -152,8 +147,7 @@ Function Add-DatabricksSecret
 		
     [Parameter(ParameterSetName = "BytesValue", Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("bytes_value", "new_bytes_value")] [byte[]] $BytesValue
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -166,16 +160,15 @@ Function Add-DatabricksSecret
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/secrets/put"
-    
-    $ScopeName = $PSBoundParameters.ScopeName
   }
 
   process {
+    $ScopeName = $PSBoundParameters.ScopeName
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
-    $parameters = @{}
-    switch ($PSCmdlet.ParameterSetName) 
-    { 
+    $parameters = @{ }
+    switch ($PSCmdlet.ParameterSetName) { 
       "StringValue" {
         $parameters | Add-Property -Name "string_value" -Value $StringValue
 			
@@ -197,8 +190,7 @@ Function Add-DatabricksSecret
   }
 }
 
-Function Remove-DatabricksSecret
-{
+Function Remove-DatabricksSecret {
   <#
       .SYNOPSIS
       Deletes the secret stored in this secret scope. You must have WRITE or MANAGE permission on the secret scope.
@@ -218,8 +210,7 @@ Function Remove-DatabricksSecret
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName, 
     [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("key")] [string] $SecretName
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -232,16 +223,16 @@ Function Remove-DatabricksSecret
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/secrets/delete"
-    
-    $ScopeName = $PSBoundParameters.ScopeName
   }
 
   process {
+    $ScopeName = $PSBoundParameters.ScopeName
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
       scope = $ScopeName 
-      key = $SecretName 
+      key   = $SecretName 
     }
 	
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -252,8 +243,7 @@ Function Remove-DatabricksSecret
 }
 
 
-Function Get-DatabricksSecret
-{
+Function Get-DatabricksSecret {
   <#
       .SYNOPSIS
       Lists the secret keys that are stored at this scope. This is a metadata-only operation; secret data cannot be retrieved using this API. Users need READ permission to make this call.
@@ -265,9 +255,9 @@ Function Get-DatabricksSecret
       .EXAMPLE
       Get-DatabricksSecret -ScopeName "MyScope"
       .EXAMPLE
-      #AUTOMATED_TEST:List cluster zones
+      #AUTOMATED_TEST:Get Secret
       $secretScopes = Get-DatabricksSecretScope
-      $secretScopes[0] | Get-DatabricksSecret
+      if($secretScopes) { $secretScopes[0] | Get-DatabricksSecret }
   #>
   [CmdletBinding()]
   param
@@ -293,8 +283,7 @@ Function Get-DatabricksSecret
 }
 
 
-Function Add-DatabricksSecretScopeACL
-{
+Function Add-DatabricksSecretScopeACL {
   <#
       .SYNOPSIS
       Creates or overwrites the ACL associated with the given principal (user or group) on the specified scope point. In general, a user or group will use the most powerful permission available to them, and permissions are ordered as follows:
@@ -317,13 +306,12 @@ Function Add-DatabricksSecretScopeACL
     [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $Principal, 
     [Parameter(Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [string] [ValidateSet("Manage", "Read", "Write")] $Permission
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
     
     $scopeValues = (Get-DynamicParamValues { Get-DatabricksSecretScope }).name
-    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope','name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
+    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope', 'name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
 
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -331,16 +319,16 @@ Function Add-DatabricksSecretScopeACL
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/secrets/acls/put"
-    
-    $ScopeName = $PSBoundParameters.ScopeName
   }
 	
   process {
+    $ScopeName = $PSBoundParameters.ScopeName
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
-      scope = $ScopeName 
-      principal = $Principal 
+      scope      = $ScopeName 
+      principal  = $Principal 
       permission = $Permission.ToUpper() 
     }
 	
@@ -352,8 +340,7 @@ Function Add-DatabricksSecretScopeACL
 }
 
 
-Function Remove-DatabricksSecretScopeACL
-{
+Function Remove-DatabricksSecretScopeACL {
   <#
       .SYNOPSIS
       Deletes the given ACL on the given scope.
@@ -373,13 +360,12 @@ Function Remove-DatabricksSecretScopeACL
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("scope", "name")] [string] $ScopeName, 
     [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $Principal
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $scopeValues = (Get-DynamicParamValues { Get-DatabricksSecretScope }).name
-    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope','name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
+    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope', 'name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
 
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -387,15 +373,15 @@ Function Remove-DatabricksSecretScopeACL
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/secrets/acls/delete"
-    
-    $ScopeName = $PSBoundParameters.ScopeName
   }
 	
   process {
+    $ScopeName = $PSBoundParameters.ScopeName
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
-      scope = $ScopeName 
+      scope     = $ScopeName 
       principal = $Principal 
     }
 	
@@ -407,8 +393,7 @@ Function Remove-DatabricksSecretScopeACL
 }
 
 
-Function Get-DatabricksSecretScopeACL
-{
+Function Get-DatabricksSecretScopeACL {
   <#
       .SYNOPSIS
       Describes the details about the given ACL, such as the group and permission.
@@ -429,13 +414,12 @@ Function Get-DatabricksSecretScopeACL
     #[Parameter(Mandatory = $true, Position = 1)] [string] $ScopeName, 
     [Parameter(Mandatory = $false, Position = 2)] [string] $Principal = $null
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $scopeValues = (Get-DynamicParamValues { Get-DatabricksSecretScope }).name
-    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope','name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
+    New-DynamicParam -Name ScopeName -ValidateSet $scopeValues -Alias 'scope', 'name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary 
        
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -444,16 +428,15 @@ Function Get-DatabricksSecretScopeACL
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/secrets/acls/list"
     
-    $ScopeName = $PSBoundParameters.ScopeName
-    
-    if($Principal)
-    {
+    if ($Principal) {
       Write-Verbose "--$Principal--"
       $apiEndpoint = "/2.0/secrets/acls/get"
     }
   }
 	
   process {
+    $ScopeName = $PSBoundParameters.ScopeName
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -464,13 +447,11 @@ Function Get-DatabricksSecretScopeACL
 	
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    if($Principal)
-    {
+    if ($Principal) {
       # if a Principal was specified, we return the result as it is
       return $result
     }
-    else
-    {
+    else {
       # if no Principal was specified, we return the ACLs as an array
       return $result.items # the object is called "items" even though it states "acls" in the docs!
     }

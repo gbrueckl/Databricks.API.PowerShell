@@ -132,28 +132,33 @@ Function Export-DatabricksEnvironment {
 			Remove-LocalPath -LocalPath $LocalWorkspacePath -Condition $CleanLocalArtifactPath
 		}
 	
-		if ($WorkspaceExportFormat -ne "SOURCE") {
+		if ($WorkspaceExportFormat -ne "SOURCE" -and $WorkspaceExportFormat -ne "JUPYTER") {
 			$globalExtension = $ExportFormatToExtensionMapping[$WorkspaceExportFormat]
 		}
 	
-		$rootFolders = Get-DatabricksWorkspaceItem -Path $WorkspaceRootPath -ChildItems
+		$rootItems = Get-DatabricksWorkspaceItem -Path $WorkspaceRootPath -ChildItems
 	
-		foreach ($rootFolder in $rootFolders) {
-			$objectType = $rootFolder.object_type
-			$itemPath = $rootFolder.path
+		foreach ($rootItem in $rootItems) {
+			$objectType = $rootItem.object_type
+			$itemPath = $rootItem.path
 		
 			if ($objectType -eq "NOTEBOOK") {
 				Write-Information "NOTEBOOK  found at $itemPath - Exporting item ..."
 				$item = Get-DatabricksWorkspaceItem -Path $itemPath
 			
+				$exportFormat = $WorkspaceExportFormat
 				if ($globalExtension) {
 					$extension = $globalExtension
 				}
+				elseif ($item.language -eq "PYTHON" -and $WorkspaceExportFormat -eq "JUPYTER") {
+					$extension = ".ipynb"
+				}
 				else {
 					$extension = $LanguageToExtensionMapping[$item.language]
+					$exportFormat = "SOURCE"
 				}
-			
-				Export-DatabricksWorkspaceItem -LocalPath $($LocalWorkspacePath + $itemPath.Replace("/", "\") + $extension) -Path $itemPath -Format $WorkspaceExportFormat -CreateFolder
+
+				Export-DatabricksWorkspaceItem -LocalPath $($LocalWorkspacePath + $itemPath.Replace("/", "\") + $extension) -Path $itemPath -Format $exportFormat -CreateFolder
 			}
 			elseif ($objectType -eq "DIRECTORY") {
 				Write-Information "DIRECTORY found at $itemPath - Starting new iteration for WorkspaceItems only ..."
@@ -383,7 +388,7 @@ Function Import-DatabricksEnvironment {
 									Write-Verbose "Removing existing item $dbPathItem ..."
 									
 									$recursive = $false
-									if($mapping.Format -eq "DBC" -and $existingItem.object_type -eq "DIRECTORY") { $recursive = $true}
+									if ($mapping.Format -eq "DBC" -and $existingItem.object_type -eq "DIRECTORY") { $recursive = $true }
 
 									$existingItem | Remove-DatabricksWorkspaceItem -Recursive $recursive
 								}

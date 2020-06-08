@@ -1,5 +1,4 @@
-﻿Function Add-DatabricksInstancePool
-{
+﻿Function Add-DatabricksInstancePool {
   <#
       .SYNOPSIS
       Create an instance pool. Use the returned instance_pool_id to query the status of the instance pool, which includes the number of instances currently allocated by the pool. If you provide the min_idle_instances parameter, instances are provisioned in the background and are ready to use once the idle_count in the InstancePoolStats equals the requested minimum.
@@ -44,8 +43,7 @@
     #[Parameter(Mandatory = $false, Position = 10)] [array] $PreloadedSparkVersions
   )
   
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -55,8 +53,7 @@
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
     New-DynamicParam -Name PreloadedSparkVersions -ValidateSet $sparkVersionValues -Type string[] -DPDictionary $Dictionary
 
-    if($script:dbCloudProvider -in  @("AWS"))
-    {
+    if ($script:dbCloudProvider -in @("AWS")) {
       $awsZoneValues = (Get-DynamicParamValues { Get-DatabricksZone }).key
       New-DynamicParam -Name AwsZone -ValidateSet $awsZoneValues -Type string[] -DPDictionary $Dictionary
            
@@ -71,30 +68,27 @@
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/instance-pools/create"
+  }
 
+  process {
     $NodeTypeId = $PSBoundParameters.NodeTypeId
     $PreloadedSparkVersions = $PSBoundParameters.PreloadedSparkVersions
     $AwsZone = $PSBoundParameters.AwsZone
     $AwsAvailability = $PSBoundParameters.AwsAvailability
-  }
 
-  process {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    if($InstancePoolName)
-    {
+    if ($InstancePoolName) {
       $parameters = $InstancePoolName | ConvertTo-Hashtable
     }
-    else
-    {
-      $parameters = @{}
+    else {
+      $parameters = @{ }
     }
     
-    if(-not $AwsAttributes) # check if a ClusterMode was explicitly specified
-    {
-      if($script:dbCloudProvider -in  @("AWS"))
-      {
-        $AwsAttributes = @{}
+    if (-not $AwsAttributes) {
+      # check if a ClusterMode was explicitly specified
+      if ($script:dbCloudProvider -in @("AWS")) {
+        $AwsAttributes = @{ }
         
         $AwsAttributes | Add-Property -Name "availability" -Value $AwsAvailability -Force
         $AwsAttributes | Add-Property -Name "zone_id" -Value $AwsZone -Force
@@ -119,8 +113,7 @@
   }
 }
 
-Function Update-DatabricksInstancePool
-{
+Function Update-DatabricksInstancePool {
   <#
       .SYNOPSIS
       Edit an instance pool. This modifies the configuration of an existing instance pool.
@@ -153,8 +146,7 @@ Function Update-DatabricksInstancePool
     [Parameter(Mandatory = $false, Position = 6)] [int32] $IdleInstanceAutoterminationMinutes
   )
       
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -168,19 +160,17 @@ Function Update-DatabricksInstancePool
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/instance-pools/edit"
-
-    $NodeTypeId = $PSBoundParameters.NodeTypeId
   }
   process {
+    $NodeTypeId = $PSBoundParameters.NodeTypeId
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    if($InstancePoolName)
-    {
+    if ($InstancePoolName) {
       $parameters = $InstancePoolName | ConvertTo-Hashtable
     }
-    else
-    {
-      $parameters = @{}
+    else {
+      $parameters = @{ }
     }
    
     $parameters | Add-Property -Name "instance_pool_name" -Value $InstancePoolName -Force
@@ -195,8 +185,7 @@ Function Update-DatabricksInstancePool
   }
 }
 
-Function Remove-DatabricksInstancePool
-{
+Function Remove-DatabricksInstancePool {
   <#
       .SYNOPSIS
       Delete an instance pool. This permanently deletes the instance pool. The idle instances in the pool are terminated asynchronously. New clusters cannot attach to the pool. Running clusters attached to the pool continue to run but cannot autoscale up. Terminated clusters attached to the pool will fail to start until they are edited to no longer use the pool.
@@ -214,8 +203,7 @@ Function Remove-DatabricksInstancePool
     #[Parameter(Mandatory = $true, Position = 1)] [Alias("instance_pool_id")] [string] $InstancePoolID
   )
   
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -229,13 +217,13 @@ Function Remove-DatabricksInstancePool
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/instance-pools/delete"
-
-    $InstancePoolID = $PSBoundParameters.InstancePoolID
   }
   process {
+    $InstancePoolID = $PSBoundParameters.InstancePoolID
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
 
     $parameters | Add-Property -Name "instance_pool_id" -Value $InstancePoolID -Force
 			
@@ -245,8 +233,7 @@ Function Remove-DatabricksInstancePool
   }
 }
 
-Function Get-DatabricksInstancePool
-{
+Function Get-DatabricksInstancePool {
   <#
       .SYNOPSIS
       Retrieve the information for an instance pool given its identifier.
@@ -267,10 +254,8 @@ Function Get-DatabricksInstancePool
     #[Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("instance_pool_id")] [string] $InstancePoolID
   )
   
-  DynamicParam
-  {
-    if(-not $List)
-    {
+  DynamicParam {
+    if (-not $List) {
       #Create the RuntimeDefinedParameterDictionary
       $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -285,31 +270,28 @@ Function Get-DatabricksInstancePool
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/instance-pools/list"
-    
-    $InstancePoolID = $PSBoundParameters.InstancePoolID
-    
-    if($InstancePoolID)
-    {
-      Write-Verbose "InstancePoolId specified ($InstancePoolID) - using get endpoint instead of list endpoint..."
-      $apiEndpoint =  "/2.0/instance-pools/get"
-    }
   }
 
   process {
+    $InstancePoolID = $PSBoundParameters.InstancePoolID
+    
+    if ($InstancePoolID) {
+      Write-Verbose "InstancePoolId specified ($InstancePoolID) - using get endpoint instead of list endpoint..."
+      $apiEndpoint = "/2.0/instance-pools/get"
+    }
+    
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    $parameters = @{}
+    $parameters = @{ }
     $parameters | Add-Property  -Name "instance_pool_id" -Value $InstancePoolID
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    if($InstancePoolID)
-    {
+    if ($InstancePoolID) {
       # if a InstancePool was specified, we return the result as it is
       return $result
     }
-    else
-    {
+    else {
       # if no InstancePool was specified, we return the InstancePools as an array
       return $result.instance_pools
     }

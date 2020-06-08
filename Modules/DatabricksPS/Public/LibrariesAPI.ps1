@@ -1,5 +1,4 @@
-Function Get-DatabricksClusterLibraries
-{
+Function Get-DatabricksClusterLibraries {
 	<#
 			.SYNOPSIS
 			Get the status of libraries on a cluster or all clusters. A status will be available for all libraries installed on the cluster via the API or the libraries UI as well as libraries set to be installed on all clusters via the libraries UI. If a library has been set to be installed on all clusters, is_library_for_all_clusters will be true, even if the library was also installed on the cluster.
@@ -22,33 +21,29 @@ Function Get-DatabricksClusterLibraries
 
 	$requestMethod = "GET"
 	$apiEndpoint = "/2.0/libraries/all-cluster-statuses"
-	if($ClusterID)
-	{
+	if ($ClusterID) {
 		Write-Verbose "ClusterID specified ($ClusterID) - using cluster-status endpoint instead of all-cluster-statuses ..."
 		$apiEndpoint = "/2.0/libraries/cluster-status"
 	}
 
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	#Set parameters
-	$parameters = @{}
+	$parameters = @{ }
 	$parameters | Add-Property  -Name "cluster_id" -Value $ClusterID
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	if($ClusterID)
-	{
+	if ($ClusterID) {
 		# if a ClusterID was specified, we return the result as it is
 		return $result
 	}
-	else
-	{
+	else {
 		# if no ClusterID was specified, we return the statuses as an array
 		return $result.statuses
 	}
 }
 
-Function Add-DatabricksClusterLibraries
-{
+Function Add-DatabricksClusterLibraries {
 	<#
 			.SYNOPSIS
 			Install libraries on a cluster. The installation is asynchronous - it happens in the background after the completion of this request. The actual set of libraries to be installed on a cluster is the union of the libraries specified via this method and the libraries set to be installed on all clusters via the libraries UI.
@@ -91,7 +86,7 @@ Function Add-DatabricksClusterLibraries
 	Write-Verbose "Building Body/Parameters for final API call ..."
 	$parameters = @{
 		cluster_id = $ClusterID 
-		libraries = $Libraries 
+		libraries  = $Libraries 
 	}
 
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -99,8 +94,7 @@ Function Add-DatabricksClusterLibraries
 	return $result
 }
 
-Function Remove-DatabricksClusterLibraries
-{
+Function Remove-DatabricksClusterLibraries {
 	<#
 			.SYNOPSIS
 			Set libraries to be uninstalled on a cluster. The libraries aren't uninstalled until the cluster is restarted. Uninstalling libraries that are not installed on the cluster has no impact but is not an error.
@@ -143,7 +137,7 @@ Function Remove-DatabricksClusterLibraries
 	#Set parameters
 	$parameters = @{
 		cluster_id = $ClusterID 
-		libraries = $Libraries 
+		libraries  = $Libraries 
 	}
 
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
