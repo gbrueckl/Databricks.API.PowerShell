@@ -13,9 +13,38 @@ $rootPath = $rootPath | Split-Path -Parent
 Push-Location $rootPath
 
 function Process-TestScript([string]$TestScript) {
-	$TestScript = $TestScript.Replace("/myTestFolder/", $script:dbfsTestFolder)
+	$TestScript = $TestScript.Replace("/myDBFSTestFolder/", $script:dbfsTestFolder)
+	$TestScript = $TestScript.Replace("/myWorkspaceTestFolder/", $script:workspaceTestFolder)
 	
 	return $TestScript
+}
+
+function Compare-FoldersRecursive (
+	[string] $SourcePath,
+	[string] $TargetPath 
+) {
+	$sourceItems = Get-ChildItem -Path $SourcePath -ErrorAction SilentlyContinue
+
+	if (-not $sourceItems) { return @($TargetPath) }
+
+	$targetItems = Get-ChildItem -Path $TargetPath
+
+	$diffs = Compare-Object -ReferenceObject $targetItems -DifferenceObject $sourceItems -Property BaseName
+	$diffsOut = @()
+	if ($diffs) {
+		$diffsOut = $diffsOut + $(Join-Path $TargetPath $diffs.BaseName)
+	}
+
+	$targetFolders = $targetItems | Where-Object { $_ -is [System.IO.DirectoryInfo] }
+
+	foreach ($targetFolder in $targetFolders) {
+		$diffsSubDir = Compare-FoldersRecursive -SourcePath $targetFolder.FullName.Replace($TargetPath, $SourcePath) -TargetPath $targetFolder.FullName
+		if ($diffsSubDir) {
+			$diffsOut = $diffsOut + $diffsSubDir
+		}
+	}
+
+	return $diffsOut
 }
 
 $config = Get-Content "$rootPath\Tests\TestEnvironments.config.json" | ConvertFrom-Json
@@ -37,6 +66,8 @@ foreach ($environment in $activeEnvironments) {
 	
 		$script:dbfsTestFolder = '/' + $environment.dbfsTestFolder.Trim('/') + '/'
 		Add-DatabricksFSDirectory -Path $script:dbfsTestFolder
+
+		$script:workspaceTestFolder = '/' + $environment.workspaceTestFolder.Trim('/') + '/'
 	
 		$moduleCommands = Get-Command -Module "DatabricksPS"
 	
@@ -77,7 +108,7 @@ foreach ($environment in $activeEnvironments) {
 	}
 	finally {
 		Write-Information "Starting Cleanup for Environment $($environment.name) ..."
-		Remove-DatabricksFSItem -Path $script:dbfsTestFolder -Recursive $true
+		Remove-DatabricksFSItem -Path $script:dbfsTestFolder -Recursive $true -ErrorAction SilentlyContinue
 		Write-Information "Finished Cleanup for Environment $($environment.name) ..."
 	}
 }
@@ -86,6 +117,6 @@ foreach ($environment in $activeEnvironments) {
 <#
 Remove-Module -Name "DatabricksPS" -ErrorAction SilentlyContinue -Force
 Import-Module "$rootPath\Modules\DatabricksPS"
-Set-DatabricksEnvironment -AccessToken "$accessToken" -ApiRootUrl "$apiUrl" -Verbose 
+Set-DatabricksEnvironment -AccessToken "$accessToken" -ApiRootUrl "$apiUrl"
 . $testCase.FullName
 #>

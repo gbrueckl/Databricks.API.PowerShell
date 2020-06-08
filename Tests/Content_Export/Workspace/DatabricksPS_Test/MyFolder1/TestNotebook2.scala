@@ -1,2 +1,0 @@
-// Databricks notebook source
-{"cells":[{"cell_type":"code","source":["#widgets\n#dbutils.widgets.removeAll()\ndbutils.widgets.dropdown(\"throwError\", \"0\", [\"0\", \"1\"])\nthrowError = bool(int(dbutils.widgets.get(\"throwError\")))"],"metadata":{},"outputs":[],"execution_count":1},{"cell_type":"code","source":["if throwError:\n  raise \"Error\""],"metadata":{},"outputs":[],"execution_count":2}],"metadata":{"name":"TestNotebook1","notebookId":3127335798638898},"nbformat":4,"nbformat_minor":0}

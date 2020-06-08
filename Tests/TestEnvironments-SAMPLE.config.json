@@ -4,13 +4,17 @@
 			"name": "Azure",
 			"isActive": true,
 			"accessToken": "dapi12341234123412134",
-			"apiRootUrl":	"https://westeurope.azuredatabricks.net"
+			"apiRootUrl": "https://westeurope.azuredatabricks.net",
+			"dbfsTestFolder": "/DatabricksPS_Tests/",
+			"workspaceTestFolder": "/DatabricksPS_Tests/"
 		},
 		{
 			"name": "AWS",
 			"isActive": false,
 			"accessToken": "dapi12341234123412134",
-			"apiRootUrl":	"https://abc-12345-xaz.cloud.databricks.com"
+			"apiRootUrl": "https://abc-12345-xaz.cloud.databricks.com",
+			"dbfsTestFolder": "/DatabricksPS_Tests/",
+			"workspaceTestFolder": "/DatabricksPS_Tests/"
 		}
 	]
 }

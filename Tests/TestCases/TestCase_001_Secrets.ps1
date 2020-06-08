@@ -9,20 +9,29 @@ $scopeName = "MyTestScope"
 $secretName = "MySecretPassword"
 
 $currentScope = Get-DatabricksSecretScope | Where-Object ($_.name -eq $scopeName)
+
 if ($currentScope) {
-	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
+	# Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
+	Write-Warning $currentScope
+	Write-Error "SecretScope '$currentScope' already exists in the Databricks Workspace and real data may be overwritten during the test!
+	Please check the SecretScope and delete it manually before running the test again."
 }
 
 try {
-	$x = Add-DatabricksSecretScope -ScopeName $scopeName -Verbose
-	Get-DatabricksSecretScope -Verbose
+	$x = Add-DatabricksSecretScope -ScopeName $scopeName -InitialManagePrincipal "users"
+	Get-DatabricksSecretScope
 
-	Add-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -StringValue "Pass@word1234!" -Verbose
+	Add-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -StringValue "Pass@word1234!"
 	$enc = [system.Text.Encoding]::UTF8
 	$secretText = "This is a secret value" 
 	$secretBytes = $enc.GetBytes($secretText) 
-	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes -Verbose
-	Get-DatabricksSecret -ScopeName $scopeName -Verbose
+	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes
+	Get-DatabricksSecret -ScopeName $scopeName
+
+	Write-Information "S U C C E S S  -  Testcase $testCaseName finished successfully!"
+}
+catch {
+	throw $_
 }
 finally {
 	Write-Information "Starting Cleanup for testcase $testCaseName ..."

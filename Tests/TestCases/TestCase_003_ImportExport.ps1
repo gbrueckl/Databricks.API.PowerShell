@@ -10,7 +10,7 @@ Write-Information "Testing Import/Export ..."
 $contentPathLocal = "$rootPath\Tests\Content"
 $contentPathExport = "$rootPath\Tests\Content_Export"
 
-$contentPathOnline = "/DatabricksPS_Test"
+$contentPathOnline = $script:workspaceTestFolder
 
 Write-Information "Checking if Path/Folder '$contentPathOnline' already exists in the Databricks Workspace ..."
 $dbItem = $null
@@ -20,6 +20,7 @@ try {
 catch { }
 
 if ($dbItem) {
+	# Remove-DatabricksWorkspaceItem -Path $contentPathOnline -Recursive $true
 	Write-Warning $dbItem
 	Write-Error "Path/Folder '$contentPathOnline' already exists in the Databricks Workspace and real data may be overwritten during the test!
 	Please check the path and delete it manually before running the test again."
@@ -34,25 +35,37 @@ try {
 	Import-DatabricksEnvironment -LocalPath $contentPathLocal -Artifacts "Workspace" -OverwriteExistingWorkspaceItems
 
 	Write-Information "Exporting Workspace to compare with original content ..."
-	Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath $contentPathExport -Artifacts "Workspace" -WorkspaceRootPath $contentPathTest
+	Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath $contentPathExport -Artifacts "Workspace" -WorkspaceRootPath $contentPathOnline -WorkspaceExportFormat "JUPYTER"
+	
+	
+	$sourceFolder = "$contentPathLocal\Workspace$contentPathOnline".replace('/', '\')
+	$targetFolder = "$contentPathExport\Workspace$contentPathOnline".replace('/', '\')
+	$diffs = Compare-FoldersRecursive -SourcePath $sourceFolder -TargetPath $targetFolder
+
+	$actualDiffs = $diffs | ForEach-Object { $_.Replace($targetFolder, '') }
+	
+	$expectedDiffs = @(
+		'invalidFileExtension2'
+		'MyFolder2\invalidFileExtension1'
+		'Tests'
+	)
+
+	if (Compare-Object $actualDiffs $expectedDiffs) {
+		Write-Warning "Expected Diffs:"
+		Write-Warning $($expectedDiffs | ConvertTo-Json)
+		Write-Warning "Actuald Diffs:"
+		Write-Warning $($actualDiffs | ConvertTo-Json)
+		Write-Error "Import and Export did not Match!"
+	}
+
+	Write-Information "S U C C E S S  -  Testcase $testCaseName finished successfully!"
+}
+catch {
+	throw $_
 }
 finally {
 	Write-Information "Starting Cleanup for testcase $testCaseName ..."
-	#Remove-DatabricksWorkspaceItem -Path $contentPathTest -Recursive $true
+	Remove-DatabricksWorkspaceItem -Path $contentPathOnline -Recursive $true
+	Remove-Item -Path $contentPathExport -Recurse -Force
 	Write-Information "Finished Cleanup for testcase $testCaseName"
 }
-
-<#
-$workspaceItemName = 'TestNotebook2.scala.ipynb'
-$dbPathItem = '\DatabricksPS_Test\MyFolder1\TestNotebook2.scala'.Replace('\', '/')
-
-$tokens = $workspaceItemName.Split('.')
-
-(Split-Path $dbPathItem -Parent) + "\" + $($tokens[0..($tokens.Length - 3)] -join ".")
-$dbPathItem = $tokens[0..($tokens.Length - 3)] -join "." # remove last two tokens
-Get-DatabricksWorkspaceItem -Path "/" -ChildItems
-Get-DatabricksWorkspaceItem -Path $contentPathOnline
-#>
-
-$origFiles = Get-ChildItem -Path "$contentPathLocal/Workspace/$contentPathOnline"
-$exportedFiles = Get-ChildItem -Path "$contentPathExport/Workspace/$contentPathOnline"
