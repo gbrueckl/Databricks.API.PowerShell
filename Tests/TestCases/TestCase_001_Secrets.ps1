@@ -5,7 +5,7 @@ Write-Information "Starting Testcase $testCaseName ..."
 
 
 Write-Information "Testing Secrets API ..."
-$scopeName = "MyTestScope"
+$scopeName = $script:testSecretScope
 $secretName = "MySecretPassword"
 
 $currentScope = Get-DatabricksSecretScope | Where-Object ($_.name -eq $scopeName)
@@ -21,12 +21,16 @@ try {
 	$x = Add-DatabricksSecretScope -ScopeName $scopeName -InitialManagePrincipal "users"
 	Get-DatabricksSecretScope
 
-	Add-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -StringValue "Pass@word1234!"
+	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret1" -StringValue "Pass@word1234!"
+
 	$enc = [system.Text.Encoding]::UTF8
 	$secretText = "This is a secret value" 
 	$secretBytes = $enc.GetBytes($secretText) 
 	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes
+
 	Get-DatabricksSecret -ScopeName $scopeName
+
+	Get-DatabricksSecret -ScopeName $scopeName | Remove-DatabricksSecret -ScopeName $scopeName
 
 	Write-Information "S U C C E S S  -  Testcase $testCaseName finished successfully!"
 }
@@ -35,7 +39,6 @@ catch {
 }
 finally {
 	Write-Information "Starting Cleanup for testcase $testCaseName ..."
-	Remove-DatabricksSecret -ScopeName $scopeName -SecretName $secretName -ErrorAction SilentlyContinue
 	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
 	Write-Information "Finished Cleanup for testcase $testCaseName"
 }

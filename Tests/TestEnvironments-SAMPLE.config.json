@@ -3,18 +3,28 @@
 		{
 			"name": "Azure",
 			"isActive": true,
-			"accessToken": "dapi12341234123412134",
-			"apiRootUrl": "https://westeurope.azuredatabricks.net",
-			"dbfsTestFolder": "/DatabricksPS_Tests/",
-			"workspaceTestFolder": "/DatabricksPS_Tests/"
+			"authentication": {
+				"ApiRootUrl": "https://westeurope.azuredatabricks.net",
+				"AccessToken": "dapi12341234123412134"
+			},
+			"testConfig": {
+				"dbfsFolder": "/DatabricksPS_Tests/",
+				"workspaceFolder": "/DatabricksPS_Tests/",
+				"secretScope": "MySecretTestScope"
+			}
 		},
 		{
 			"name": "AWS",
 			"isActive": false,
-			"accessToken": "dapi12341234123412134",
-			"apiRootUrl": "https://abc-12345-xaz.cloud.databricks.com",
-			"dbfsTestFolder": "/DatabricksPS_Tests/",
-			"workspaceTestFolder": "/DatabricksPS_Tests/"
+			"authentication": {
+				"ApiRootUrl": "https://abc-12345-xaz.cloud.databricks.com",
+				"AccessToken": "dapi12341234123412134"
+			},
+			"testConfig": {
+				"dbfsFolder": "/DatabricksPS_Tests/",
+				"workspaceFolder": "/DatabricksPS_Tests/",
+				"secretScope": "MySecretTestScope"
+			}
 		}
 	]
 }

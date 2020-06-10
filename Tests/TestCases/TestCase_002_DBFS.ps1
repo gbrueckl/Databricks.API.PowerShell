@@ -15,7 +15,7 @@ else {
 Write-Information "Testing DBFS API ..."
 $fileName = "myFile.txt"
 $localFilePath = "$rootPath\Tests\Content\DBFS\$fileName"
-$dbfsPath = "$script:dbfsTestFolder$fileName"
+$dbfsPath = "$script:testDBFSFolder$fileName"
 $localTempFolder = "$rootPath\Tests\Content\DBFS\_TEMP"
 try {
 	Upload-DatabricksFSFile -Path $dbfsPath -LocalPath $localFilePath -Overwrite $true -BatchSize 10

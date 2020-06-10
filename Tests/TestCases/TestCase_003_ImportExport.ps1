@@ -10,7 +10,7 @@ Write-Information "Testing Import/Export ..."
 $contentPathLocal = "$rootPath\Tests\Content"
 $contentPathExport = "$rootPath\Tests\Content_Export"
 
-$contentPathOnline = $script:workspaceTestFolder
+$contentPathOnline = $script:testWorkspaceFolder # must also match whats in /Content/Workspace/XXX !!!
 
 Write-Information "Checking if Path/Folder '$contentPathOnline' already exists in the Databricks Workspace ..."
 $dbItem = $null
@@ -35,7 +35,7 @@ try {
 	Import-DatabricksEnvironment -LocalPath $contentPathLocal -Artifacts "Workspace" -OverwriteExistingWorkspaceItems
 
 	Write-Information "Exporting Workspace to compare with original content ..."
-	Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath $contentPathExport -Artifacts "Workspace" -WorkspaceRootPath $contentPathOnline -WorkspaceExportFormat "JUPYTER"
+	Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath $contentPathExport -Artifacts "Workspace" -WorkspaceRootPath $contentPathOnline
 	
 	
 	$sourceFolder = "$contentPathLocal\Workspace$contentPathOnline".replace('/', '\')

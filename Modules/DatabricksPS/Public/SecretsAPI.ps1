@@ -101,7 +101,6 @@ Function Get-DatabricksSecretScope {
 			.EXAMPLE
 			#AUTOMATED_TEST:List Secret Scopes
 			Get-DatabricksSecretScope
-
 	#>
   [CmdletBinding()]
   param ()

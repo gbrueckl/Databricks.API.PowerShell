@@ -13,8 +13,9 @@ $rootPath = $rootPath | Split-Path -Parent
 Push-Location $rootPath
 
 function Process-TestScript([string]$TestScript) {
-	$TestScript = $TestScript.Replace("/myDBFSTestFolder/", $script:dbfsTestFolder)
-	$TestScript = $TestScript.Replace("/myWorkspaceTestFolder/", $script:workspaceTestFolder)
+	$TestScript = $TestScript.Replace("/myDBFSTestFolder/", $script:testDBFSFolder)
+	$TestScript = $TestScript.Replace("/myWorkspaceTestFolder/", $script:testWorkspaceFolder)
+	$TestScript = $TestScript.Replace("myTestSecretScope", $script:testSecretScope)
 	
 	return $TestScript
 }
@@ -56,18 +57,28 @@ Import-Module "$rootPath\Modules\DatabricksPS" -Verbose
 $regEx = "\s*\.EXAMPLE\s+#AUTOMATED_TEST:(.*)\n((?:.|\r|\n)+?)\s+(?=\.EXAMPLE|#>)"
 
 $activeEnvironments = $config.environments | Where-Object { $_.isActive }
-foreach ($environment in $activeEnvironments) {
+foreach ($environment in $activeEnvironments) { 
 	try {
 		Write-Information "Testing Environment $($environment.name) ..."
-		$accessToken = $environment.accessToken
-		$apiUrl = $environment.apiRootUrl
-	
-		Set-DatabricksEnvironment -AccessToken "$accessToken" -ApiRootUrl "$apiUrl" -Verbose 
-	
-		$script:dbfsTestFolder = '/' + $environment.dbfsTestFolder.Trim('/') + '/'
-		Add-DatabricksFSDirectory -Path $script:dbfsTestFolder
+		$authentication = $environment.authentication | ConvertTo-Hashtable
 
-		$script:workspaceTestFolder = '/' + $environment.workspaceTestFolder.Trim('/') + '/'
+		if ($authentication.Keys -contains "Credential") {
+			$username = $authentication.Credential.Username
+			# Convert Value to SecureString-String to be stored in config file:
+			# "P@ssword1" | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString
+			$password = $authentication.Credential.PasswordSecure | ConvertTo-SecureString
+			$credential = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
+			$authentication["Credential"] = $credential
+		}
+
+		Set-DatabricksEnvironment @authentication -Verbose
+	
+		# prepare DBFS for single-command tests
+		$script:testDBFSFolder = '/' + $environment.testConfig.dbfsFolder.Trim('/') + '/'
+		Add-DatabricksFSDirectory -Path $script:testDBFSFolder
+
+		$script:testWorkspaceFolder = '/' + $environment.testConfig.workspaceFolder.Trim('/') + '/'
+		$script:testSecretScope = $environment.testConfig.secretScope.Trim()
 	
 		$moduleCommands = Get-Command -Module "DatabricksPS"
 	
@@ -109,6 +120,7 @@ foreach ($environment in $activeEnvironments) {
 	finally {
 		Write-Information "Starting Cleanup for Environment $($environment.name) ..."
 		Remove-DatabricksFSItem -Path $script:dbfsTestFolder -Recursive $true -ErrorAction SilentlyContinue
+		# WorkspaceFolder and SecretScope are only used within their corresponding test case and the clean-up happens there!
 		Write-Information "Finished Cleanup for Environment $($environment.name) ..."
 	}
 }
