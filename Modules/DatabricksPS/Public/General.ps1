@@ -163,13 +163,15 @@ Function Set-DatabricksEnvironment {
 
 		[Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
 		[Parameter(Mandatory = $false, Position = 3)] [int] $ApiCallRetryCount = -1,
-		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10
+		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10,
+
+		[Parameter(Mandatory = $false, Position = 5)] [string] $CustomApiRootUrl
 	)
 	DynamicParam {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 		
-		New-DynamicParam -Name ApiRootUrl -ValidateSet $script:dbApiRootUrls -Mandatory -DPDictionary $Dictionary
+		New-DynamicParam -Name ApiRootUrl -ValidateSet $script:dbApiRootUrls -DPDictionary $Dictionary
 			
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
@@ -184,7 +186,16 @@ Function Set-DatabricksEnvironment {
 	process {
 		$x = Clear-ScriptVariables
 
-		$ApiRootUrl = $PSBoundParameters.ApiRootUrl
+		if (-not $PSBoundParameters.ApiRootUrl -and -not $PSBoundParameters.CustomApiRootUrl) {
+			Write-Error "Parameter -ApiRootUrl or -CustomApiRootUrl needs to be specified!"
+		}
+		elseif ($PSBoundParameters.CustomApiRootUrl) {
+			$ApiRootUrl = $PSBoundParameters.CustomApiRootUrl
+		}
+		else {
+			$ApiRootUrl = $PSBoundParameters.ApiRootUrl
+		}
+		
 
 		#region Dynamic Parameter Caching
 		Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
