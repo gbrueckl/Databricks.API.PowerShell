@@ -196,7 +196,6 @@ Function Set-DatabricksEnvironment {
 			$ApiRootUrl = $PSBoundParameters.ApiRootUrl
 		}
 		
-
 		#region Dynamic Parameter Caching
 		Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
 		$script:dbDynamicParameterCacheTimeout = $DynamicParameterCacheTimeout
