@@ -34,16 +34,16 @@ try {
 		Write-Error "DBFS upload and download did not match!"
 	}
 
-	Write-Information "S U C C E S S  -  Testcase $testCaseName finished successfully!"
+	Write-Information "S U C C E S S  -  Testcase '$testCaseName' finished successfully!"
 }
 catch {
 	throw $_
 }
 finally {
-	Write-Information "Starting Cleanup for testcase $testCaseName ..."
+	Write-Information "Starting Cleanup for testcase '$testCaseName' ..."
 	Remove-Item -Path $localTempFolder -Recurse -Force -ErrorAction SilentlyContinue
 	Remove-DatabricksFSItem $dbfsPath -ErrorAction SilentlyContinue
-	Write-Information "Finished Cleanup for testcase $testCaseName"
+	Write-Information "Finished Cleanup for testcase '$testCaseName'!"
 }
 
 

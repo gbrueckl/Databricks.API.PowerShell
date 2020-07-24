@@ -499,7 +499,7 @@ Function New-DatabricksJobRun {
       New-DatabricksJobRun -ClusterID "1234-asdfae-1234" -NotebookPath "/Shared/MyNotebook" -RunName "MyJobRun" -TimeoutSeconds 300
   #>
 	
-  [CmdletBinding(DefaultParametersetname = "JarJob")]
+  [CmdletBinding(DefaultParametersetname = "NotebookJob")]
   param
   (
     #[Parameter(ParameterSetName = "NotebookJob", Mandatory = $true)]
@@ -508,6 +508,7 @@ Function New-DatabricksJobRun {
     #[Parameter(ParameterSetName = "SparkJob", Mandatory = $true)] [int64] $JobID,
 		
     [Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
+    [Parameter(ParameterSetName = "Notebook", Mandatory = $false)] [int64] $NotebookRevisionTimestamp = -1, 
     [Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)]
     [Parameter(ParameterSetName = "NotebookJob", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
 
@@ -522,15 +523,14 @@ Function New-DatabricksJobRun {
     [Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3)] 
     [Parameter(ParameterSetName = "JarJob", Mandatory = $false, Position = 3)] [string[]] $JarParameters, 
 
-		
-    [Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1)] [object] $NewClusterDefinition, 
     [Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)]
-    [Parameter(ParameterSetName = "SparkJob", Mandatory = $false, Position = 2)] [string] $SparkParameters, 
+    [Parameter(ParameterSetName = "SparkJob", Mandatory = $false, Position = 2)] [string[]] $SparkParameters, 
 		
     # generic parameters
     #[Parameter(Mandatory = $false, Position = 1)] [string] $ClusterID, 
+    [Parameter(Mandatory = $false, Position = 1)] [object] $NewClusterDefinition, 
     [Parameter(Mandatory = $false, Position = 4)] [string] $RunName, 
-    [Parameter(Mandatory = $false, Position = 5)] [string[]] $Libraries, 
+    [Parameter(Mandatory = $false, Position = 5)] [object[]] $Libraries, 
     [Parameter(Mandatory = $false, Position = 6)] [int32] $TimeoutSeconds = -1
   )
   DynamicParam {
@@ -560,17 +560,22 @@ Function New-DatabricksJobRun {
       $apiEndpoint = "/2.0/jobs/run-now"
     }
 
+    if(-not $ClusterID -and -not $NewClusterDefinition)
+    {
+      throw "Either -ClusterID or -NewClusterDefinition need to be provided!"
+    }
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{ }
     switch ($PSCmdlet.ParameterSetName) { 
       "Notebook" {
-        $notebookTask = @{ notebook_path = $NotebookPath }
+        $notebookTask = @{ "notebook_path" = $NotebookPath }
         $notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
+        $notebookTask | Add-Property -Name "revision_timestamp" -Value $NotebookRevisionTimestamp -NullValue -1
 
         #Set parameters
-        $parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
-        $parameters | Add-Property -Name "notebook_task" -Value $notebookTask
+        $parameters |  Add-Property -Name "notebook_task" -Value $notebookTask
       }
 		
       "Jar" {
@@ -581,7 +586,6 @@ Function New-DatabricksJobRun {
         $jarTask | Add-Property  -Name "parameters" -Value $JarParameters
 
         #Set parameters
-        $parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
         $parameters | Add-Property -Name "spark_jar_task" -Value $jarTask
       }
 		
@@ -592,7 +596,6 @@ Function New-DatabricksJobRun {
         $pythonTask | Add-Property  -Name "parameters" -Value $PythonParameters
 
         #Set parameters
-        $parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
         $parameters | Add-Property -Name "spark_python_task" -Value $pythonTask
       }
 		
@@ -602,42 +605,49 @@ Function New-DatabricksJobRun {
         }
 
         #Set parameters
-        $parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
         $parameters | Add-Property -Name "spark_submit_task" -Value $sparkTask
       }
 		
       "NotebookJob" {
-        $parameters | Add-Property -Name "job_id" -Value $JobID
-
         #Set parameters
         $parameters | Add-Property -Name "notebook_params" -Value $NotebookParameters
       }
 		
       "PythonJob" {
-        $parameters | Add-Property -Name "job_id" -Value $JobID
-
         #Set parameters
         $parameters | Add-Property -Name "python_params" -Value $PythonParameters
       }
 		
       "JarJob" {
-        $parameters | Add-Property -Name "job_id" -Value $JobID
-
         #Set parameters
         $parameters | Add-Property -Name "jar_params" -Value $JarParameters
       }
 		
       "SparkJob" {
-        $parameters | Add-Property -Name "job_id" -Value $JobID
-
         #Set parameters
         $parameters | Add-Property -Name "spark_submit_params" -Value $SparkParameters
       }
     }
+
+    if($JobID)
+    {
+      $parameters | Add-Property -Name "job_id" -Value $JobID
+    }
+    else {
+      if($NewClusterDefinition)
+      {
+        $parameters | Add-Property -Name "new_cluster" -Value $NewClusterDefinition
+      }
+      else {
+        $parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
+      }
+      $parameters | Add-Property -Name "run_name" -Value $RunName
+      $parameters | Add-Property -Name "libraries" -Value $Libraries
+      $parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1
+    }
 	
-    $parameters | Add-Property -Name "run_name" -Value $RunName
-    $parameters | Add-Property -Name "libraries" -Value $Libraries
-    $parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1
+    
+    
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
@@ -695,7 +705,7 @@ Function Get-DatabricksJobRun {
   param
   (
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1, 
-    [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 2)] [string] [ValidateSet("ActiveOnly", "CompletedOnly", "All")] $Filter = "All",
+    [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, Position = 2)] [string] [ValidateSet("ActiveOnly", "CompletedOnly", "All", "InteractiveOnly")] $Filter = "All",
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Offset = -1, 
     [Parameter(ParameterSetName = "ByJobId", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int32] $Limit = -1,
 		
@@ -736,7 +746,16 @@ Function Get-DatabricksJobRun {
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
     switch ($PSCmdlet.ParameterSetName) { 
-      "ByJobId" { return $result.runs } 
+      "ByJobId" { 
+        if($Filter -eq "InteractiveOnly")
+        {
+          return $result.runs | Where-Object { $_.run_type -eq "SUBMIT_RUN" }
+        }
+        else
+        {
+          return $result.runs 
+        } 
+      }
       "ByRunId" { return $result } 
     } 
   }

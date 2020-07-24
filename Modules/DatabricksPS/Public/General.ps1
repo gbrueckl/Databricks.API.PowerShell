@@ -48,28 +48,42 @@
 		
 		Write-Verbose "Body: `n$($Body)"
 	}
-		
-	$retry = 0
-	do {
-		try {
-			$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
-			# exit loop after successful execution
-			break
-		} 
-		catch {
-			$retry += 1
-			if ($retry -le $script:dbApiCallRetryCount) {
-				Write-Warning $_.Exception
-				Write-Warning $_
-				Write-Information "Retrying API call ($retry of $($script:dbApiCallRetryCount) retries) ..."
-				Start-Sleep -Seconds $script:dbApiCallRetryWait
-			}
-			else {
-				Write-Error  $_
-			}
-		}				
+
+	$psCmd = "Invoke-RestMethod 
+	-Uri $apiUrl 
+	-Method $Method 
+	-Headers @$(($headers | ConvertTo-Json -Depth 20).Replace('":', '" =').Replace('",', '"')) 
+	-Body '$(($Body | ConvertTo-Json -Depth 20 | Out-String).Trim('"').Replace('\r', '').Replace('\n', '').Replace('\"', '"'))'
+	-Verbose"
+	Write-Verbose "Executing the following nativ PowerShell command: `n# -----------------------------------------------`n$psCmd"
+
+	if($script:dbApiCallRetryCount -gt 0)
+	{	
+		$retry = 0
+		do {
+			try {
+				$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
+				# exit loop after successful execution
+				break
+			} 
+			catch {
+				$retry += 1
+				if ($retry -le $script:dbApiCallRetryCount) {
+					Write-Warning $_.Exception
+					Write-Warning $_
+					Write-Information "Retrying API call ($retry of $($script:dbApiCallRetryCount) retries) ..."
+					Start-Sleep -Seconds $script:dbApiCallRetryWait
+				}
+				else {
+					throw $_
+				}
+			}				
+		}
+		while ($retry -le $script:dbApiCallRetryCount)
 	}
-	while ($retry -le $script:dbApiCallRetryCount)	
+	else {
+		$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
+	}	
 	
 	Write-Verbose "Response: $($result | ConvertTo-Json -Depth 10)"
 	

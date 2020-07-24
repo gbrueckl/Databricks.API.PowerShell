@@ -119,7 +119,7 @@ foreach ($environment in $activeEnvironments) {
 	}
 	finally {
 		Write-Information "Starting Cleanup for Environment $($environment.name) ..."
-		Remove-DatabricksFSItem -Path $script:dbfsTestFolder -Recursive $true -ErrorAction SilentlyContinue
+		Remove-DatabricksFSItem -Path $script:testDBFSFolder -Recursive $true -ErrorAction SilentlyContinue
 		# WorkspaceFolder and SecretScope are only used within their corresponding test case and the clean-up happens there!
 		Write-Information "Finished Cleanup for Environment $($environment.name) ..."
 	}

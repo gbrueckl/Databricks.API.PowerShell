@@ -80,10 +80,10 @@ foreach($import in $PublicFunctions)
   # find all functions - search for "Function" or "function" followed by some whitespaces and the function name
   # function name has to contain a "-"
   $regEx = '[Ff]unction\s+(\S+\-\S+)\s'
-  $matches = [regex]::Matches($content, $regEx)
+  $functions = [regex]::Matches($content, $regEx)
 	
-  Write-Verbose "$($matches.Count) functions found! Importing them ..."
-  $matches | ForEach-Object { 
+  Write-Verbose "$($functions.Count) functions found! Importing them ..."
+  $functions | ForEach-Object { 
             #Write-Host "Exporting function '$($_.Groups[1]) ..."
             #Export-ModuleMember -Function  $_.Groups[1] 
           }

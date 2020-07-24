@@ -27,7 +27,6 @@ if ($dbItem) {
 }
 
 try {
-	Write-Information "Starting testcase $testCaseName ..."
 	Write-Information "Importing Workspace content ..."
 	Import-DatabricksEnvironment -LocalPath $contentPathLocal -Artifacts "Workspace" -OverwriteExistingWorkspaceItems
 
@@ -58,14 +57,14 @@ try {
 		Write-Error "Import and Export did not Match!"
 	}
 
-	Write-Information "S U C C E S S  -  Testcase $testCaseName finished successfully!"
+	Write-Information "S U C C E S S  -  Testcase '$testCaseName' finished successfully!"
 }
 catch {
 	throw $_
 }
 finally {
-	Write-Information "Starting Cleanup for testcase $testCaseName ..."
+	Write-Information "Starting Cleanup for testcase '$testCaseName' ..."
 	Remove-DatabricksWorkspaceItem -Path $contentPathOnline -Recursive $true
 	Remove-Item -Path $contentPathExport -Recurse -Force
-	Write-Information "Finished Cleanup for testcase $testCaseName"
+	Write-Information "Finished Cleanup for testcase '$testCaseName'!"
 }

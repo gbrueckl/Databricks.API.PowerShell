@@ -8,6 +8,7 @@ Write-Information "Testing Secrets API ..."
 $scopeName = $script:testSecretScope
 $secretName = "MySecretPassword"
 
+Write-Information "Checking if Secret Scope '$scopeName' already exists ..."
 $currentScope = Get-DatabricksSecretScope | Where-Object ($_.name -eq $scopeName)
 
 if ($currentScope) {
@@ -18,29 +19,38 @@ if ($currentScope) {
 }
 
 try {
-	$x = Add-DatabricksSecretScope -ScopeName $scopeName -InitialManagePrincipal "users"
+	Write-Information "Adding Secret Scope '$scopeName' ..."
+	$currentScope = Add-DatabricksSecretScope -ScopeName $scopeName -InitialManagePrincipal "users"
 	Get-DatabricksSecretScope
 
+	Write-Information "Adding Secret with -StringValue ..."
 	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret1" -StringValue "Pass@word1234!"
 
 	$enc = [system.Text.Encoding]::UTF8
 	$secretText = "This is a secret value" 
 	$secretBytes = $enc.GetBytes($secretText) 
+	Write-Information "Adding Secret with -BytesValue ..."
 	Add-DatabricksSecret -ScopeName $scopeName -SecretName "MySecret2" -BytesValue $secretBytes
 
+	Write-Information "Listing secrets of Scope '$scopeName' ..."
 	Get-DatabricksSecret -ScopeName $scopeName
 
+	Write-Information "Removing secrets of Scope '$scopeName' ..."
 	Get-DatabricksSecret -ScopeName $scopeName | Remove-DatabricksSecret -ScopeName $scopeName
 
-	Write-Information "S U C C E S S  -  Testcase $testCaseName finished successfully!"
+	Write-Information "S U C C E S S  -  Testcase '$testCaseName' finished successfully!"
 }
 catch {
 	throw $_
 }
 finally {
-	Write-Information "Starting Cleanup for testcase $testCaseName ..."
-	Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
-	Write-Information "Finished Cleanup for testcase $testCaseName"
+	Write-Information "Starting Cleanup for testcase '$testCaseName' ..."
+	if($currentScope)
+	{
+		Write-Information "Removing Secret Scope '$scopeName' ..."
+		Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
+	}
+	Write-Information "Finished Cleanup for testcase '$testCaseName'!"
 }
 
 

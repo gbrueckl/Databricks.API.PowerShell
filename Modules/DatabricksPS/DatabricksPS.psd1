@@ -1,10 +1,10 @@
-﻿@{
+@{
 
 	# Script module or binary module file associated with this manifest.
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.0.1.0'
+	ModuleVersion     = '1.0.2.0'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -59,94 +59,98 @@
 
 	# Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there is nothing to export.
 	FunctionsToExport = @(
-		'Add-DatabricksCluster', 
-		'Update-DatabricksCluster', 
-		'Start-DatabricksCluster', 
-		'Restart-DatabricksCluster', 
-		'Stop-DatabricksCluster', 
-		'Resize-DatabricksCluster', 
-		'Remove-DatabricksCluster', 
-		'Get-DatabricksCluster', 
-		'Pin-DatabricksCluster', 
-		'Unpin-DatabricksCluster', 
-		'Get-DatabricksClusterEvent', 
-		'Get-DatabricksNodeType', 
-		'Get-DatabricksZone', 
-		'Get-DatabricksSparkVersion', 
-		'Add-DatabricksFSFile', 
-		'Add-DatabricksFSFileBlock', 
-		'Close-DatabricksFSFile', 
-		'Remove-DatabricksFSItem', 
-		'Get-DatabricksFSItem', 
-		'Add-DatabricksFSDirectory', 
-		'Move-DatabricksFSItem', 
-		'Get-DatabricksFSContent', 
-		'Upload-DatabricksFSFile', 
-		'Download-DatabricksFSFile', 
-		'Invoke-DatabricksApiRequest', 
-		'Set-DatabricksEnvironment', 
-		'Clear-DatabricksEnvironment', 
-		'Test-DatabricksEnvironment', 
-		'Clear-DatabricksCachedDynamicParameterValue', 
-		'Set-DatabricksDynamicParameterCacheTimeout', 
-		'Add-DatabricksGroupMember', 
-		'Add-DatabricksGroup', 
-		'Get-DatabricksGroupMember', 
-		'Get-DatabricksGroup', 
-		'Get-DatabricksMembership', 
-		'Remove-DatabricksGroupMember', 
-		'Remove-DatabricksGroup', 
-		'Export-DatabricksEnvironment', 
-		'Import-DatabricksEnvironment', 
-		'Add-DatabricksInstancePool', 
-		'Update-DatabricksInstancePool', 
-		'Remove-DatabricksInstancePool', 
-		'Get-DatabricksInstancePool', 
-		'Add-DatabricksInstanceProfile', 
-		'Get-DatabricksInstanceProfile', 
-		'Remove-DatabricksInstanceProfile', 
-		'Add-DatabricksJob', 
-		'Get-DatabricksJob', 
-		'Remove-DatabricksJob', 
-		'Update-DatabricksJob', 
-		'Start-DatabricksJob', 
-		'New-DatabricksJobRun', 
-		'Get-DatabricksJobRun', 
-		'Export-DatabricksJobRun', 
-		'Stop-DatabricksJobRun', 
-		'Get-DatabricksJobRunOutput', 
-		'Remove-DatabricksJobRun', 
-		'Get-DatabricksClusterLibraries', 
-		'Add-DatabricksClusterLibraries', 
-		'Remove-DatabricksClusterLibraries', 
-		'Get-DatabricksSCIMUser', 
-		'Add-DatabricksSCIMUser', 
-		'Remove-DatabricksSCIMUser', 
-		'Get-DatabricksSCIMGroup', 
-		'Add-DatabricksSCIMGroup', 
-		'Remove-DatabricksSCIMGroup', 
-		'Get-DatabricksSCIMServicePrincipal', 
-		'Add-DatabricksSCIMServicePrincipal', 
-		'Remove-DatabricksSCIMServicePrincipal', 
-		'Update-DatabricksSCIMServicePrincipal', 
-		'Add-DatabricksSecretScope', 
-		'Remove-DatabricksSecretScope', 
-		'Get-DatabricksSecretScope', 
-		'Add-DatabricksSecret', 
-		'Remove-DatabricksSecret', 
-		'Get-DatabricksSecret', 
-		'Add-DatabricksSecretScopeACL', 
-		'Remove-DatabricksSecretScopeACL', 
-		'Get-DatabricksSecretScopeACL', 
-		'Add-DatabricksApiToken', 
-		'Get-DatabricksApiToken', 
-		'Remove-DatabricksApiToken', 
-		'Remove-DatabricksWorkspaceItem', 
-		'Export-DatabricksWorkspaceItem', 
-		'Import-DatabricksWorkspaceItem', 
-		'Get-DatabricksWorkspaceItem', 
-		'Add-DatabricksWorkspaceDirectory'
-	)
+'Get-DatabricksClusterPolicy', 
+'Add-DatabricksClusterPolicy', 
+'Remove-DatabricksClusterPolicy', 
+'Update-DatabricksClusterPolicy', 
+'Add-DatabricksCluster', 
+'Update-DatabricksCluster', 
+'Start-DatabricksCluster', 
+'Restart-DatabricksCluster', 
+'Stop-DatabricksCluster', 
+'Resize-DatabricksCluster', 
+'Remove-DatabricksCluster', 
+'Get-DatabricksCluster', 
+'Pin-DatabricksCluster', 
+'Unpin-DatabricksCluster', 
+'Get-DatabricksClusterEvent', 
+'Get-DatabricksNodeType', 
+'Get-DatabricksZone', 
+'Get-DatabricksSparkVersion', 
+'Add-DatabricksFSFile', 
+'Add-DatabricksFSFileBlock', 
+'Close-DatabricksFSFile', 
+'Remove-DatabricksFSItem', 
+'Get-DatabricksFSItem', 
+'Add-DatabricksFSDirectory', 
+'Move-DatabricksFSItem', 
+'Get-DatabricksFSContent', 
+'Upload-DatabricksFSFile', 
+'Download-DatabricksFSFile', 
+'Invoke-DatabricksApiRequest', 
+'Set-DatabricksEnvironment', 
+'Clear-DatabricksEnvironment', 
+'Test-DatabricksEnvironment', 
+'Clear-DatabricksCachedDynamicParameterValue', 
+'Set-DatabricksDynamicParameterCacheTimeout', 
+'Add-DatabricksGroupMember', 
+'Add-DatabricksGroup', 
+'Get-DatabricksGroupMember', 
+'Get-DatabricksGroup', 
+'Get-DatabricksMembership', 
+'Remove-DatabricksGroupMember', 
+'Remove-DatabricksGroup', 
+'Export-DatabricksEnvironment', 
+'Import-DatabricksEnvironment', 
+'Add-DatabricksInstancePool', 
+'Update-DatabricksInstancePool', 
+'Remove-DatabricksInstancePool', 
+'Get-DatabricksInstancePool', 
+'Add-DatabricksInstanceProfile', 
+'Get-DatabricksInstanceProfile', 
+'Remove-DatabricksInstanceProfile', 
+'Add-DatabricksJob', 
+'Get-DatabricksJob', 
+'Remove-DatabricksJob', 
+'Update-DatabricksJob', 
+'Start-DatabricksJob', 
+'New-DatabricksJobRun', 
+'Get-DatabricksJobRun', 
+'Export-DatabricksJobRun', 
+'Stop-DatabricksJobRun', 
+'Get-DatabricksJobRunOutput', 
+'Remove-DatabricksJobRun', 
+'Get-DatabricksClusterLibraries', 
+'Add-DatabricksClusterLibraries', 
+'Remove-DatabricksClusterLibraries', 
+'Get-DatabricksSCIMUser', 
+'Add-DatabricksSCIMUser', 
+'Remove-DatabricksSCIMUser', 
+'Get-DatabricksSCIMGroup', 
+'Add-DatabricksSCIMGroup', 
+'Remove-DatabricksSCIMGroup', 
+'Get-DatabricksSCIMServicePrincipal', 
+'Add-DatabricksSCIMServicePrincipal', 
+'Remove-DatabricksSCIMServicePrincipal', 
+'Update-DatabricksSCIMServicePrincipal', 
+'Add-DatabricksSecretScope', 
+'Remove-DatabricksSecretScope', 
+'Get-DatabricksSecretScope', 
+'Add-DatabricksSecret', 
+'Remove-DatabricksSecret', 
+'Get-DatabricksSecret', 
+'Add-DatabricksSecretScopeACL', 
+'Remove-DatabricksSecretScopeACL', 
+'Get-DatabricksSecretScopeACL', 
+'Add-DatabricksApiToken', 
+'Get-DatabricksApiToken', 
+'Remove-DatabricksApiToken', 
+'Remove-DatabricksWorkspaceItem', 
+'Export-DatabricksWorkspaceItem', 
+'Import-DatabricksWorkspaceItem', 
+'Get-DatabricksWorkspaceItem', 
+'Add-DatabricksWorkspaceDirectory'
+)
 
 	# Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there is nothing to export.
 	CmdletsToExport   = @()
@@ -194,6 +198,26 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
