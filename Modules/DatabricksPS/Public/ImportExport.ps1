@@ -3,6 +3,7 @@ $FolderNameClusters = "Clusters"
 $FolderNameJobs = "Jobs"
 $FolderNameSecurity = "Security"
 $FolderNameSecrets = "Secrets"
+$FolderNameDBFS = "DBFS"
 
 $NameIDSeparator = "__"
 $ExistingClusterNameTag = "existing_cluster_name"
@@ -102,7 +103,7 @@ Function Export-DatabricksEnvironment {
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
-		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets")] $Artifacts = @("All"),
+		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets", "DBFS")] $Artifacts = @("All"),
 		[Parameter(Mandatory = $false)] [Alias('CleanLocalPath')][switch] $CleanLocalRootPath,
 		[Parameter(Mandatory = $false)] [switch] $CleanLocalArtifactPath,
 		[Parameter(Mandatory = $false)] [string] $WorkspaceRootPath = "/",
@@ -290,6 +291,31 @@ Function Export-DatabricksEnvironment {
 		}
 	}
 	#endregion
+
+	#region DBFS
+	if ($Artifacts -contains "All" -or $Artifacts -ccontains "DBFS") {
+		Write-Warning "It is not possible to donwload the whole DBFS.`nThis export will only download files from DBFS that already exist locally and overwrite them!"
+		$LocalDBFSPath = "$LocalPath\$FolderNameDBFS"
+
+		if(-not (Test-Path $LocalDBFSPath))
+		{
+			Write-Error "Local DBFS path $LocalDBFSPath does not exist so the DBFS export cannot work properly!"
+		}
+		else {
+			$LocalDBFSPath = (Get-Item -Path $LocalDBFSPath).FullName
+		}
+
+		$localItems = Get-ChildItem -Path $LocalDBFSPath -Recurse | Where-Object { -not $_.PSIsContainer}
+
+		foreach($localItem in $localItems)
+		{
+			$dbfsPath = $localItem.FullName.Replace($LocalDBFSPath, '').Replace("\", "/")
+
+			Write-Information "Downloading file from DBFS: '$LocalDBFSPath' ..."
+			Download-DatabricksFSFile -Path $dbfsPath -LocalPath $localitem.FullName -Overwrite $true
+		}
+	}
+	#endregion
 }
 		
 
@@ -319,7 +345,7 @@ Function Import-DatabricksEnvironment {
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
-		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets")] $Artifacts = @("All"),
+		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets", "DBFS")] $Artifacts = @("All"),
 		[Parameter(Mandatory = $false)] [switch] $OverwriteExistingWorkspaceItems,
 		[Parameter(Mandatory = $false)] [switch] $UpdateExistingClusters,
 		[Parameter(Mandatory = $false)] [switch] $UpdateExistingJobs,
@@ -570,6 +596,38 @@ Function Import-DatabricksEnvironment {
 				else {
 					Write-Warning "Currently only secret scopes stored in Databricks are supported!`nSkipping secret scope $($secretScopeDefinition.Name) ..."
 				}
+			}
+		}
+	}
+	#endregion
+
+	#region DBFS
+	if ($Artifacts -contains "All" -or $Artifacts -ccontains "DBFS") {
+		Write-Warning "It is not possible to donwload the whole DBFS.`nThis export will only download files from DBFS that already exist locally and overwrite them!"
+		$LocalDBFSPath = "$LocalPath\$FolderNameDBFS"
+
+		if(-not (Test-Path $LocalDBFSPath))
+		{
+			Write-Warning "Local DBFS path $LocalDBFSPath does not exist so no files will be imported to DBFS!"
+		}
+		else {
+			$LocalDBFSPath = (Get-Item -Path $LocalDBFSPath).FullName
+		}
+
+		$localItems = Get-ChildItem -Path $LocalDBFSPath -Recurse
+
+		foreach($localItem in $localItems)
+		{
+			$dbfsPath = $localItem.FullName.Replace($LocalDBFSPath, '').Replace("\", "/")
+
+			if($localItem.PSIsContainer)
+			{
+				Write-Information "Creating DBFS folder '$dbfsPath' ..."
+				Add-DatabricksFSDirectory -Path $dbfsPath
+			}
+			else {
+				Write-Information "Uploading file to DBFS: '$LocalDBFSPath' ..."
+				Upload-DatabricksFSFile -Path $dbfsPath -LocalPath $localitem.FullName -Overwrite $true
 			}
 		}
 	}

@@ -9,11 +9,13 @@ $scopeName = $script:testSecretScope
 $secretName = "MySecretPassword"
 
 Write-Information "Checking if Secret Scope '$scopeName' already exists ..."
-$currentScope = Get-DatabricksSecretScope | Where-Object ($_.name -eq $scopeName)
+$currentScope = Get-DatabricksSecretScope | Where-Object { $_.name -eq $scopeName }
 
 if ($currentScope) {
 	# Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
-	Write-Warning $currentScope
+	Write-Warning "Secret Scope '$scopeName' already exists: $currentScope"
+	Write-Warning "You can manually remove it by running: Remove-DatabricksSecretScope -ScopeName '$scopeName'"
+
 	Write-Error "SecretScope '$currentScope' already exists in the Databricks Workspace and real data may be overwritten during the test!
 	Please check the SecretScope and delete it manually before running the test again."
 }
@@ -45,10 +47,13 @@ catch {
 }
 finally {
 	Write-Information "Starting Cleanup for testcase '$testCaseName' ..."
+
+	$currentScope = Get-DatabricksSecretScope | Where-Object { $_.name -eq $scopeName }
+
 	if($currentScope)
 	{
 		Write-Information "Removing Secret Scope '$scopeName' ..."
-		Remove-DatabricksSecretScope -ScopeName $scopeName -ErrorAction SilentlyContinue
+		Remove-DatabricksSecretScope -ScopeName $scopeName
 	}
 	Write-Information "Finished Cleanup for testcase '$testCaseName'!"
 }

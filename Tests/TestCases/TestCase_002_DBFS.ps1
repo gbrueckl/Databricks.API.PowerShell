@@ -14,7 +14,7 @@ else {
 
 Write-Information "Testing DBFS API ..."
 $fileName = "myFile.txt"
-$localFilePath = "$rootPath\Tests\Content\DBFS\$fileName"
+$localFilePath = "$rootPath\Tests\Content\DBFS\$script:testDBFSFolder\$fileName"
 $dbfsPath = "$script:testDBFSFolder$fileName"
 $localTempFolder = "$rootPath\Tests\Content\DBFS\_TEMP"
 try {

@@ -7,22 +7,24 @@ Write-Information "Starting Testcase $testCaseName ..."
 $rootPath = Get-Location
 
 Write-Information "Testing Import/Export ..."
+$workspacePathOnline = $script:testWorkspaceFolder # must also match whats in /Content/Workspace/XXX !!!
+$dbfsPathOnline = $script:testDBFSFolder # must also match whats in /Content/DBFS/XXX !!!
+
+
 $contentPathLocal = "$rootPath\Tests\Content"
 $contentPathExport = "$rootPath\Tests\Content_Export"
 
-$contentPathOnline = $script:testWorkspaceFolder # must also match whats in /Content/Workspace/XXX !!!
-
-Write-Information "Checking if Path/Folder '$contentPathOnline' already exists in the Databricks Workspace ..."
+Write-Information "Checking if Path/Folder '$workspacePathOnline' already exists in the Databricks Workspace ..."
 $dbItem = $null
 try {
-	$dbItem = Get-DatabricksWorkspaceItem -Path $contentPathOnline
+	$dbItem = Get-DatabricksWorkspaceItem -Path $workspacePathOnline
 }
 catch { }
 
 if ($dbItem) {
-	# Remove-DatabricksWorkspaceItem -Path $contentPathOnline -Recursive $true
+	# Remove-DatabricksWorkspaceItem -Path $workspacePathOnline -Recursive $true
 	Write-Warning $dbItem
-	Write-Error "Path/Folder '$contentPathOnline' already exists in the Databricks Workspace and real data may be overwritten during the test!
+	Write-Error "Path/Folder '$workspacePathOnline' already exists in the Databricks Workspace and real data may be overwritten during the test!
 	Please check the path and delete it manually before running the test again."
 }
 
@@ -34,11 +36,11 @@ try {
 	Import-DatabricksEnvironment -LocalPath $contentPathLocal -Artifacts "Workspace" -OverwriteExistingWorkspaceItems
 
 	Write-Information "Exporting Workspace to compare with original content ..."
-	Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath $contentPathExport -Artifacts "Workspace" -WorkspaceRootPath $contentPathOnline
+	Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath $contentPathExport -Artifacts "Workspace" -WorkspaceRootPath $workspacePathOnline
 	
 	
-	$sourceFolder = "$contentPathLocal\Workspace$contentPathOnline".replace('/', '\')
-	$targetFolder = "$contentPathExport\Workspace$contentPathOnline".replace('/', '\')
+	$sourceFolder = "$contentPathLocal\Workspace$workspacePathOnline".replace('/', '\')
+	$targetFolder = "$contentPathExport\Workspace$workspacePathOnline".replace('/', '\')
 	$diffs = Compare-FoldersRecursive -SourcePath $sourceFolder -TargetPath $targetFolder
 
 	$actualDiffs = $diffs | ForEach-Object { $_.Replace($targetFolder, '') }
@@ -57,6 +59,14 @@ try {
 		Write-Error "Import and Export did not Match!"
 	}
 
+	Write-Information "Importing DBFS content from '$contentPathLocal\DBFS' ..."
+	Import-DatabricksEnvironment -LocalPath $contentPathLocal -Artifacts "DBFS"
+
+	Write-Information "Exporting DBFS content to '$contentPathExport\DBFS' ..."
+	# need to copy original file to export folder as the Export only downloads files that exist locally!
+	Copy-Item -Path "$contentPathLocal\DBFS" -Destination "$contentPathExport\DBFS" -Recurse
+	Export-DatabricksEnvironment -LocalPath $contentPathExport -Artifacts "DBFS"
+
 	Write-Information "S U C C E S S  -  Testcase '$testCaseName' finished successfully!"
 }
 catch {
@@ -64,7 +74,8 @@ catch {
 }
 finally {
 	Write-Information "Starting Cleanup for testcase '$testCaseName' ..."
-	Remove-DatabricksWorkspaceItem -Path $contentPathOnline -Recursive $true
-	Remove-Item -Path $contentPathExport -Recurse -Force
+	Remove-DatabricksWorkspaceItem -Path $workspacePathOnline -Recursive $true -ErrorAction SilentlyContinue
+	Remove-Item -Path $contentPathExport -Recurse -Force -ErrorAction SilentlyContinue
+	Remove-DatabricksFSItem -Path $dbfsPathOnline -Recursive $true -ErrorAction SilentlyContinue
 	Write-Information "Finished Cleanup for testcase '$testCaseName'!"
 }

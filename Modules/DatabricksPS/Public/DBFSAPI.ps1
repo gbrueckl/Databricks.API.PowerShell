@@ -416,22 +416,28 @@ Function Upload-DatabricksFSFile {
 	$localFile = [System.IO.File]::ReadAllBytes($LocalPath)
 	$totalSize = $localFile.Length
 	
-	Write-Verbose "Starting upload of file in batches of size $BatchSize ..."
-	$offset = 0
-	do {
-		Write-Verbose "Adding new content from offset $offset ..."
-		if ($offset + $BatchSize -gt $totalSize) {
-			$BatchSize = $totalSize - $offset
+	if($totalSize -gt 0)
+	{
+		Write-Verbose "Starting upload of file in batches of size $BatchSize ..."
+		$offset = 0
+		do {
+			Write-Verbose "Adding new content from offset $offset ..."
+			if ($offset + $BatchSize -gt $totalSize) {
+				$BatchSize = $totalSize - $offset
+			}
+			$content = $localFile[$offset..$($offset + $BatchSize)]
+			$contentB64 = [System.Convert]::ToBase64String($content)
+			
+			Add-DatabricksFSFileBlock -Handle $dbfsFile.handle -Data $contentB64
+			
+			$offset = $offset + $BatchSize + 1
 		}
-		$content = $localFile[$offset..$($offset + $BatchSize)]
-		$contentB64 = [System.Convert]::ToBase64String($content)
-		
-		Add-DatabricksFSFileBlock -Handle $dbfsFile.handle -Data $contentB64
-		
-		$offset = $offset + $BatchSize + 1
+		while ($offset -lt $totalSize)
+		Write-Verbose "Finished uploading local file '$LocalPath' to DBFS '$Path'"
 	}
-	while ($offset -lt $totalSize)
-	Write-Verbose "Finished uploading local file '$LocalPath' to DBFS '$Path'"
+	else {
+		Write-Warning "Local file at '$LocalPath' is empty!"
+	}
 	
 	Close-DatabricksFSFile -Handle $dbfsFile.handle
 	

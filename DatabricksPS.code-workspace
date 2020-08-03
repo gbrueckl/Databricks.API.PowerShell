@@ -4,5 +4,11 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"databricks.workspaceConfiguration": {
+			"workspaceGuid": "03b869ae-1215-2120-f33e-768d2cf2b5d1",
+			"lastActiveConnection": "gbrueck.at - LIVE"
+		},
+		"python.dataScience.codeRegularExpression": "^(# COMMAND ----------|#\\s*%%|#\\s*\\<codecell\\>|#\\s*In\\[\\d*?\\]|#\\s*In\\[ \\])"
+	}
 }

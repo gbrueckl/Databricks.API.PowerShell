@@ -10,7 +10,7 @@
 			"testConfig": {
 				"dbfsFolder": "/DatabricksPS_Tests/",
 				"workspaceFolder": "/DatabricksPS_Tests/",
-				"secretScope": "MySecretTestScope"
+				"secretScope": "DatabricksPS_Tests"
 			}
 		},
 		{
@@ -23,7 +23,7 @@
 			"testConfig": {
 				"dbfsFolder": "/DatabricksPS_Tests/",
 				"workspaceFolder": "/DatabricksPS_Tests/",
-				"secretScope": "MySecretTestScope"
+				"secretScope": "DatabricksPS_Tests"
 			}
 		}
 	]
