@@ -64,17 +64,20 @@ Function Add-DatabricksSCIMUser {
       .PARAMETER UserName
       The username of the user to add. Usually an email address.
       .PARAMETER GroupNames
-       A list of existing Databricks group names to which the SP is added
-       .PARAMETER GroupIDs
-       A list of existing Databricks group IDs to which the SP is added
+      A list of existing Databricks group names to which the SP is added
+      .PARAMETER GroupIDs
+      A list of existing Databricks group IDs to which the SP is added
       .PARAMETER Entitlements
       A list of Entitlements/Permissions the user should be assigned
       .EXAMPLE
-      Add-DatabricksSCIMUser -UserName John.doe@test.com -Groups admins -Entitlements allow-cluster-create -Verbose
+      Add-DatabricksSCIMUser -UserName John.doe@test.com -GroupNames admins -Entitlements allow-cluster-create -Verbose
   #>
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $True)] [Alias("user_name")] [string] $UserName,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
+    [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
     [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
@@ -98,8 +101,14 @@ Function Add-DatabricksSCIMUser {
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:User") -Force
     $parameters | Add-Property -Name "userName" -Value $UserName -Force
-    $parameters | Add-Property -Name "groups" -Value $groups -Force
-    $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force
+    if($PSCmdlet.ParameterSetName -ne "Entitlements")
+    {
+      $parameters | Add-Property -Name "groups" -Value $groups -Force
+    }
+    if ($Entitlements.Count -gt 0) 
+    { 
+      $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force 
+    }
         
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
     
@@ -130,6 +139,71 @@ Function Remove-DatabricksSCIMUser {
 	
   process {
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -ContentType 'application/scim+json'
+    
+    return $result
+  }
+}
+
+Function Update-DatabricksSCIMUser {
+  <#
+      .SYNOPSIS
+      Admin users: Overwrite the user resource across multiple attributes, except those that are immutable (userName and userId).
+      .DESCRIPTION
+      Admin users: Overwrite the user resource across multiple attributes, except those that are immutable (userName and userId).
+      Official API Documentation: https://docs.databricks.com/dev-tools/api/latest/scim/scim-users.html#update-user-by-id-put
+      .PARAMETER UserID
+      The id of the user you want to update.
+      .PARAMETER UserName
+      The name of the user that should be updated. The username of an existing user cannot be changed!
+      .PARAMETER GroupNames
+      A list of existing Databricks group names to which the User is added
+      .PARAMETER GroupIDs
+      A list of existing Databricks group IDs to which the User is added
+      .PARAMETER Entitlements
+      A list of Entitlements/Permissions the user should be assigned
+      .EXAMPLE
+      Update-DatabricksSCIMUser -UserID 12345678 -UserName John.doe@test.com -GroupNames admins -Entitlements allow-cluster-create -Verbose
+  #>
+  [CmdletBinding()]
+  param (
+    [Parameter(Mandatory = $True)] [Alias("user_id")] [long] $UserID,
+    [Parameter(Mandatory = $True)] [Alias("user_name")] [string] $UserName,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
+    [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
+  )  
+  begin {
+    $requestMethod = "PUT"
+    $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
+  }
+	
+  process {
+    #Set parameters
+    Write-Verbose "Building Body/Parameters for final API call ..."
+    $parameters = @{ }
+    
+    if ($PSCmdlet.ParameterSetName -eq "GroupNames") {
+      $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
+    }
+    
+    if($GroupIDs)
+    {
+      $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
+    }
+    if($Entitlements)
+    {
+      $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
+    }
+
+    $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:User") -Force
+    $parameters | Add-Property -Name "userName" -Value $UserName -Force
+    $parameters | Add-Property -Name "groups" -Value $groups -Force
+    $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force 
+        
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
     
     return $result
   }
@@ -223,8 +297,11 @@ Function Add-DatabricksSCIMGroup {
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
     
-    $groupMembers = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
-    
+    if($MemberUserIDs)
+    {
+      $groupMembers = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
+    }
+
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:Group") -Force
     $parameters | Add-Property -Name "displayName" -Value $GroupName -Force
     $parameters | Add-Property -Name "members" -Value $groupMembers -Force
@@ -258,6 +335,59 @@ Function Remove-DatabricksSCIMGroup {
 	
   process {
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -ContentType 'application/scim+json'
+    
+    return $result
+  }
+}
+
+Function Update-DatabricksSCIMGroup {
+  <#
+      .SYNOPSIS
+      Admin users: Update a group in Azure Databricks by adding or removing members. Can add and remove individual members or groups within the group.
+      .DESCRIPTION
+      Admin users: Update a group in Azure Databricks by adding or removing members. Can add and remove individual members or groups within the group.
+      Official API Documentation: https://docs.databricks.com/dev-tools/api/latest/scim/scim-groups.html#update-group
+      .PARAMETER GroupID
+      The id of the group you want to update
+      .PARAMETER AddIDs
+      A list of existing Databricks user or group IDs which you want to add to the groups members
+      .PARAMETER RemoveIDs
+      A list of existing Databricks user or group IDs which you want to remove from the groups members
+      .EXAMPLE
+      Update-DatabricksSCIMGroup -GroupID 123456 -AddIDs 456789 -RemoveIDs 987654
+  #>
+  [CmdletBinding()]
+  param (
+    [Parameter(Mandatory = $True)] [Alias("group_id")] [long] $GroupID,
+    [Parameter(Mandatory = $false)] [long[]] $AddIDs,
+    [Parameter(Mandatory = $false)][long[]] $RemoveIDs
+  )  
+  begin {
+    $requestMethod = "PATCH"
+    $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
+  }
+	
+  process {
+    #Set parameters
+    Write-Verbose "Building Body/Parameters for final API call ..."
+    $parameters = @{ }
+    
+    $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:api:messages:2.0:PatchOp") -Force
+
+    $operations = @()
+
+    if($AddIDs)
+    {
+      $AddIDs | ForEach-Object { $operations += @{"op" = "add"; "value" = @{"members" = @(@{"value" = $_.ToString() })}} }
+    }
+    if($RemoveIDs)
+    {
+      $RemoveIDs | ForEach-Object { $operations += @{"op" = "remove"; "path" = 'members[value eq "' + $_.ToString() + '"]'} }
+    }
+
+    $parameters | Add-Property -Name "Operations" -Value $operations -Force
+        
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
     
     return $result
   }
@@ -331,18 +461,21 @@ Function Add-DatabricksSCIMServicePrincipal {
       .PARAMETER DisplayName
       A user-friendly name that should be shown in the UI.
       .PARAMETER GroupNames
-       A list of existing Databricks group names to which the SP is added
-       .PARAMETER GroupIDs
-       A list of existing Databricks group IDs to which the SP is added
+      A list of existing Databricks group names to which the SP is added
+      .PARAMETER GroupIDs
+      A list of existing Databricks group IDs to which the SP is added
       .PARAMETER Entitlements
       A list of Entitlements/Permissions the user should be assigned
       .EXAMPLE
-      Add-DatabricksSCIMUser -UserName John.doe@test.com -Groups admins -Entitlements allow-cluster-create -Verbose
+      Add-DatabricksSCIMServicePrincipal -ApplicationID b4647a57-063a-43e3-a6b4-c9a4e9f9f0b7 -DisplayName "my Service Principal" -GroupNames admins -Entitlements allow-cluster-create -Verbose
   #>
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $True)] [Alias("application_id", "client_id")] [string] $ApplicationID,
     [Parameter(Mandatory = $False)] [Alias("display_name")] [string] $DisplayName,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
+    [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
     [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
@@ -362,8 +495,14 @@ Function Add-DatabricksSCIMServicePrincipal {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
     }
     
-    $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
-    $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
+    if($GroupIDs)
+    {
+      $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
+    }
+    if($Entitlements)
+    {
+      $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
+    }
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:ServicePrincipal") -Force
     $parameters | Add-Property -Name "applicationId" -Value $ApplicationID -Force
@@ -421,19 +560,22 @@ Function Update-DatabricksSCIMServicePrincipal {
       .PARAMETER DisplayName
       A user-friendly name that should be shown in the UI.
       .PARAMETER GroupNames
-       A list of existing Databricks group names to which the SP is added
-       .PARAMETER GroupIDs
-       A list of existing Databricks group IDs to which the SP is added
+      A list of existing Databricks group names to which the SP is added
+      .PARAMETER GroupIDs
+      A list of existing Databricks group IDs to which the SP is added
       .PARAMETER Entitlements
       A list of Entitlements/Permissions the user should be assigned
       .EXAMPLE
-      Add-DatabricksSCIMUser -UserName John.doe@test.com -Groups admins -Entitlements allow-cluster-create -Verbose
+      Update-DatabricksSCIMServicePrincipal -ServicePrincipalID b4647a57-063a-43e3-a6b4-c9a4e9f9f0b7 -ApplicationID b4647a57-063a-43e3-a6b4-c9a4e9f9f0b7 -GroupNames admins -Entitlements allow-cluster-create -Verbose
   #>
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $True)] [Alias("service_principal_id")] [long] $ServicePrincipalID,
     [Parameter(Mandatory = $True)] [Alias("application_id", "client_id")] [string] $ApplicationID,
     [Parameter(Mandatory = $True)] [Alias("display_name")] [string] $DisplayName,
+    [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
+    [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
+    [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
     [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
@@ -452,14 +594,20 @@ Function Update-DatabricksSCIMServicePrincipal {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
     }
     
-    $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
-    $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
+    if($GroupIDs)
+    {
+      $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
+    }
+    if($Entitlements)
+    {
+      $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
+    }
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:ServicePrincipal") -Force
     $parameters | Add-Property -Name "applicationId" -Value $ApplicationID -Force
     $parameters | Add-Property -Name "displayName" -Value $DisplayName -Force
     $parameters | Add-Property -Name "groups" -Value $groups -Force
-    if ($Entitlements.Count -gt 0) { $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force }
+    $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force
         
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
     

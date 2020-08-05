@@ -43,17 +43,17 @@
 	}
 	else {
 		# for POST requests we have to convert the body to JSON
-		Write-Verbose "Non-GET request - converting Body to JSON ..."
+		Write-Verbose "$($Method.ToUpper()) request - converting Body to JSON ..."
 		$Body = $Body | ConvertTo-Json -Depth 20
 		
 		Write-Verbose "Body: `n$($Body)"
 	}
 
-	$psCmd = "Invoke-RestMethod 
-	-Uri $apiUrl 
-	-Method $Method 
-	-Headers @$(($headers | ConvertTo-Json -Depth 20).Replace('":', '" =').Replace('",', '"')) 
-	-Body '$(($Body | ConvertTo-Json -Depth 20 | Out-String).Trim('"').Replace('\r', '').Replace('\n', '').Replace('\"', '"'))'
+	$psCmd = "Invoke-RestMethod ``
+	-Uri '$apiUrl' ``
+	-Method $Method ``
+	-Headers @$(($headers | ConvertTo-Json -Depth 20).Replace('":', '" =').Replace('",', '";')) ``
+	-Body '$(($Body | Out-String).Trim('"').Replace('\r', '').Replace('\n', ''))' ``
 	-Verbose"
 	Write-Verbose "Executing the following nativ PowerShell command: `n# -----------------------------------------------`n$psCmd"
 
