@@ -96,8 +96,6 @@ Function Set-DatabricksEnvironment {
 			Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
 			.DESCRIPTION
 			Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
-			.PARAMETER PBIAPIUrl
-			The url for the PBI API
 			.PARAMETER AccessToken
 			The AccessToken to use to access the Databricks API
 			For example: dapi1234abcd32101691ded20b53a1326285
@@ -112,7 +110,7 @@ Function Set-DatabricksEnvironment {
 			The Powershell credential to use when using AAD authentication.
 			.PARAMETER ClientID
 			The ID of the Azure Active Directory (AAD) application that was deployed to use AAD authentication with Databricks.
-			If used in combination with -ServicePrincipal this value does not have to be supplied but is overwritten using the Usernamen from -Credential.
+			If used in combination with -ServicePrincipal this value is ignored and is overwritten using the Usernamen from -Credential.
 			.PARAMETER TenantID
 			The ID of the Azure Active Directory (AAD). (optional)
 			.PARAMETER AzureResourceID
@@ -161,7 +159,7 @@ Function Set-DatabricksEnvironment {
 		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 4)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 4)]
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 4)] [string] $TenantID = "common",
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 4)] [string] $TenantID,
 		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 3)] [string] $AzureResourceID,
 		

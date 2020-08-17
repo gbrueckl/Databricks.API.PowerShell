@@ -9,14 +9,25 @@ Function Add-DatabricksSecretScope {
 			Scope name requested by the user. Scope names are unique. This field is required.
 			.PARAMETER InitialManagePrincipal 
 			The principal that is initially granted MANAGE permission to the created scope.
+      .PARAMETER AzureKeyVaultResourceID 
+			The Azure resource Id of the Azure Key Vault which you want to use for your AKV backed Databricks secret scope.
+      This information can be found in the Azure Portal under the "Properties" tab of your Azure Key Vault.
+      Exmaple: "/subscriptions/30373b46-1234-1234-1234-d5560532fc32/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myKeyVault"
 			.EXAMPLE
 			New-DatabricksSecretScope -ScopeName "MySecretScope" -InitialManagePrincipal "users"
+      .EXAMPLE
+			New-DatabricksSecretScope -ScopeName "MySecretScope" -InitialManagePrincipal "users" -AzureKeyVaultResourceID "/subscriptions/30373b46-1234-1234-1234-d5560532fc32/resourceGroups/myResourceGroup/providers/Microsoft.KeyVault/vaults/myKeyVault"
 	#>
-  [CmdletBinding()]
+  [CmdletBinding(DefaultParametersetname = "Databricks")]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [string] [Alias("scope", "name", "scope_name")] $ScopeName, 
-    [Parameter(Mandatory = $false, Position = 2, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null
+    [Parameter(ParameterSetName = "Databricks", Mandatory = $true, ValueFromPipeline = $true)]
+    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("scope", "name", "scope_name")] $ScopeName, 
+
+    [Parameter(ParameterSetName = "Databricks", Mandatory = $true, ValueFromPipeline = $true)]
+    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null,
+
+    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("ResourceId")] $AzureKeyVaultResourceID
   )
   begin {
     $requestMethod = "POST"
@@ -24,6 +35,12 @@ Function Add-DatabricksSecretScope {
   }
 	
   process {
+    if ($AzureKeyVaultResourceID) {
+      Write-Warning "Creating an Azure Key Vault backed Secret Scope in Databricks via the REST API is currently NOT SUPPORTED!"
+      Write-Warning "You are using this at your own risk!"
+      Write-Warning "Currently this is only working if you are authenticated using Azure Active Directory Username/Password!"
+    }
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
@@ -31,6 +48,18 @@ Function Add-DatabricksSecretScope {
     }
 	
     $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
+
+    if ($AzureKeyVaultResourceID) {
+      $parameters | Add-Property -Name "scope_backend_type" -Value 2
+
+      $akvName = $AzureKeyVaultResourceID.Split("/")[-1]
+      $akvDetails = @{
+        dns_name = "https://$akvName.vault.azure.net/"
+        resource_id = "/subscriptions/30373b46-5f05-48dd-8b2e-d5560532fc32/resourceGroups/Shared/providers/Microsoft.KeyVault/vaults/gb-kv-001"
+      }
+
+      $parameters | Add-Property -Name "backend_azure_keyvault" -Value $akvDetails
+    }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
