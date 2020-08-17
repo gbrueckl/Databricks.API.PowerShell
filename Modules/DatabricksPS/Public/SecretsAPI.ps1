@@ -55,7 +55,7 @@ Function Add-DatabricksSecretScope {
       $akvName = $AzureKeyVaultResourceID.Split("/")[-1]
       $akvDetails = @{
         dns_name = "https://$akvName.vault.azure.net/"
-        resource_id = "/subscriptions/30373b46-5f05-48dd-8b2e-d5560532fc32/resourceGroups/Shared/providers/Microsoft.KeyVault/vaults/gb-kv-001"
+        resource_id = $AzureKeyVaultResourceID
       }
 
       $parameters | Add-Property -Name "backend_azure_keyvault" -Value $akvDetails
