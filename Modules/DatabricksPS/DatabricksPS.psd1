@@ -93,6 +93,7 @@
 'Test-DatabricksEnvironment', 
 'Clear-DatabricksCachedDynamicParameterValue', 
 'Set-DatabricksDynamicParameterCacheTimeout', 
+'Get-DatabricksPSStatus', 
 'Add-DatabricksGroupMember', 
 'Add-DatabricksGroup', 
 'Get-DatabricksGroupMember', 
@@ -200,6 +201,8 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
+
 
 
 

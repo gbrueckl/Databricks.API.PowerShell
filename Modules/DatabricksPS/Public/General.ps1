@@ -442,7 +442,7 @@ Function Set-DatabricksDynamicParameterCacheTimeout {
 			.DESCRIPTION
 			Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
 			.PARAM Seconds
-			Number of seconds the Cached Dynamic PArameter Values are valid
+			Number of seconds the Cached Dynamic Parameter Values are valid
 			.EXAMPLE
 			Set-DatabricksDynamicParameterCacheTimeout -Seconds 10
 	#>
@@ -452,6 +452,42 @@ Function Set-DatabricksDynamicParameterCacheTimeout {
 	)
 
 	$script:dbDynamicParameterCacheTimeout = $Seconds
+}
+
+Function Get-DatabricksPSStatus {
+	<#
+		.SYNOPSIS
+		Returns the current status of DatabricksPS module.
+		.DESCRIPTION
+		Returns the current status of DatabricksPS module.
+		.EXAMPLE
+		Get-DatabricksPSStatus
+	#>
+	[CmdletBinding()]
+	param ()
+
+	process {
+		Write-Output "API Root URL:             $script:dbApiRootUrl"
+		Write-Output "Cloud Provider:           $script:dbCloudProvider"
+		Write-Output "Authentication Method:    $script:dbAuthenticationProvider"
+		Write-Output "Initialized:              $script:dbInitialized"
+		Write-Output "API Call Retry Count:     $script:dbApiCallRetryCount"
+		Write-Output "API Call Retry Wait:      $script:dbApiCallRetryWait"
+
+		if($script:dbInitialized)
+		{
+			$test = Get-DatabricksWorkspaceItem -Path "/"
+
+			if($test)
+			{
+				Write-Output "Connection Test successful!"
+				Write-Output $test
+			}
+		}
+		else {
+			Write-Output "Databricks environment has not been initialized yet! Please run Set-DatabricksEnvironment before any other cmdlet!"
+		}
+	}
 }
 
 # Licensed under the Apache License, Version 2.0 (the "License");
