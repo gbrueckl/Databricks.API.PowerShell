@@ -108,6 +108,8 @@ Function Add-DatabricksCluster
     if($ClusterObject)
     {
       $parameters = $ClusterObject | ConvertTo-Hashtable
+      Write-Verbose "ClusterObject: "
+      Write-Verbose $($ClusterObject | ConvertTo-Json)
     }
     else
     {
@@ -287,6 +289,8 @@ Function Update-DatabricksCluster
     if($ClusterObject)
     {
       $parameters = $ClusterObject | ConvertTo-Hashtable
+      Write-Verbose "ClusterObject: "
+      Write-Verbose $($ClusterObject | ConvertTo-Json)
     }
     else
     {

@@ -88,7 +88,7 @@ Function Add-DatabricksFSFileBlock {
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+	return
 }
 
 Function Close-DatabricksFSFile {
@@ -128,7 +128,7 @@ Function Close-DatabricksFSFile {
 	
 	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+	return
 }
 
 Function Remove-DatabricksFSItem {

@@ -8,6 +8,12 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
+# Release History
+### v1.1.1.0: 
+- Added new cmdlet Add-DatabricksClusterLocalLibrary to add a local library (.jar, .whl, ...) to a cluster with a single command
+### v1.0.0.0: 
+- Added Azure Active Directory (AAD) Authentication for Service Principals and Users
+
 # Setup and Installation
 The easiest way to install the PowerShell module is to use the PowerShell built-in Install-Module cmdlet:
 ```powershell
