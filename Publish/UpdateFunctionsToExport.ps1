@@ -1,10 +1,15 @@
-﻿# if executed from PowerShell ISE
-if ($psise) { 
-	$rootPath = Split-Path -Parent $psise.CurrentFile.FullPath | Split-Path -Parent
+﻿# halt on first error
+$ErrorActionPreference = "Stop"
+# print Information stream
+$InformationPreference = "Continue"
+
+$rootPath = Switch ($Host.name) {
+	'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
+	'Windows PowerShell ISE Host' { Split-Path -Path $psISE.CurrentFile.FullPath }
+	'ConsoleHost' { $PSScriptRoot }
 }
-else {
-	$rootPath = (Get-Item $PSScriptRoot).Parent.FullName
-}
+
+$rootPath = $rootPath | Split-Path -Parent
 
 $moduleName = $ModuleName = (Get-ChildItem "$rootPath\Modules")[0].Name
 $psdFilePath = "$rootPath\Modules\$moduleName\$moduleName.psd1"
@@ -50,5 +55,5 @@ $cmdletsToExport = "`n'" + ($exportedCmdlets -join "', `n'") + "'`n"
 $newPsdContent = [regex]::Replace($psdContent, $regEx, '$1' + $cmdletsToExport + '$3')
 
 Write-Information "Writing updated Content to $psdFilePath ..."
-$newPsdContent | Out-File "$psdFilePath"
+$newPsdContent | Out-File "$psdFilePath" -Encoding "UTF8"
 
