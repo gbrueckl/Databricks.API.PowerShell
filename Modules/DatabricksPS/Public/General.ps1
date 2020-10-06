@@ -147,6 +147,8 @@ Function Set-DatabricksEnvironment {
 	[CmdletBinding()]
 	param
 	(
+		[Parameter(Mandatory = $true, Position = 1)] [string] [Alias("CustomApiRootUrl")] $ApiRootUrl,
+		
 		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
 		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
@@ -175,19 +177,8 @@ Function Set-DatabricksEnvironment {
 
 		[Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
 		[Parameter(Mandatory = $false, Position = 3)] [int] $ApiCallRetryCount = -1,
-		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10,
-
-		[Parameter(Mandatory = $false, Position = 5)] [string] $CustomApiRootUrl
+		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10
 	)
-	DynamicParam {
-		#Create the RuntimeDefinedParameterDictionary
-		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
-		
-		New-DynamicParam -Name ApiRootUrl -ValidateSet $script:dbApiRootUrls -DPDictionary $Dictionary
-			
-		#return RuntimeDefinedParameterDictionary
-		return $Dictionary
-	}
 
 	begin {
 		Write-Verbose "Setting [System.Net.ServicePointManager]::SecurityProtocol to [System.Net.SecurityProtocolType]::Tls12 ..."
@@ -197,16 +188,6 @@ Function Set-DatabricksEnvironment {
 
 	process {
 		$x = Clear-ScriptVariables
-
-		if (-not $PSBoundParameters.ApiRootUrl -and -not $PSBoundParameters.CustomApiRootUrl) {
-			Write-Error "Parameter -ApiRootUrl or -CustomApiRootUrl needs to be specified!"
-		}
-		elseif ($PSBoundParameters.CustomApiRootUrl) {
-			$ApiRootUrl = $PSBoundParameters.CustomApiRootUrl
-		}
-		else {
-			$ApiRootUrl = $PSBoundParameters.ApiRootUrl
-		}
 		
 		#region Dynamic Parameter Caching
 		Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
@@ -489,6 +470,87 @@ Function Get-DatabricksPSStatus {
 		}
 	}
 }
+
+
+Function Get-DatabricksApiRootUrl
+{
+	<#
+			.SYNOPSIS
+			Returns a list of common API Root URLs for databricks default locations.
+			.DESCRIPTION
+			Returns a list of common API Root URLs for databricks default locations.
+			This list is not necessary complete!
+			.EXAMPLE
+			#AUTOMATED_TEST:List common API Root URLs
+			Get-DatabricksApiRootUrl
+	#>
+	[CmdletBinding()]
+	param ()
+
+	# 2019-12-05: 
+	# (Get-AzLocation | Where-Object { $_.Providers -contains 'Microsoft.Databricks'}).Location | Sort-Object
+
+	$dbAvailableRegionsAzure = @(
+	'australiacentral',
+	'australiacentral2',
+	'australiaeast',
+	'australiasoutheast',
+	'brazilsouth',
+	'canadacentral',
+	'canadaeast',
+	'centralindia',
+	'centralus',
+	'chinaeast2',
+	'chinanorth2'	
+	'eastasia',
+	'eastus',
+	'eastus2',
+	'francecentral',
+	'japaneast',
+	'japanwest',
+	'koreacentral',
+	'koreasouth',
+	'northcentralus',
+	'northeurope',
+	'southafricanorth',
+	'southafricawest',
+	'southcentralus',
+	'southeastasia',
+	'southindia',
+	'uaenorth',
+	'uksouth',
+	'ukwest',
+	'westeurope',
+	'westindia',
+	'westus',
+	'westus2'
+	)
+
+	# 2019-12-05:
+	# https://docs.databricks.com/administration-guide/cloud-configurations/aws/regions.html
+	$dbAvailableRegionsAWS = @(
+	'us-west-2',
+	'us-west-1',
+	'us-east-1',
+	'sa-east-1',
+	'eu-west-1',
+	'eu-west-3',
+	'eu-central-1',
+	'ap-south-1',
+	'ap-southeast-2',
+	'ap-southeast-1',
+	'ap-northeast-2',
+	'ap-northeast-1',
+	'ca-central-1'
+	)
+
+	$dbApiRootUrls = @()
+	$dbApiRootUrls += $script:dbAvailableRegionsAzure | ForEach-Object { "https://$_.azuredatabricks.net"}
+	$dbApiRootUrls += $script:dbAvailableRegionsAWS | ForEach-Object { "https://$_.cloud.databricks.com"}
+
+	return $dbApiRootUrls
+}
+
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
