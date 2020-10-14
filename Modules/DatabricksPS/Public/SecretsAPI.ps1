@@ -24,8 +24,8 @@ Function Add-DatabricksSecretScope {
     [Parameter(ParameterSetName = "Databricks", Mandatory = $true, ValueFromPipeline = $true)]
     [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("scope", "name", "scope_name")] $ScopeName, 
 
-    [Parameter(ParameterSetName = "Databricks", Mandatory = $true, ValueFromPipeline = $true)]
-    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null,
+    [Parameter(ParameterSetName = "Databricks", Mandatory = $false, ValueFromPipeline = $true)]
+    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $false, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null,
 
     [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("ResourceId")] $AzureKeyVaultResourceID
   )
@@ -46,8 +46,10 @@ Function Add-DatabricksSecretScope {
     $parameters = @{
       scope = $ScopeName 
     }
-	
-    $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
+    
+    if ($InitialManagePrincipal) {
+      $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
+    }
 
     if ($AzureKeyVaultResourceID) {
       $parameters | Add-Property -Name "scope_backend_type" -Value 2
