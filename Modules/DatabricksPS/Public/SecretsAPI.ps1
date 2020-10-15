@@ -47,9 +47,7 @@ Function Add-DatabricksSecretScope {
       scope = $ScopeName 
     }
     
-    if ($InitialManagePrincipal) {
-      $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
-    }
+    $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
 
     if ($AzureKeyVaultResourceID) {
       $parameters | Add-Property -Name "scope_backend_type" -Value 2
