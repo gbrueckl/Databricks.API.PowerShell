@@ -50,7 +50,7 @@ Function Add-DatabricksSecretScope {
     $parameters | Add-Property -Name "initial_manage_principal" -Value $InitialManagePrincipal
 
     if ($AzureKeyVaultResourceID) {
-      $parameters | Add-Property -Name "scope_backend_type" -Value 2
+      $parameters | Add-Property -Name "scope_backend_type" -Value "AZURE_KEYVAULT"
 
       $akvName = $AzureKeyVaultResourceID.Split("/")[-1]
       $akvDetails = @{
