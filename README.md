@@ -9,8 +9,10 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.1.4.0: 
+- Fix Secrets API when creating Azure KeyVault Backed Secret Scopes.
 ### v1.1.3.0: 
-- Minor fix for Secrets API making -InitialManagePrincipal optional
+- Minor fix for Secrets API making -InitialManagePrincipal optional.
 ### v1.1.2.0: 
 - Changed -ApiRootUrl parameter to support any URL and not just a fixed list. 
 - Added Get-DatabricksApiRootUrl cmdlet to be able to get a list of predefined API Root URLs
