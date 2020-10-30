@@ -134,6 +134,12 @@ Function Set-DatabricksEnvironment {
 			Number of times an API call is tried before an actual error is thrown.
 			.PARAMETER ApiCallRetryWait
 			Number of seconds to wait before retrying an API call.
+			.PARAMETER AzureActiveDirectoryAuthorityUrl
+			A custom URL to obtain the Azure Active Directory access token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://login.microsoftonline.com/"
+			The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryAuthority
+			.PARAMETER AzureActiveDirectoryServiceEndpointResourceId
+			A custom URL to obtain the Azure Management Resource endpoint token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://management.core.windows.net/"
+			The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryServiceEndpointResourceId
 			.EXAMPLE
 			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
 			.EXAMPLE
@@ -142,7 +148,6 @@ Function Set-DatabricksEnvironment {
 			$azureResourceId = '/subscriptions/fb1e20c4-1234-1234-1234-f92a9ac35db4/resourceGroups/myResourceGroupName/providers/Microsoft.Databricks/workspaces/myDatabricksResource'
 			$cred = Get-Credential
 			Set-DatabricksEnvironment -ClientID '058a2e1e-1234-1234-1234-5c4c3e31e36e' -Credential $cred -AzureResourceID $azureResourceId -ApiRootUrl "https://westeurope.azuredatabricks.net"
-			
 	#>
 	[CmdletBinding()]
 	param
@@ -173,11 +178,19 @@ Function Set-DatabricksEnvironment {
 		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 7)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 7)]
-		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 7)][switch] $ServicePrincipal,
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 7)] [switch] $ServicePrincipal,
 
 		[Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
 		[Parameter(Mandatory = $false, Position = 3)] [int] $ApiCallRetryCount = -1,
-		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10
+		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10,
+
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 8)]
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 8)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 8)] [string] $AzureActiveDirectoryAuthorityUrl = "https://login.microsoftonline.com/",
+
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 9)]
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 9)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 9)] [string] $AzureActiveDirectoryServiceEndpointResourceId = "https://management.core.windows.net/"
 	)
 
 	begin {
@@ -218,7 +231,7 @@ Function Set-DatabricksEnvironment {
 
 		Write-Verbose "Trying to derive CloudProvider from ApiRootUrl ..."
 		Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
-		if ($ApiRootUrl -ilike "*.azuredatabricks.*") {
+		if ($ApiRootUrl -ilike "*.azuredatabricks.*" -or $ApiRootUrl -ilike "*//adb-*.azure.*") {
 			Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
 			$script:dbCloudProvider = "Azure"
 		}
@@ -279,8 +292,9 @@ Function Set-DatabricksEnvironment {
 		#region AAD Authentication General
 		if ($PSCmdlet.ParameterSetName.StartsWith("AADAuthentication")) {
 			$script:dbCloudProvider = "Azure"
-			$authUrl = "https://login.windows.net/$TenantID/oauth2/token/"
 
+			$AzureActiveDirectoryAuthorityUrl = "$AzureActiveDirectoryAuthorityUrl$TenantID/oauth2/token/"
+			
 			Write-Verbose "Getting AAD access token ..."
 			if ($ServicePrincipal) {
 				Write-Verbose "Using Service Principal authentication flow ..."
@@ -296,17 +310,17 @@ Function Set-DatabricksEnvironment {
 					"client_secret" = $Credential.GetNetworkCredential().Password
 				}
 
+				Write-Verbose "API Call: POST $AzureActiveDirectoryAuthorityUrl"
+				Write-Verbose "Body: `n$($Body | Out-String)"
+				
+				$authResultLoginApp = Invoke-RestMethod -Uri $AzureActiveDirectoryAuthorityUrl -Method POST -Headers $headers -Body $body
+
+				$body["resource"] = $AzureActiveDirectoryServiceEndpointResourceId
+
 				Write-Verbose "API Call: POST $authUrl"
 				Write-Verbose "Body: `n$($Body | Out-String)"
 				
-				$authResultLoginApp = Invoke-RestMethod -Uri $authUrl -Method POST -Headers $headers -Body $body
-
-				$body["resource"] = "https://management.core.windows.net/" # Resource ID for AzureDatabricks, this is fixed!
-
-				Write-Verbose "API Call: POST $authUrl"
-				Write-Verbose "Body: `n$($Body | Out-String)"
-				
-				$authResultMgmt = Invoke-RestMethod -Uri $authUrl -Method POST -Headers $headers -Body $body
+				$authResultMgmt = Invoke-RestMethod -Uri $AzureActiveDirectoryAuthorityUrl -Method POST -Headers $headers -Body $body
 
 				$script:dbAuthenticationHeader["Authorization"] = "$($AuthResultLoginApp.token_type) $($authResultLoginApp.access_token)"
 				$script:dbAuthenticationHeader["X-Databricks-Azure-SP-Management-Token"] = $authResultMgmt.access_token
@@ -322,10 +336,10 @@ Function Set-DatabricksEnvironment {
 					"password"   = $Credential.GetNetworkCredential().Password
 					"scope"      = "openid"
 				}
-				Write-Verbose "API Call: POST $authUrl"
+				Write-Verbose "API Call: POST $AzureActiveDirectoryAuthorityUrl"
 				Write-Verbose "Body: `n$($Body | Out-String)"
 				
-				$authResult = Invoke-RestMethod -Uri $authUrl -Method POST -Body $body
+				$authResult = Invoke-RestMethod -Uri $AzureActiveDirectoryAuthorityUrl -Method POST -Body $body
 				
 				$script:dbAuthenticationHeader["Authorization"] = "$($authResult.token_type) $($authResult.access_token)"
 			}
