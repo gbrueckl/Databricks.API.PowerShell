@@ -9,6 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.2.0.1: 
+- Add support for Azure backed Secret Scopes for non-standard Azure environments like AzureChinaCloud or AzureUSGovernment
 ### v1.2.0.0: 
 - Add support for AAD authentication in non-standard Azure environments like AzureChinaCloud or AzureUSGovernment
 ### v1.1.4.0: 

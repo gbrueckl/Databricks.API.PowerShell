@@ -27,7 +27,8 @@ Function Add-DatabricksSecretScope {
     [Parameter(ParameterSetName = "Databricks", Mandatory = $false, ValueFromPipeline = $true)]
     [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $false, ValueFromPipeline = $true)] [string] [Alias("initial_manage_principal")] $InitialManagePrincipal = $null,
 
-    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("ResourceId")] $AzureKeyVaultResourceID
+    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $true, ValueFromPipeline = $true)] [string] [Alias("ResourceId", "resource_id")] $AzureKeyVaultResourceID,
+    [Parameter(ParameterSetName = "AzureKeyVault", Mandatory = $false, ValueFromPipeline = $true)] [string] [Alias("dns_name")] $AzureKeyVaultDNS
   )
   begin {
     $requestMethod = "POST"
@@ -53,8 +54,14 @@ Function Add-DatabricksSecretScope {
       $parameters | Add-Property -Name "scope_backend_type" -Value "AZURE_KEYVAULT"
 
       $akvName = $AzureKeyVaultResourceID.Split("/")[-1]
+
+      if(-not $AzureKeyVaultDNS)
+      {
+        $AzureKeyVaultDNS = "https://$akvName.vault.azure.net/"
+      }
+      
       $akvDetails = @{
-        dns_name = "https://$akvName.vault.azure.net/"
+        dns_name = $AzureKeyVaultDNS
         resource_id = $AzureKeyVaultResourceID
       }
 
