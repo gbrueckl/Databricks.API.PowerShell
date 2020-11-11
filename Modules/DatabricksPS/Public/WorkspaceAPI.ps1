@@ -111,7 +111,7 @@ Function Import-DatabricksWorkspaceItem {
 			.PARAMETER Overwrite 
 			The flag that specifies whether to overwrite existing object. It is false by default. For DBC format, overwrite is not supported since it may contain a directory.
 			.EXAMPLE
-			Import-WorkspaceItem -Path "/myImportedFolder -Format "DBC" -LocalPath "C:\myFileToImport.dbc" -Overwrite $false
+			Import-DatabricksWorkspaceItem -Path "/myImportedFolder -Format "DBC" -LocalPath "C:\myFileToImport.dbc" -Overwrite $false
 	#>
 	[CmdletBinding()]
 	param
@@ -200,7 +200,7 @@ Function Get-DatabricksWorkspaceItem {
 Function Add-DatabricksWorkspaceDirectory {
 	<#
 			.SYNOPSIS
-			List the contents of a given path in a Databricks workspace
+			Creates a directory in a Databricks workspace
 			.DESCRIPTION
 			Creates the given directory and necessary parent directories if they do not exists. If there exists an object (not a directory) at any prefix of the input path, this call returns an error RESOURCE_ALREADY_EXISTS. Note that if this operation fails it may have succeeded in creating some of the necessary parrent directories.
 			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#mkdirs
