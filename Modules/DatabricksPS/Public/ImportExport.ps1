@@ -406,20 +406,27 @@ Function Import-DatabricksEnvironment {
 						$importParams.Add("LocalPath", $workspaceItem.FullName)
 
 						if ($OverwriteExistingWorkspaceItems) { 
-							try {
-								Write-Verbose "Checking if item $dbPathItem exists ..."
-								$existingItem = Get-DatabricksWorkspaceItem -Path $dbPathItem
-							
-								if ($existingItem) {
-									Write-Verbose "Removing existing item $dbPathItem ..."
-									
-									$recursive = $false
-									if ($mapping.Format -eq "DBC" -and $existingItem.object_type -eq "DIRECTORY") { $recursive = $true }
+							if ($mapping.Format -eq "DBC")
+							{
+								try {
+									Write-Verbose "Checking if item $dbPathItem exists ..."
+									$existingItem = Get-DatabricksWorkspaceItem -Path $dbPathItem -ErrorAction SilentlyContinue
+								
+									if ($existingItem) {
+										Write-Verbose "Removing existing item $dbPathItem ..."
+										
+										$recursive = $false
+										if ($mapping.Format -eq "DBC" -and $existingItem.object_type -eq "DIRECTORY") { $recursive = $true }
 
-									$existingItem | Remove-DatabricksWorkspaceItem -Recursive $recursive
+										$existingItem | Remove-DatabricksWorkspaceItem -Recursive $recursive
+									}
 								}
+								catch { }
 							}
-							catch { }
+							else
+							{
+								$importParams.Add("Overwrite", $true)
+							}
 						}
 
 						Write-Verbose "Importing item $dbPathItem ..."
