@@ -284,7 +284,8 @@ Function Add-DatabricksSCIMGroup {
   [CmdletBinding()]
   param (
     [Parameter(Mandatory = $True)] [Alias("group_name")] [string] $GroupName,
-    [Parameter(Mandatory = $False)] [string[]] $MemberUserIDs
+    [Parameter(Mandatory = $False)] [string[]] $MemberUserIDs,
+    [Parameter(Mandatory = $False)] [ValidateSet('', 'allow-instance-pool-create', 'allow-cluster-create')] [string[]] $Entitlements
   )
   
   begin {
@@ -302,12 +303,17 @@ Function Add-DatabricksSCIMGroup {
       $groupMembers = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
     }
 
+    if($Entitlements) {
+      $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
+    }
+
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:Group") -Force
     $parameters | Add-Property -Name "displayName" -Value $GroupName -Force
     $parameters | Add-Property -Name "members" -Value $groupMembers -Force
-        
+    $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force
+
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -ContentType 'application/scim+json'
-    
+
     return $result
   }
 }
