@@ -285,7 +285,7 @@ Function Add-DatabricksSCIMGroup {
   param (
     [Parameter(Mandatory = $True)] [Alias("group_name")] [string] $GroupName,
     [Parameter(Mandatory = $False)] [string[]] $MemberUserIDs,
-    [Parameter(Mandatory = $False)] [ValidateSet('', 'allow-instance-pool-create', 'allow-cluster-create')] [string[]] $Entitlements
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')] [string[]] $Entitlements
   )
   
   begin {
