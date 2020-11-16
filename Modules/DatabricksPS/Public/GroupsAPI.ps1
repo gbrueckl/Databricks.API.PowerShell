@@ -9,6 +9,8 @@ Function Add-DatabricksGroupMember {
       The name of the user to add to the group.
       .PARAMETER GroupName 
       The name of the group to add to the group.
+      .PARAMETER ServicePrincipalID
+      The Application-ID of the Service Principal to add to the group. E.g. from Get-DatabricksSCIMServicePrincipal
       .PARAMETER ParentGroupName 
       Name of the parent group to which the new member will be added. This field is required.
       .EXAMPLE
@@ -17,7 +19,8 @@ Function Add-DatabricksGroupMember {
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "AddUser", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("user_name")] [string] $UserName
+    [Parameter(ParameterSetName = "AddUser", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("user_name")] [string] $UserName,
+    [Parameter(ParameterSetName = "AddServicePrincipal", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("applicationId")] [string] $ServicePrincipalID
     #[Parameter(ParameterSetName = "AddGroup", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("group_name")] [string] $GroupName, 
     #[Parameter(Mandatory = $true, Position = 2)] [string] $ParentGroupName
   )
@@ -26,9 +29,9 @@ Function Add-DatabricksGroupMember {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $groupValues = Get-DynamicParamValues { Get-DatabricksGroup }
-    New-DynamicParam -Name ParentGroupName -ValidateSet $groupValues -Alias 'parent_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name ParentGroupName -ValidateSet $groupValues -Alias 'parent_name', 'group_name', 'displayName' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 
-    New-DynamicParam -Name GroupName -ParameterSetName 'AddGroup'  -ValidateSet $groupValues -Alias 'group_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name GroupName -ParameterSetName 'AddGroup'  -ValidateSet $groupValues  -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -50,6 +53,7 @@ Function Add-DatabricksGroupMember {
 			
     switch ($PSCmdlet.ParameterSetName) { 
       "AddUser" { $parameters | Add-Property -Name "user_name" -Value $UserName }
+      "AddServicePrincipal" { $parameters | Add-Property -Name "user_name" -Value $ServicePrincipalID } # Service Principals are added like regular users
       "AddGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
     }
 
@@ -75,7 +79,7 @@ Function Add-DatabricksGroup {
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name")] [string] $GroupName
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [Alias("group_name", "displayName")] [string] $GroupName
   )
 	
   begin {
@@ -122,7 +126,7 @@ Function Get-DatabricksGroupMember {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $groupValues = Get-DynamicParamValues { Get-DatabricksGroup }
-    New-DynamicParam -Name GroupName -ValidateSet $groupValues -Alias 'group_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name GroupName -ValidateSet $groupValues -Alias 'group_name', 'displayName' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -182,7 +186,7 @@ Function Get-DatabricksGroup {
   }
 }
 
-Function Get-DatabricksMembership {
+Function Get-DatabricksGroupMembership {
   <#
       .SYNOPSIS
       Retrieves all groups in which a given user or group is a member (note: this method is non-recursive - it will return all groups in which the given user or group is a member but not the groups in which those groups are members). This call returns an error RESOURCE_DOES_NOT_EXIST if a user or group with the given name does not exist.
@@ -193,13 +197,20 @@ Function Get-DatabricksMembership {
       The name of the user to add to the group.
       .PARAMETER GroupName 
       The name of the group to add to the group.
+      .PARAMETER ServicePrincipalID
+      The Application-ID of the Service Principal to add to the group. E.g. from Get-DatabricksSCIMServicePrincipal
       .EXAMPLE
-      Get-DatabricksMembership GroupName "Data Scientists
+      #AUTOMATED_TEST:Get Group Membership
+      $user = (Get-DatabricksSCIMUser)[0]
+
+      Get-DatabricksGroupMembership -Username $user.emails[0].value
   #>
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "UserMemberships", Mandatory = $true, Position = 1)] [string] $UserName
+    [Parameter(ParameterSetName = "UserMemberships", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("user_name")] [string] $UserName,
+    [Parameter(ParameterSetName = "ServicePrincipalMemberships", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("applicationId")] [string] $ServicePrincipalID
+    
     #[Parameter(ParameterSetName = "GroupMemberships", Mandatory = $true, Position = 1)] [string] $GroupName
   )
   DynamicParam {
@@ -207,7 +218,7 @@ Function Get-DatabricksMembership {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $groupValues = Get-DynamicParamValues { Get-DatabricksGroup }
-    New-DynamicParam -Name GroupName -ParameterSetName 'GroupMemberships' -ValidateSet $groupValues -Alias 'group_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name GroupName -ParameterSetName 'GroupMemberships' -ValidateSet $groupValues -Alias 'group_name', 'displayName' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -227,6 +238,7 @@ Function Get-DatabricksMembership {
 			
     switch ($PSCmdlet.ParameterSetName) { 
       "UserMemberships" { $parameters | Add-Property -Name "user_name" -Value $UserName }
+      "ServicePrincipalMemberships" { $parameters | Add-Property -Name "user_name" -Value $ServicePrincipalID }
       "GroupMemberships" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
     }
 		
@@ -244,9 +256,11 @@ Function Remove-DatabricksGroupMember {
       Removes a user or group from a group. This call returns an error RESOURCE_DOES_NOT_EXIST if a user or group with the given name does not exist, or if a group with the given parent name does not exist.
       Official API Documentation: https://docs.databricks.com/api/latest/groups.html#remove-member
       .PARAMETER UserName 
-      The name of the user to remove to the group.
+      The name of the user to remove from the group.
       .PARAMETER GroupName 
-      The name of the group to remove to the group.
+      The name of the group to remove from the group.
+      .PARAMETER ServicePrincipalID
+      The Application-ID of the Service Principal to remove from the group. E.g. from Get-DatabricksSCIMServicePrincipal
       .PARAMETER ParentGroupName 
       Name of the parent group from which the user/group will be removed. This field is required.
       .EXAMPLE
@@ -255,7 +269,9 @@ Function Remove-DatabricksGroupMember {
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "RemoveUser", Mandatory = $true, Position = 1)] [string] $UserName
+    [Parameter(ParameterSetName = "RemoveUser", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("user_name")] [string] $UserName,
+    [Parameter(ParameterSetName = "RemoveServicePrincipal", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("applicationId")] [string] $ServicePrincipalID
+    
     #[Parameter(ParameterSetName = "RemoveGroup", Mandatory = $true, Position = 1)] [string] $GroupName, 
     #[Parameter(Mandatory = $true, Position = 2)] [string] $ParentGroupName
   )
@@ -264,9 +280,9 @@ Function Remove-DatabricksGroupMember {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $groupValues = Get-DynamicParamValues { Get-DatabricksGroup }
-    New-DynamicParam -Name ParentGroupName -ValidateSet $groupValues -Alias 'parent_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name ParentGroupName -ValidateSet $groupValues -Alias 'parent_name', 'group_name', 'displayName' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 
-    New-DynamicParam -Name GroupName -ParameterSetName 'RemoveGroup'  -ValidateSet $groupValues -Alias 'group_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name GroupName -ParameterSetName 'RemoveGroup'  -ValidateSet $groupValues -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -289,6 +305,7 @@ Function Remove-DatabricksGroupMember {
 		
     switch ($PSCmdlet.ParameterSetName) { 
       "RemoveUser" { $parameters | Add-Property -Name "user_name" -Value $UserName }
+      "RemoveServicePrincipal" { $parameters | Add-Property -Name "user_name" -Value $ServicePrincipalID } # Service Principals are removed like regular users
       "RemoveGroup" { $parameters | Add-Property -Name "group_name" -Value $GroupName }
     }
 		
@@ -320,7 +337,7 @@ Function Remove-DatabricksGroup {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $groupValues = Get-DynamicParamValues { Get-DatabricksGroup }
-    New-DynamicParam -Name GroupName -ValidateSet $groupValues -Alias 'group_name' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name GroupName -ValidateSet $groupValues -Alias 'group_name', 'displayName' -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
     
     #return RuntimeDefinedParameterDictionary
     return $Dictionary

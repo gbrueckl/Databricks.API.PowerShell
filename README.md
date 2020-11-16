@@ -9,6 +9,10 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.2.2.0: 
+- Add -Entitlements parameter to Add-DatabricksSCIMGroup
+- Some fixes for proper pipelining when working with Groups and SCIM APIs
+- Add test-case for Security (SCIM, Groups, memberships, ...)
 ### v1.2.1.0: 
 - Fixed issue with Import of already existing files and folders
 ### v1.2.0.1: 
