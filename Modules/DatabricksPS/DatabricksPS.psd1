@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.2.2.0'
+	ModuleVersion     = '1.3.0.0'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -95,6 +95,10 @@
 'Set-DatabricksDynamicParameterCacheTimeout', 
 'Get-DatabricksPSStatus', 
 'Get-DatabricksApiRootUrl', 
+'Add-DatabricksGlobalInitScript', 
+'Get-DatabricksGlobalInitScript', 
+'Remove-DatabricksGlobalInitScript', 
+'Update-DatabricksGlobalInitScript', 
 'Add-DatabricksGroupMember', 
 'Add-DatabricksGroup', 
 'Get-DatabricksGroupMember', 

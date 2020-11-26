@@ -9,6 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.3.0.0: 
+- Add support for Global Init Scripts
 ### v1.2.2.0: 
 - Add -Entitlements parameter to Add-DatabricksSCIMGroup
 - Some fixes for proper pipelining when working with Groups and SCIM APIs
