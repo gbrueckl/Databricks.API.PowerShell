@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.3.1.0'
+	ModuleVersion     = '1.5.0.0'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -151,6 +151,15 @@
 'Add-DatabricksSecretScopeACL', 
 'Remove-DatabricksSecretScopeACL', 
 'Get-DatabricksSecretScopeACL', 
+'Add-DatabricksSQLEndpoint', 
+'Remove-DatabricksSQLEndpoint', 
+'Update-DatabricksSQLEndpoint', 
+'Get-DatabricksSQLEndpoint', 
+'Start-DatabricksSQLEndpoint', 
+'Stop-DatabricksSQLEndpoint', 
+'Get-DatabricksSQLEndpointConfig', 
+'Update-DatabricksSQLEndpointConfig', 
+'Get-DatabricksSQLHistory', 
 'Add-DatabricksApiToken', 
 'Get-DatabricksApiToken', 
 'Remove-DatabricksApiToken', 
@@ -209,6 +218,9 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
+
+
 
 
 
