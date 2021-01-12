@@ -9,8 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
-### v1.5..0: 
-- Add support for SQL Analytics APIs
+### v1.5.0: 
+- Add support for SQL Analytics APIs (experimental)
 ### v1.3.1.0: 
 - Add support for Workspace configs (get/set)
 ### v1.3.0.0: 
