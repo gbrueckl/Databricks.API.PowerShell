@@ -197,7 +197,7 @@ Function Get-DatabricksSQLEndpoint {
     [Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointId
   )
   begin {
-    $requestMethod = "DELETE"
+    $requestMethod = "GET"
     $apiEndpoint = "/2.0/sql/endpoints"
   }
 	
@@ -315,7 +315,7 @@ Function Get-DatabricksSQLEndpointConfig {
   [CmdletBinding()]
   param ()
   begin {
-    $requestMethod = "Get"
+    $requestMethod = "GET"
     $apiEndpoint = "/2.0/sql/config/endpoints"
   }
 	
