@@ -84,7 +84,7 @@ Function Add-DatabricksCluster
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
+    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary -Mandatory
     New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
 
     $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
@@ -92,7 +92,7 @@ Function Add-DatabricksCluster
     New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
+    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary -Mandatory
 
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -282,15 +282,15 @@ Function Update-DatabricksCluster
       New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -ParameterSetName "ClusterID" -Mandatory -DPDictionary $Dictionary
   
       $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-      New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary -Mandatroy
+      New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary
       New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -DPDictionary $Dictionary
 
       $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
-      New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary -Mandatroy
+      New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary
       New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
       $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-      New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary -Mandatory
+      New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
 
       #return RuntimeDefinedParameterDictionary
       return $Dictionary
@@ -362,6 +362,14 @@ Function Update-DatabricksCluster
     if(-not $parameters["num_workers"] -and -not $parameters["autoscale"])
     {
       throw "Either -NumWorkers or -MinWorkers and -MaxWorkers need to be provided!"
+    }
+    if(-not $parameters["spark_version"])
+    {
+      throw "Parameter -SparkVersion needs to be provided!"
+    }
+    if(-not $parameters["node_type_id"])
+    {
+      throw "Parameter -NodeTypeId needs to be provided!"
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -541,7 +549,7 @@ Function Resize-DatabricksCluster
   param
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
-    [Parameter(ParameterSetName = "NumberOfWorkers", Mandatory = $true, Position = 2)] [int32] $NumWorkers,
+    [Parameter(ParameterSetName = "FixedSize", Mandatory = $true, Position = 2)] [int32] $NumWorkers,
     [Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MinWorkers, 
     [Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 3)] [int32] $MaxWorkers
   )
@@ -572,7 +580,7 @@ Function Resize-DatabricksCluster
 		
     switch($PSCmdlet.ParameterSetName) 
     { 
-      "NumberOfWorkers"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+      "FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
       "Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
     } 
 
