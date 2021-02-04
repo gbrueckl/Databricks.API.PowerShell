@@ -9,8 +9,14 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
-### v1.5.0: 
-- Add support for SQL Analytics APIs (experimental)
+### v1.6.1.0: 
+- Fix issue with Cluster cmdlets to properly support pipelineing
+- Added support for Instance Pools in Clulster cmdlets
+### v1.6.0.0: 
+- Add support for Project APIs (experimental, [link](https://docs.databricks.com/projects.html#projects-api-experimental)) 
+- Added Workspace Config settings
+### v1.5.0.0: 
+- Add support for SQL Analytics APIs (experimental, [link](https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints))
 ### v1.3.1.0: 
 - Add support for Workspace configs (get/set)
 ### v1.3.0.0: 

@@ -15,7 +15,7 @@ Function Get-DatabricksWorkspaceConfig {
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [ValidateSet("enableTokensConfig", "maxTokenLifetimeDays", "enableIpAccessLists")] [string] $Keys
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [ValidateSet("enableTokensConfig", "maxTokenLifetimeDays", "enableIpAccessLists", "enableProjectTypeInWorkspace")] [Alias("Config", "Keys")] [string] $Key
   )
   begin {
     $requestMethod = "GET"
@@ -27,7 +27,7 @@ Function Get-DatabricksWorkspaceConfig {
 
     #Set parameters
     $parameters = @{
-      keys = $Keys
+      keys = $Key
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -51,14 +51,18 @@ Function Set-DatabricksWorkspaceConfig {
       .PARAMETER EnableIpAccessLists
 			The IP access list feature is enabled for the workspace if true and it is disabled if false. Note that these are String values, not booleans.
 			.EXAMPLE
-			Add-DatabricksGlobalInitScript -Name "MyScript" -Script "echo Hello World" -AsPlainText -Position 1 -Enabled $true
+			Set-DatabricksWorkspaceConfig -EnableTokensConfig $true
+      .EXAMPLE
+			Set-DatabricksWorkspaceConfig -MaxTokenLifetimeDays 90
+      .EXAMPLE
+			Set-DatabricksWorkspaceConfig -EnableIpAccessLists $false
 	#>
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)]  [boolean] $EnableTokensConfig,
-    [Parameter(Mandatory = $false, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $MaxTokenLifetimeDays,
-    [Parameter(Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $false)] [boolean] $EnableIpAccessLists
+    [Parameter(ParameterSetName = "EnableTokensConfig", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)]  [boolean] $EnableTokensConfig,
+    [Parameter(ParameterSetName = "MaxTokenLifetimeDays", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [string] $MaxTokenLifetimeDays,
+    [Parameter(ParameterSetName = "EnableIpAccessLists", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [boolean] $EnableIpAccessLists
   )
 	
   begin {
@@ -70,10 +74,13 @@ Function Set-DatabricksWorkspaceConfig {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
     #Set parameters
-    $parameters = @{
-      enableTokensConfig = $EnableTokensConfig
-      maxTokenLifetimeDays = $maxTokenLifetimeDays
-      enableIpAccessLists = $EnableIpAccessLists
+    $parameters = @{ }
+
+    switch($PSCmdlet.ParameterSetName) 
+    { 
+      "EnableTokensConfig"    { $parameters | Add-Property -Name "enableTokensConfig" -Value $EnableTokensConfig -Force } 
+      "MaxTokenLifetimeDays"  { $parameters | Add-Property -Name "maxTokenLifetimeDays" -Value $MaxTokenLifetimeDays -Force }
+      "EnableIpAccessLists"   { $parameters | Add-Property -Name "enableIpAccessLists" -Value $EnableIpAccessLists.toString().toLower() -Force } # has to be a string
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

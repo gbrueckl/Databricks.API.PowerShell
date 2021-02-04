@@ -29,6 +29,10 @@ Function Add-DatabricksCluster
       This field encodes, through a single value, the resources available to each of the Spark nodes in this cluster. For example, the Spark nodes can be provisioned and optimized for memory or compute intensive workloads A list of available node types can be retrieved by using the List Node Types API call. This field is required.
       .PARAMETER DriverNodeTypeId 
       The node type of the Spark driver. Note that this field is optional; if unset, the driver node type will be set as the same value as node_type_id defined above.
+      .PARAMETER InstancePoolId
+      The optional ID of the instance pool to which the cluster belongs. Refer to Instance Pools API for details.
+      .PARAMETER DriverInstancePoolId
+      The optional ID of the instance pool to which the cluster belongs. Refer to Instance Pools API for details.
       .PARAMETER SshPublicKeys 
       SSH public key contents that will be added to each Spark node in this cluster. The corresponding private keys can be used to login with the user name ubuntu on port 2200. Up to 10 keys can be specified.
       .PARAMETER CustomTags 
@@ -55,27 +59,24 @@ Function Add-DatabricksCluster
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "FixedSize", Mandatory = $true, Position = 1)] [int32] $NumWorkers,
-    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 1)] [int32] $MinWorkers, 
-    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MaxWorkers, 
+    [Parameter(ParameterSetName = "FixedSize", Mandatory = $true)] [int32] $NumWorkers,
+    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true)] [int32] $MinWorkers, 
+    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true)] [int32] $MaxWorkers, 
 		
-    [Parameter(ParameterSetName = "ClusterObject", Mandatory = $false, Position = 3)] [object] $ClusterObject,
+    [Parameter(ParameterSetName = "ClusterObject", Mandatory = $true, ValueFromPipeline = $true)] [object] $ClusterObject,
 		
-    [Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
-    #[Parameter(Mandatory = $false, Position = 3)] [string] $SparkVersion, 
-    [Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
-    [Parameter(Mandatory = $false, Position = 5)] [hashtable] $AwsAttributes, 
-    #[Parameter(Mandatory = $false, Position = 6)] [string] $NodeTypeId, 
-    #[Parameter(Mandatory = $false, Position = 7)] [string] $DriverNodeTypeId, 
-    [Parameter(Mandatory = $false, Position = 8)] [string[]] $SshPublicKeys, 
-    [Parameter(Mandatory = $false, Position = 9)] [hashtable] $CustomTags, 
-    [Parameter(Mandatory = $false, Position = 10)] [object] $ClusterLogConf, 
-    [Parameter(Mandatory = $false, Position = 11)] [object[]] $InitScripts, 
-    [Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
-    [Parameter(Mandatory = $false, Position = 13)] [int32] $AutoterminationMinutes, 
-    [Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk,
-    [Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion = "3 (3.5)",
-    [Parameter(Mandatory = $false, Position = 16)] [string] [ValidateSet("HighConcurrency", "Standard")] $ClusterMode
+    [Parameter(Mandatory = $false)] [string] $ClusterName, 
+    [Parameter(Mandatory = $false)] [hashtable] $SparkConf, 
+    [Parameter(Mandatory = $false)] [hashtable] $AwsAttributes, 
+    [Parameter(Mandatory = $false)] [string[]] $SshPublicKeys, 
+    [Parameter(Mandatory = $false)] [hashtable] $CustomTags, 
+    [Parameter(Mandatory = $false)] [object] $ClusterLogConf, 
+    [Parameter(Mandatory = $false)] [object[]] $InitScripts, 
+    [Parameter(Mandatory = $false)] [hashtable] $SparkEnvVars, 
+    [Parameter(Mandatory = $false)] [int32] $AutoterminationMinutes, 
+    [Parameter(Mandatory = $false)] [bool] $EnableElasticDisk,
+    [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3",
+    [Parameter(Mandatory = $false)] [string] [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
   )
   DynamicParam
   {
@@ -85,6 +86,10 @@ Function Add-DatabricksCluster
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
     New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
     New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
+
+    $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
+    New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary
+    New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
     New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
@@ -124,22 +129,35 @@ Function Add-DatabricksCluster
       }
       switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
       { 
-        '2 (2.7)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-        '3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+        '2'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '2 (2.7)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '3'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+        '3 (3.5)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
       }
       Write-Verbose "PythonVersion set to $PythonVersion"
+    }
+
+    if(-not $SparkConf) # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
+    {
+      $SparkConf = @{}
     }
 	
     if($ClusterMode) # check if a ClusterMode was explicitly specified
     {
-      if(-not $CustomTags) # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
+      if(-not $CustomTags) # ensure that the CustomTags variable exists - otherwise create it as empty hashtable
       {
         $CustomTags = @{}
       }
-      switch($ClusterMode) # set PYSPARK_PYTHON environment variable accordingly
+      switch($ClusterMode)
       { 
         'Standard'  { $CustomTags | Add-Property -Name "ResourceClass" -Value "Standard" -Force } 
         'HighConcurrency'  { $CustomTags | Add-Property -Name "ResourceClass" -Value "Serverless" -Force }
+        'SingleNode'  { 
+                        $CustomTags | Add-Property -Name "ResourceClass" -Value "SingleNode" -Force 
+                        
+                        $SparkConf | Add-Property -Name "spark.master" -Value "local[*]" -Force 
+                        $SparkConf | Add-Property -Name "spark.databricks.cluster.profile" -Value "singleNode" -Force 
+                      } 
       }
       Write-Verbose "ClusterMode set to $ClusterMode"
     }
@@ -206,8 +224,12 @@ Function Update-DatabricksCluster
       Attributes related to clusters running on Amazon Web Services. If not specified at cluster creation, a set of default values will be used.
       .PARAMETER NodeTypeId 
       This field encodes, through a single value, the resources available to each of the Spark nodes in this cluster. For example, the Spark nodes can be provisioned and optimized for memory or compute intensive workloads A list of available node types can be retrieved by using the List Node Types API call. This field is required.
-      .PARAMETER Drive_NodeTypeId 
+      .PARAMETER DriveNodeTypeId 
       The node type of the Spark driver. Note that this field is optional; if unset, the driver node type will be set as the same value as node_type_id defined above.
+      .PARAMETER InstancePoolId
+      The optional ID of the instance pool to which the cluster belongs. Refer to Instance Pools API for details.
+      .PARAMETER DriverInstancePoolId
+      The optional ID of the instance pool to which the cluster belongs. Refer to Instance Pools API for details.
       .PARAMETER SshPublicKeys 
       SSH public key contents that will be added to each Spark node in this cluster. The corresponding private keys can be used to login with the user name ubuntu on port 2200. Up to 10 keys can be specified.
       .PARAMETER CustomTags 
@@ -228,30 +250,27 @@ Function Update-DatabricksCluster
       .EXAMPLE
       Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId "i3.xlarge"
   #>
-  [CmdletBinding(DefaultParametersetName = "FixedSize")]
+  [CmdletBinding(DefaultParametersetName = "ClusterId")]
   param
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
 
-    [Parameter(ParameterSetName = "FixedSize", Mandatory = $false, Position = 2)] [int32] $NumWorkers,
-    [Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 2)] [int32] $MinWorkers, 
-    [Parameter(ParameterSetName = "Autoscale", Mandatory = $false, Position = 3)] [int32] $MaxWorkers, 
+    [Parameter(Mandatory = $false)] [int32] $NumWorkers,
+    [Parameter(Mandatory = $false)] [int32] $MinWorkers, 
+    [Parameter(Mandatory = $false)] [int32] $MaxWorkers, 
 		
-    [Parameter(Mandatory = $false, Position = 3)] [object] $ClusterObject,
-    [Parameter(Mandatory = $false, Position = 3)] [string] $ClusterName, 
-    #[Parameter(Mandatory = $false, Position = 3)] [string] $SparkVersion, 
-    [Parameter(Mandatory = $false, Position = 4)] [hashtable] $SparkConf, 
-    [Parameter(Mandatory = $false, Position = 5)] [hashtable] $AwsAttributes, 
-    #[Parameter(Mandatory = $false, Position = 6)] [string] $NodeTypeId, 
-    #[Parameter(Mandatory = $false, Position = 7)] [string] $DriverNodeTypeId, 
-    [Parameter(Mandatory = $false, Position = 8)] [string[]] $SshPublicKeys, 
-    [Parameter(Mandatory = $false, Position = 9)] [hashtable] $CustomTags, 
-    [Parameter(Mandatory = $false, Position = 10)] [object] $ClusterLogConf, 
-    [Parameter(Mandatory = $false, Position = 11)] [object[]] $InitScripts, 
-    [Parameter(Mandatory = $false, Position = 12)] [hashtable] $SparkEnvVars, 
-    [Parameter(Mandatory = $false, Position = 13)] [int32] $AutoterminationMinutes, 
-    [Parameter(Mandatory = $false, Position = 14)] [bool] $EnableElasticDisk,
-    [Parameter(Mandatory = $false, Position = 15)] [string] [ValidateSet("2 (2.7)", "3 (3.5)")] $PythonVersion
+    [Parameter(ParameterSetName = "ClusterObject", Mandatory = $true, ValueFromPipeline = $true)] [object] $ClusterObject,
+    [Parameter(Mandatory = $false)] [string] $ClusterName, 
+    [Parameter(Mandatory = $false)] [hashtable] $SparkConf, 
+    [Parameter(Mandatory = $false)] [hashtable] $AwsAttributes, 
+    [Parameter(Mandatory = $false)] [string[]] $SshPublicKeys, 
+    [Parameter(Mandatory = $false)] [hashtable] $CustomTags, 
+    [Parameter(Mandatory = $false)] [object] $ClusterLogConf, 
+    [Parameter(Mandatory = $false)] [object[]] $InitScripts, 
+    [Parameter(Mandatory = $false)] [hashtable] $SparkEnvVars, 
+    [Parameter(Mandatory = $false)] [int32] $AutoterminationMinutes, 
+    [Parameter(Mandatory = $false)] [bool] $EnableElasticDisk,
+    [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion
   )
 	
   DynamicParam
@@ -260,14 +279,18 @@ Function Update-DatabricksCluster
       $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
     
       $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
-      New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+      New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -ParameterSetName "ClusterID" -Mandatory -DPDictionary $Dictionary
   
       $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-      New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
-      New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
+      New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary -Mandatroy
+      New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -DPDictionary $Dictionary
+
+      $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
+      New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary -Mandatroy
+      New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
       $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-      New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
+      New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary -Mandatory
 
       #return RuntimeDefinedParameterDictionary
       return $Dictionary
@@ -305,8 +328,10 @@ Function Update-DatabricksCluster
       }
       switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
       { 
-        '2 (2.7)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-        '3 (3.5)'  { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+        '2'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '2 (2.7)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '3'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+        '3 (3.5)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
       }
       Write-Verbose "PythonVersion set to $PythonVersion"
     }
@@ -326,10 +351,17 @@ Function Update-DatabricksCluster
     $parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
     $parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
 
-    switch($PSCmdlet.ParameterSetName) 
+    if($NumWorkers) 
     { 
-      "FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
-      "Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
+      $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force
+    }
+    elseif ($MinWorkers -and $MaxWorkers) {
+      $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force 
+    }
+    
+    if(-not $parameters["num_workers"] -and -not $parameters["autoscale"])
+    {
+      throw "Either -NumWorkers or -MinWorkers and -MaxWorkers need to be provided!"
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

@@ -350,7 +350,7 @@ Function Update-DatabricksSQLEndpointConfig {
     [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("security_policy")] [ValidateSet("DATA_ACCESS_CONTROL", "PASSTHROUGH")] [string] $SecurityPolicy,
     [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("data_access_config")] [hashtable] $DataAccessConfig,
     [Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("instance_profile_arn")] [object] $InstanceProfileARN,
-    [Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("pass_through, passthrough")] [object] $CredentialPassThrough,
+    [Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("pass_through", "passthrough")] [object] $CredentialPassThrough,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [switch] $Force
   )
 	
