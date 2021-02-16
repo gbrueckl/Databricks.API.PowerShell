@@ -55,7 +55,7 @@
 	-Headers @$(($headers | ConvertTo-Json -Depth 20).Replace('":', '" =').Replace('",', '";')) ``
 	-Body '$(($Body | Out-String).Trim('"').Replace('\r', '').Replace('\n', ''))' ``
 	-Verbose"
-	Write-Verbose "Executing the following nativ PowerShell command: `n# -----------------------------------------------`n$psCmd"
+	Write-Debug "Executing the following nativ PowerShell command: `n# -----------------------------------------------`n$psCmd"
 
 	if($script:dbApiCallRetryCount -gt 0)
 	{	
