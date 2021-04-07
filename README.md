@@ -9,6 +9,9 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.7.0.0: 
+- Added support for v1.2 APIs ([Execution Context](https://docs.databricks.com/dev-tools/api/1.2/index.html#execution-context) and [Command Execution](https://docs.databricks.com/dev-tools/api/1.2/index.html#command-execution-1))
+- fully supports pipelining for easy use
 ### v1.6.2.0: 
 - Fix issue with Cluster cmdlets to properly support pipelineing
 - Added support for Instance Pools in Clulster cmdlets
