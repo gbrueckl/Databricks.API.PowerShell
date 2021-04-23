@@ -67,7 +67,7 @@ Function Add-DatabricksFSFileBlock {
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int] $Handle, 
+		[Parameter(Mandatory = $true, Position = 1)] [UInt64] $Handle, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $Data,
 		[Parameter(Mandatory = $false, Position = 2)] [switch] $AsPlainText
 	)
@@ -114,7 +114,7 @@ Function Close-DatabricksFSFile {
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [int] $Handle
+		[Parameter(Mandatory = $true, Position = 1)] [UInt64] $Handle
 	)
 	
 	$requestMethod = "POST"
@@ -350,8 +350,8 @@ Function Get-DatabricksFSContent {
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
-		[Parameter(Mandatory = $false, Position = 2)] [int] $Offset = -1, 
-		[Parameter(Mandatory = $false, Position = 3)] [int] $Length = -1,
+		[Parameter(Mandatory = $false, Position = 2)] [Int64] $Offset = -1, 
+		[Parameter(Mandatory = $false, Position = 3)] [Int64] $Length = -1,
 		[Parameter(Mandatory = $false, Position = 4)] [switch] $Decode
 	)
 	
@@ -406,7 +406,7 @@ Function Upload-DatabricksFSFile {
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath,
 		[Parameter(Mandatory = $false, Position = 3)] [bool] $Overwrite = $false,
-		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048000
+		[Parameter(Mandatory = $false, Position = 4)] [UInt64] $BatchSize = 1048000
 	)
 	
 	Write-Verbose "Creating new file in DBFS at $Path ..."
@@ -470,7 +470,7 @@ Function Download-DatabricksFSFile {
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
 		[Parameter(Mandatory = $true, Position = 2)] [string] $LocalPath,
 		[Parameter(Mandatory = $false, Position = 3)] [bool] $Overwrite = $false,
-		[Parameter(Mandatory = $false, Position = 4)] [int] $BatchSize = 1048576
+		[Parameter(Mandatory = $false, Position = 4)] [UInt64] $BatchSize = 1048576
 	)
 	
 	$dbfsFile = Get-DatabricksFSItem -Path $Path
