@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.7.0.0'
+	ModuleVersion     = '1.8.0.1'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -19,7 +19,7 @@
 	Copyright         = '(c) Gerhard Brueckl. All rights reserved.'
 
 	# Description of the functionality provided by this module
-	Description       = 'A powershell module to interact with the Databricks APIs on Azure and AWS.'
+	Description       = 'A powershell module to interact with the Databricks APIs on Azure, AWS and GCP.'
 
 	# Minimum version of the Windows PowerShell engine required by this module
 	PowerShellVersion = '3.0'
@@ -80,6 +80,7 @@
 'Start-DatabricksCommand', 
 'Get-DatabricksCommandStatus', 
 'Remove-DatabricksExecutionContext', 
+'Get-DatabricksCommandResult', 
 'Add-DatabricksFSFile', 
 'Add-DatabricksFSFileBlock', 
 'Close-DatabricksFSFile', 
@@ -225,6 +226,27 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

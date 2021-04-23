@@ -4,6 +4,7 @@ $FolderNameJobs = "Jobs"
 $FolderNameSecurity = "Security"
 $FolderNameSecrets = "Secrets"
 $FolderNameDBFS = "DBFS"
+$FolderNameSQL = "SQL"
 
 $NameIDSeparator = "__"
 $ExistingClusterNameTag = "existing_cluster_name"
@@ -97,18 +98,24 @@ Function Export-DatabricksEnvironment {
 			The format in which the workspace items (=notebooks) should be exported. The default is 'SOURCE' which is also highly recommended if the files are checked in to a source control tool like Git as only the raw code is exported and not the results as it would be the case for export format DBC!
 			.PARAMETER ExportJobClusters
 			Allows you to also export job clusters. This is usually not necessary as job clusters are spawned on demand.
+			.PARAMETER SQLClusterID
+			If SQL objects should be exported, a cluster ID has to be specified which will be used to query the SQL metastore.
+			.PARAMETER SQLDatabases
+			If specified, only the selected SQL databases will be exported - default is All
 			.EXAMPLE
 			Export-DatabricksEnvironment -LocalPath 'C:\MyExport\' -CleanLocalPath
 	#>
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
-		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets", "DBFS")] $Artifacts = @("All"),
-		[Parameter(Mandatory = $false)] [Alias('CleanLocalPath')][switch] $CleanLocalRootPath,
+		[Parameter(Mandatory = $false)] [string[]] [ValidateSet("All", "Workspace", "Clusters", "Jobs", "Security", "Secrets", "DBFS", "SQL")] $Artifacts = @("All"),
+		[Parameter(Mandatory = $false)] [Alias('CleanLocalPath')] [switch] $CleanLocalRootPath,
 		[Parameter(Mandatory = $false)] [switch] $CleanLocalArtifactPath,
 		[Parameter(Mandatory = $false)] [string] $WorkspaceRootPath = "/",
 		[Parameter(Mandatory = $false)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $WorkspaceExportFormat = "SOURCE",
-		[Parameter(Mandatory = $false)] [switch] $ExportJobClusters
+		[Parameter(Mandatory = $false)] [switch] $ExportJobClusters,
+		[Parameter(Mandatory = $false)] [Alias('cluster_id')] [string] $SQLClusterID,
+		[Parameter(Mandatory = $false)] [string[]] $SQLDatabases = @("All")
 	)
 	
 	if ($Artifacts -ne @("Workspace")) {
@@ -313,6 +320,56 @@ Function Export-DatabricksEnvironment {
 
 			Write-Information "Downloading file from DBFS: '$LocalDBFSPath' ..."
 			Download-DatabricksFSFile -Path $dbfsPath -LocalPath $localitem.FullName -Overwrite $true
+		}
+	}
+	#endregion
+
+	#region SQL
+	if ($Artifacts -contains "All" -or $Artifacts -ccontains "SQL") {
+		if (-not $SQLClusterID)
+		{
+			Write-Error "To export SQL objects the parameter -SQLClusterID is mandatory but was not supplied!"
+		}
+
+		Write-Warning "The export of SQL objects is still experimental!"
+
+		$LocalSQLPath = "$LocalPath\$FolderNameSQL"
+		if (-not (Test-Path $LocalSQLPath)) {
+			Write-Verbose "Creating local folder '$LocalSQLPath' ..."
+			$x = New-Item -ItemType Directory -Force -Path $LocalSQLPath
+		}
+		else {
+			Remove-LocalPath -LocalPath $LocalSQLPath -Condition $CleanLocalArtifactPath
+		}
+
+		$sqlContext = Get-DatabricksExecutionContext -ClusterID $SQLClusterID -Language "sql"
+
+		if ("All" -in $SQLDatabases)
+		{
+			$cmdGetDatabases = $sqlContext | Start-DatabricksCommand -Command "SHOW DATABASES"
+			$databases = ($cmdGetDatabases | Get-DatabricksCommandResult -AwaitCompletion).databaseName
+		}
+		else {
+			$databases = $SQLDatabases
+		}
+
+		foreach($database in $databases)
+		{
+			$databaseExportPath = Join-Path $LocalSQLPath -ChildPath $database
+			Write-Information "Exporting SQL database '$database' to $databaseExportPath ..."
+			$x = New-Item -ItemType Directory -Force -Path $databaseExportPath
+			
+			$cmdGetTables = $sqlContext | Start-DatabricksCommand -Command "SHOW TABLES IN $database"
+			$tables = $cmdGetTables | Get-DatabricksCommandResult -AwaitCompletion
+
+			foreach($table in $tables)
+			{
+				$cmdShowCreate = $context | Start-DatabricksCommand -Command "SHOW CREATE TABLE $($table.database).$($table.tableName)"
+
+				$crtTbl = $cmdShowCreate | Get-DatabricksCommandResult -AwaitCompletion
+
+				$crtTbl.createtab_stmt | Out-File -FilePath (Join-Path $databaseExportPath -ChildPath "$($table.tableName).sql")
+			}
 		}
 	}
 	#endregion
