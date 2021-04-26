@@ -9,6 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.8.1.0: 
+- Update-DatabricksCluster now allows you to specify `-ClusterID` and `-ClusterObject` at the same time where the first one has priority. This can be used to update an existing cluster with the configuration of another cluster.
 ### v1.8.0.1: 
 - add additional option to export SQL objects via `Export-DatabricksEnvironment` (experimental)
 - added cmdlet to easily view results of Databricks command
