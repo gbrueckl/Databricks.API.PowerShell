@@ -1,5 +1,4 @@
-Function Test-Initialized
-{
+Function Test-Initialized {
 	<#
 			.SYNOPSIS
 			Checks if Set-DatabricksEnvironment was executed before any other command of the module.   
@@ -12,15 +11,13 @@ Function Test-Initialized
 	param ()
 
 	Write-Verbose "Checking if Databricks environment has been initialized yet ..."
-	if($script:dbInitialized -eq $false)
-	{
+	if ($script:dbInitialized -eq $false) {
 		Write-Error "Databricks environment has not been initialized yet! Please run Set-DatabricksEnvironment before any other cmdlet!"
 	}
 	Write-Verbose "Databricks environment already initialized!"
 }
 
-Function Clear-ScriptVariables
-{
+Function Clear-ScriptVariables {
 	$script:dbAccessToken = $null
 	$script:dbApiRootUrl = $null
 	$script:dbApiFullUrl = $null
@@ -35,8 +32,7 @@ Function Clear-ScriptVariables
 	$script:dbCachedDynamicParamValues = @{}
 }
 
-function Join-Parts
-{
+function Join-Parts {
 	<#
 			.SYNOPSIS
 			Join strings with a specified separator.
@@ -72,14 +68,13 @@ function Join-Parts
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Separator, 
-		[Parameter(Mandatory = $false, Position = 2, ValueFromRemainingArguments=$true)] [string[]]$Parts = $null
+		[Parameter(Mandatory = $false, Position = 2, ValueFromRemainingArguments = $true)] [string[]]$Parts = $null
 	)
 
 	return ( $Parts | Where-Object { $_ } | Foreach-Object { ( [string]$_ ).trim($Separator) } | Where-Object { $_ } ) -join $Separator
 }
 
-Function Get-RequestHeader
-{
+Function Get-RequestHeader {
 	<#
 			.SYNOPSIS
 			Returns the HTTP header for the Databricks API including authentication etc. 
@@ -110,8 +105,7 @@ Function Get-RequestHeader
 	#>
 }
 
-Function Get-ApiUrl
-{
+Function Get-ApiUrl {
 	<#
 			.SYNOPSIS
 			Returns the HTTP header for the Databricks API including authentication etc. 
@@ -131,8 +125,7 @@ Function Get-ApiUrl
 	return $result
 }
 
-Function Add-Property
-{
+Function Add-Property {
 	<#
 			.SYNOPSIS
 			Returns the HTTP header for the Databricks API including authentication etc. 
@@ -151,60 +144,52 @@ Function Add-Property
 		[Parameter(Mandatory = $false, Position = 6)] [switch] $Force
 	)
 	
-	if($Value -eq $null -or $Value -eq $NullValue)
-	{
+	if ($Value -eq $null -or $Value -eq $NullValue) {
 		Write-Verbose "Found a null-Value to add as $Name ..."
-		if($AllowEmptyValue)
-		{
+		if ($AllowEmptyValue) {
 			Write-Verbose "Adding null-value  ..."
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
-		else
-		{
+		else {
 			Write-Verbose "null-value is omitted."
 			# do nothing as we do not add Empty values
 		}
 	}
-	elseif($Value.GetType().Name -eq 'Object[]') # array
-	{
+	elseif ($Value.GetType().Name -eq 'Object[]') {
+		# array
 		Write-Verbose "Found an Array-Property to add as $Name ..."
-		if($Value.Count -gt 0 -or $AllowEmptyValue)
-		{
+		if ($Value.Count -gt 0 -or $AllowEmptyValue) {
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
-	elseif($Value.GetType().Name -eq 'Hashtable') # hashtable
-	{
+	elseif ($Value.GetType().Name -eq 'Hashtable') {
+		# hashtable
 		Write-Verbose "Found a Hashtable-Property to add as $Name ..."
-		if($Value.Count -gt 0 -or $AllowEmptyValue)
-		{
+		if ($Value.Count -gt 0 -or $AllowEmptyValue) {
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
-	elseif($Value.GetType().Name -eq 'String') # String
-	{
+	elseif ($Value.GetType().Name -eq 'String') {
+		# String
 		Write-Verbose "Found a String-Property to add as $Name ..."
-		if(-not [string]::IsNullOrEmpty($Value) -or $AllowEmptyValue)
-		{
+		if (-not [string]::IsNullOrEmpty($Value) -or $AllowEmptyValue) {
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
-	elseif($Value.GetType().Name -eq 'Boolean') # Boolean
-	{
+	elseif ($Value.GetType().Name -eq 'Boolean') {
+		# Boolean
 		Write-Verbose "Found a Boolean-Property to add as $Name ..."
 
 		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value.ToString().ToLower() -Force:$Force
 	}
-	else
-	{
+	else {
 		Write-Verbose "Found a $($Value.GetType().Name)-Property to add as $Name ..."
 
 		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 	}
 }
 
-Function Add-PropertyIfNotExists
-{
+Function Add-PropertyIfNotExists {
 	[CmdletBinding()]
 	param (
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true)] [hashtable] $Hashtable,
@@ -214,12 +199,10 @@ Function Add-PropertyIfNotExists
 	)
 	
 	# if the property does not exist or -Force is specified, we set/overwrite the value
-	if(($Hashtable.Keys -notcontains $Name) -or $Force)
-	{
+	if (($Hashtable.Keys -notcontains $Name) -or $Force) {
 		$Hashtable[$Name] = $Value
 	}
-	else
-	{
+	else {
 		throw "Property $Name already exists! Use -Force parameter to overwrite it!"	
 	}
 }
@@ -227,8 +210,7 @@ Function Add-PropertyIfNotExists
 
 # Original Code from https://www.powershellgallery.com/packages/Carbon/2.1.0/Content/Functions%5CConvertTo-Base64.ps1
 # Copied into here to avoid unnecessary dependencies
-function ConvertTo-Base64
-{
+function ConvertTo-Base64 {
 	<# 
 			.SYNOPSIS 
 			Converts a value to base-64 encoding.   
@@ -253,7 +235,7 @@ function ConvertTo-Base64
 	#>
 	[CmdletBinding()]
 	param(
-		[Parameter(Mandatory=$true,ValueFromPipeline=$true)]
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[AllowNull()]
 		[AllowEmptyString()]
 		[string[]]
@@ -263,18 +245,15 @@ function ConvertTo-Base64
 		[Text.Encoding] $Encoding = ([Text.Encoding]::UTF8)
 	)
     
-	begin
-	{
+	begin {
 		#Set-StrictMode -Version 'Latest'
 
 		#Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState    
 	}
 
-	process
-	{
+	process {
 		$Value | ForEach-Object {
-			if( $_ -eq $null )
-			{
+			if ( $_ -eq $null ) {
 				return $null
 			}
             
@@ -298,8 +277,7 @@ function ConvertTo-Base64
 
 # Original Code from https://www.powershellgallery.com/packages/Carbon/2.1.0/Content/Functions%5CConvertFrom-Base64.ps1
 # Copied into here to avoid unnecessary dependencies
-function ConvertFrom-Base64
-{
+function ConvertFrom-Base64 {
 	<# 
 			.SYNOPSIS 
 			Converts a base-64 encoded string back into its original string. 
@@ -324,7 +302,7 @@ function ConvertFrom-Base64
 	#>
 	[CmdletBinding()]
 	param(
-		[Parameter(Mandatory = $true,ValueFromPipeline = $true)]
+		[Parameter(Mandatory = $true, ValueFromPipeline = $true)]
 		[AllowNull()]
 		[AllowEmptyString()]
 		[string[]]
@@ -336,18 +314,15 @@ function ConvertFrom-Base64
 		$Encoding = ([Text.Encoding]::UTF8)
 	)
     
-	begin
-	{
+	begin {
 		#Set-StrictMode -Version 'Latest'
 
 		#Use-CallerPreference -Cmdlet $PSCmdlet -Session $ExecutionContext.SessionState
 	}
 
-	process
-	{
+	process {
 		$Value | ForEach-Object {
-			if( $_ -eq $null )
-			{
+			if ( $_ -eq $null ) {
 				return $null
 			}
             
@@ -359,8 +334,7 @@ function ConvertFrom-Base64
 
 
 
-function ConvertTo-Hashtable
-{
+function ConvertTo-Hashtable {
 	<# 
 			.SYNOPSIS 
 			Converts a PowerShell object to a generic hashtable 
@@ -374,60 +348,49 @@ function ConvertTo-Hashtable
 		[Parameter(ValueFromPipeline = $true)] $InputObject
 	)
 
-	process
-	{
+	process {
 		if ($InputObject -is [Hashtable]) { return $InputObject }
 		
 		if ($null -eq $InputObject) { return $null }
 
-		if (($InputObject -is [System.Collections.IEnumerable]) -and $InputObject -isnot [string])
-		{
+		if (($InputObject -is [System.Collections.IEnumerable]) -and $InputObject -isnot [string]) {
 			$collection = @()
 			
-			foreach ($object in $InputObject) 
-			{ 
+			foreach ($object in $InputObject) { 
 				$collection += ConvertTo-Hashtable $object 
 			}
 
 			return $collection
 		}
-		elseif ($InputObject -is [PSCustomObject])
-		{
+		elseif ($InputObject -is [PSCustomObject]) {
 			$hash = @{}
 
-			foreach ($property in $InputObject.PSObject.Properties)
-			{
+			foreach ($property in $InputObject.PSObject.Properties) {
 				$hash[$property.Name] = ConvertTo-Hashtable $property.Value
 			}
 
 			return $hash
 		}
-		else
-		{
+		else {
 			return $InputObject
 		}
 	}
 }
 
-function ConvertTo-PSObject 
-{
+function ConvertTo-PSObject {
 	[CmdletBinding()]
 	param (
 		[Parameter(ValueFromPipeline = $true)] [hashtable] $InputObject, 
 		[Parameter()] [bool] $Recursive = $true
 	)
 
-	process
-	{
+	process {
 		$output = New-Object PSCustomObject
-		foreach ($k in $InputObject.Keys)
-		{
-			if ($InputObject[$k] -is [hashtable] -and $Recursive)
-			{
+		foreach ($k in $InputObject.Keys) {
+			if ($InputObject[$k] -is [hashtable] -and $Recursive) {
 				$value = ConvertTo-PSObject -InputObject $InputObject[$k] -Recursive $Recursive
 			}
-			else
-			{
+			else {
 				$value = $InputObject[$k] 
 			}
 		
@@ -577,45 +540,39 @@ Function New-DynamicParam {
 		[string[]] $ValidateSet,
 		[scriptblock]$validateScript,
 		[switch] $Mandatory,
-		[string] $ParameterSetName="__AllParameterSets",
+		[string] $ParameterSetName = "__AllParameterSets",
 		[int] $Position,
 		[switch] $ValueFromPipelineByPropertyName,
 		[switch]$ValueFromPipeline,
 		[string] $HelpMessage,
-		[validatescript({
-					if(-not ( $_ -is [System.Management.Automation.RuntimeDefinedParameterDictionary] -or -not $_) )
-					{
-						Throw "DPDictionary must be a System.Management.Automation.RuntimeDefinedParameterDictionary object, or not exist"
-					}
-					$true
-		})]
+		[validatescript( {
+				if (-not ( $_ -is [System.Management.Automation.RuntimeDefinedParameterDictionary] -or -not $_) ) {
+					Throw "DPDictionary must be a System.Management.Automation.RuntimeDefinedParameterDictionary object, or not exist"
+				}
+				$true
+			})]
 		$DPDictionary = $false
 
 	)
 	#Create attribute object, add attributes, add to collection   
 	$ParamAttr = New-Object System.Management.Automation.ParameterAttribute
 	$ParamAttr.ParameterSetName = $ParameterSetName
-	if($Mandatory)
-	{
+	if ($Mandatory) {
 		$ParamAttr.Mandatory = $true
 	}
 	else {
 		$ParamAttr.Mandatory = $false
 	}
-	if($Position -ne $null)
-	{
-		$ParamAttr.Position=$Position
+	if ($Position -ne $null) {
+		$ParamAttr.Position = $Position
 	}
-	if($ValueFromPipelineByPropertyName)
-	{
+	if ($ValueFromPipelineByPropertyName) {
 		$ParamAttr.ValueFromPipelineByPropertyName = $true
 	}
-	if ($ValueFromPipeline)
-	{
+	if ($ValueFromPipeline) {
 		$ParamAttr.ValueFromPipeline = $true
 	}
-	if($HelpMessage)
-	{
+	if ($HelpMessage) {
 		$ParamAttr.HelpMessage = $HelpMessage
 	}
 
@@ -623,19 +580,17 @@ Function New-DynamicParam {
 	$AttributeCollection.Add($ParamAttr)
     
 	#param validation set if specified
-	if($ValidateSet)
-	{
+	if ($ValidateSet) {
 		$ParamOptions = New-Object System.Management.Automation.ValidateSetAttribute -ArgumentList $ValidateSet
 		$AttributeCollection.Add($ParamOptions)
 	}
-	if ($validateScript)
-	{
+	if ($validateScript) {
 		$paramScript = New-Object -TypeName System.Management.Automation.ValidateScriptAttribute -ArgumentList $validateScript
 		$AttributeCollection.Add($paramScript)
 	}
 
 	#Aliases if specified
-	if($Alias.count -gt 0) {
+	if ($Alias.count -gt 0) {
 		$ParamAlias = New-Object System.Management.Automation.AliasAttribute -ArgumentList $Alias
 		$AttributeCollection.Add($ParamAlias)
 	}
@@ -644,12 +599,10 @@ Function New-DynamicParam {
 	$Parameter = New-Object -TypeName System.Management.Automation.RuntimeDefinedParameter -ArgumentList @($Name, $Type, $AttributeCollection)
     
 	#Add the dynamic parameter to an existing dynamic parameter dictionary, or create the dictionary and add it
-	if($DPDictionary)
-	{
+	if ($DPDictionary) {
 		$DPDictionary.Add($Name, $Parameter)
 	}
-	else
-	{
+	else {
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 		$Dictionary.Add($Name, $Parameter)
 		$Dictionary
@@ -661,29 +614,25 @@ Function Get-DynamicParamValues {
 		[parameter(Mandatory = $true)] [scriptblock] $Command
 	)
 	Process {
-		if(-not $script:dbInitialized)
-		{
+		if (-not $script:dbInitialized) {
 			return $null
 		}
-    return $null
+		return $null
 		$commandText = $Command.ToString()
 		$commandTextGeneric = (($commandText -split 'Get-')[1] -split ' ')[0].Trim()
     
 		# some parameter values are dynamic but do not change
 		$hasFixedValues = $commandTextGeneric -in ('DatabricksNodeType', 'DatabricksSparkVersion')
     
-		if($script:dbDynamicParameterCacheTimeout -gt 0 -or $hasFixedValues)
-		{
+		if ($script:dbDynamicParameterCacheTimeout -gt 0 -or $hasFixedValues) {
 			Write-Verbose "Trying to using cached Dynamic Parameter Values"
-			if($script:dbCachedDynamicParamValues[$commandTextGeneric])
-			{
+			if ($script:dbCachedDynamicParamValues[$commandTextGeneric]) {
 				Write-Verbose "Cached Dynamic Parameter Values found for '$commandTextGeneric'!"
 				$cache = $script:dbCachedDynamicParamValues[$commandTextGeneric]
         
 				$seconds = (New-TimeSpan -Start $cache.lastRefresh -End (Get-Date)).Seconds
         
-				if($seconds -lt $script:dbDynamicParameterCacheTimeout -or $hasFixedValues)
-				{
+				if ($seconds -lt $script:dbDynamicParameterCacheTimeout -or $hasFixedValues) {
 					Write-Verbose "Returning Cached Dynamic Parameter Values!"
 					return $cache.cachedValues
 				}
@@ -694,14 +643,14 @@ Function Get-DynamicParamValues {
 		$values = Invoke-Command -ScriptBlock $Command
 		$cache = @{
 			"cachedValues" = $values
-			"lastRefresh" = Get-Date
+			"lastRefresh"  = Get-Date
 		}
 		$script:dbCachedDynamicParamValues[$CommandTextGeneric] = $cache
 		return $values
 	} 
 }
 
-Function Remove-LocalPath{
+Function Remove-LocalPath {
 	param
 	(
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
@@ -709,8 +658,7 @@ Function Remove-LocalPath{
 	)
 	#region CleanLocalPath
 	Write-Verbose "Checking if Folder '$LocalPath' exists ..."
-	if((Test-Path $LocalPath) -and $Condition)
-	{
+	if ((Test-Path $LocalPath) -and $Condition) {
 		Write-Verbose "Local folder '$LocalPath' exists and -CleanLocalPath is specified - deleting folder..."
 		Remove-Item -Path $LocalPath -Recurse -Force -ErrorAction SilentlyContinue
 	}

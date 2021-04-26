@@ -1,5 +1,4 @@
-Function Add-DatabricksCluster
-{
+Function Add-DatabricksCluster {
   <#
       .SYNOPSIS
       Creates a new Spark cluster. This method acquires new instances from the cloud provider if necessary. This method is asynchronous; the returned cluster_id can be used to poll the cluster state. When this method returns, the cluster is in a PENDING state. The cluster is usable once it enters a RUNNING state. See ClusterState.
@@ -78,8 +77,7 @@ Function Add-DatabricksCluster
     [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3",
     [Parameter(Mandatory = $false)] [string] [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -110,54 +108,45 @@ Function Add-DatabricksCluster
 
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    if($ClusterObject)
-    {
+    if ($ClusterObject) {
       $parameters = $ClusterObject | ConvertTo-Hashtable
       Write-Verbose "ClusterObject: "
       Write-Verbose $($ClusterObject | ConvertTo-Json)
     }
-    else
-    {
+    else {
       $parameters = @{}
     }
 	
-    if($PythonVersion) # check if a PythonVersion was explicitly specified
-    {
-      if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
-      {
+    if ($PythonVersion) { # check if a PythonVersion was explicitly specified
+      if (-not $SparkEnvVars) { # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
         $SparkEnvVars = @{}
       }
-      switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
-      { 
-        '2'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-        '2 (2.7)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-        '3'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
-        '3 (3.5)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+      switch ($PythonVersion) { # set PYSPARK_PYTHON environment variable accordingly 
+        '2' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '2 (2.7)' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '3' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+        '3 (3.5)' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
       }
       Write-Verbose "PythonVersion set to $PythonVersion"
     }
 
-    if(-not $SparkConf) # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
-    {
+    if (-not $SparkConf) { # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
       $SparkConf = @{}
     }
 	
-    if($ClusterMode) # check if a ClusterMode was explicitly specified
-    {
-      if(-not $CustomTags) # ensure that the CustomTags variable exists - otherwise create it as empty hashtable
-      {
+    if ($ClusterMode) { # check if a ClusterMode was explicitly specified
+      if (-not $CustomTags) { # ensure that the CustomTags variable exists - otherwise create it as empty hashtable
         $CustomTags = @{}
       }
-      switch($ClusterMode)
-      { 
-        'Standard'  { $CustomTags | Add-Property -Name "ResourceClass" -Value "Standard" -Force } 
-        'HighConcurrency'  { $CustomTags | Add-Property -Name "ResourceClass" -Value "Serverless" -Force }
-        'SingleNode'  { 
-                        $CustomTags | Add-Property -Name "ResourceClass" -Value "SingleNode" -Force 
+      switch ($ClusterMode) { 
+        'Standard' { $CustomTags | Add-Property -Name "ResourceClass" -Value "Standard" -Force } 
+        'HighConcurrency' { $CustomTags | Add-Property -Name "ResourceClass" -Value "Serverless" -Force }
+        'SingleNode' { 
+          $CustomTags | Add-Property -Name "ResourceClass" -Value "SingleNode" -Force 
                         
-                        $SparkConf | Add-Property -Name "spark.master" -Value "local[*]" -Force 
-                        $SparkConf | Add-Property -Name "spark.databricks.cluster.profile" -Value "singleNode" -Force 
-                      } 
+          $SparkConf | Add-Property -Name "spark.master" -Value "local[*]" -Force 
+          $SparkConf | Add-Property -Name "spark.databricks.cluster.profile" -Value "singleNode" -Force 
+        } 
       }
       Write-Verbose "ClusterMode set to $ClusterMode"
     }
@@ -176,10 +165,9 @@ Function Add-DatabricksCluster
     $parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
     $parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
 	
-    switch($PSCmdlet.ParameterSetName) 
-    { 
-      "FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
-      "Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
+    switch ($PSCmdlet.ParameterSetName) { 
+      "FixedSize" { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+      "Autoscale" { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
     } 
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -188,8 +176,7 @@ Function Add-DatabricksCluster
   }
 }
 
-Function Update-DatabricksCluster
-{
+Function Update-DatabricksCluster {
   <#
       .SYNOPSIS
       Edit the configuration of a cluster to match the provided attributes and size.
@@ -250,10 +237,12 @@ Function Update-DatabricksCluster
       .EXAMPLE
       Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId "i3.xlarge"
   #>
-  [CmdletBinding(DefaultParametersetName = "ClusterId")]
+  [CmdletBinding(DefaultParametersetName = "ClusterID")]
   param
   (
-    #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID, 
+    #[Parameter(ParameterSetName = "ClusterID", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] 
+    #[Parameter(ParameterSetName = "ClusterObject", Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)]    
+    #      [Alias("cluster_id")] [string] $ClusterID, 
 
     [Parameter(Mandatory = $false)] [int32] $NumWorkers,
     [Parameter(Mandatory = $false)] [int32] $MinWorkers, 
@@ -273,27 +262,26 @@ Function Update-DatabricksCluster
     [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion
   )
 	
-  DynamicParam
-  {
-      #Create the RuntimeDefinedParameterDictionary
-      $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+  DynamicParam {
+    #Create the RuntimeDefinedParameterDictionary
+    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
     
-      $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
-      New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -ParameterSetName "ClusterID" -Mandatory -DPDictionary $Dictionary
-  
-      $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-      New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary
-      New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -DPDictionary $Dictionary
+    $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
+    New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+      
+    $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
+    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary
+    New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -DPDictionary $Dictionary
 
-      $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
-      New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary
-      New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
+    $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
+    New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary
+    New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
-      $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-      New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
+    $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
+    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
 
-      #return RuntimeDefinedParameterDictionary
-      return $Dictionary
+    #return RuntimeDefinedParameterDictionary
+    return $Dictionary
   }
 
   begin {
@@ -309,29 +297,33 @@ Function Update-DatabricksCluster
 
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    if($ClusterObject)
-    {
+    if ($ClusterObject) {
       $parameters = $ClusterObject | ConvertTo-Hashtable
       Write-Verbose "ClusterObject: "
       Write-Verbose $($ClusterObject | ConvertTo-Json)
+      
+      if ($ClusterID -and $parameters.ContainsKey("cluster_id")) {
+        Write-Warning "The cluster_id was provided via parameter -ClusterID and also as part of -ClusterObject. Finally the value from -ClusterID will be used!"
+      }
     }
-    else
-    {
-      $parameters = @{}
+    else {
+      if ($ClusterID) {
+        $parameters = @{}
+      }
+      else {
+        Write-Error "Either -ClusterID or -ClusterObject need to be provided to identify which cluster to update!"
+      }
     }
 
-    if($PythonVersion) # check if a PythonVersion was explicitly specified
-    {
-      if(-not $SparkEnvVars) # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
-      {
+    if ($PythonVersion) { # check if a PythonVersion was explicitly specified
+      if (-not $SparkEnvVars) { # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
         $SparkEnvVars = @{}
       }
-      switch($PythonVersion) # set PYSPARK_PYTHON environment variable accordingly
-      { 
-        '2'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-        '2 (2.7)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
-        '3'         { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
-        '3 (3.5)'   { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+      switch ($PythonVersion) { # set PYSPARK_PYTHON environment variable accordingly 
+        '2' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '2 (2.7)' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
+        '3' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
+        '3 (3.5)' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
       }
       Write-Verbose "PythonVersion set to $PythonVersion"
     }
@@ -351,24 +343,20 @@ Function Update-DatabricksCluster
     $parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
     $parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
 
-    if($NumWorkers) 
-    { 
+    if ($NumWorkers) { 
       $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force
     }
     elseif ($MinWorkers -and $MaxWorkers) {
       $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force 
     }
     
-    if(-not $parameters["num_workers"] -and -not $parameters["autoscale"])
-    {
+    if (-not $parameters["num_workers"] -and -not $parameters["autoscale"]) {
       throw "Either -NumWorkers or -MinWorkers and -MaxWorkers need to be provided!"
     }
-    if(-not $parameters["spark_version"])
-    {
+    if (-not $parameters["spark_version"]) {
       throw "Parameter -SparkVersion needs to be provided!"
     }
-    if(-not $parameters["node_type_id"])
-    {
+    if (-not $parameters["node_type_id"]) {
       throw "Parameter -NodeTypeId needs to be provided!"
     }
 
@@ -378,8 +366,7 @@ Function Update-DatabricksCluster
   }
 }
 
-Function Start-DatabricksCluster
-{
+Function Start-DatabricksCluster {
   <#
       .SYNOPSIS
       Starts a terminated Spark cluster given its ID. This is similar to createCluster, except:
@@ -396,8 +383,7 @@ Function Start-DatabricksCluster
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -427,8 +413,7 @@ Function Start-DatabricksCluster
   }
 }
 
-Function Restart-DatabricksCluster
-{
+Function Restart-DatabricksCluster {
   <#
       .SYNOPSIS
       Restarts a Spark cluster given its id. If the cluster is not in a RUNNING state, nothing will happen.
@@ -445,8 +430,7 @@ Function Restart-DatabricksCluster
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -476,8 +460,7 @@ Function Restart-DatabricksCluster
   }
 }
 
-Function Stop-DatabricksCluster
-{
+Function Stop-DatabricksCluster {
   <#
       .SYNOPSIS
       Terminates a Spark cluster given its id. The cluster is removed asynchronously. Once the termination has completed, the cluster will be in a TERMINATED state. If the cluster is already in a TERMINATING or TERMINATED state, nothing will happen.
@@ -494,8 +477,7 @@ Function Stop-DatabricksCluster
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -525,8 +507,7 @@ Function Stop-DatabricksCluster
   }
 }
 
-Function Resize-DatabricksCluster
-{
+Function Resize-DatabricksCluster {
   <#
       .SYNOPSIS
       Resize a cluster to have a desired number of workers. This will fail unless the cluster is in a RUNNING state.
@@ -553,8 +534,7 @@ Function Resize-DatabricksCluster
     [Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 2)] [int32] $MinWorkers, 
     [Parameter(ParameterSetName = "Autoscale", Mandatory = $true, Position = 3)] [int32] $MaxWorkers
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -578,10 +558,9 @@ Function Resize-DatabricksCluster
       cluster_id = $ClusterID 
     }
 		
-    switch($PSCmdlet.ParameterSetName) 
-    { 
-      "FixedSize"  { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
-      "Autoscale"  { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
+    switch ($PSCmdlet.ParameterSetName) { 
+      "FixedSize" { $parameters | Add-Property -Name "num_workers" -Value $NumWorkers -Force } 
+      "Autoscale" { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
     } 
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -590,8 +569,7 @@ Function Resize-DatabricksCluster
   }
 }
 
-Function Remove-DatabricksCluster
-{
+Function Remove-DatabricksCluster {
   <#
       .SYNOPSIS
       Permanently deletes a Spark cluster. If the cluster is running, it is terminated and its resources are asynchronously removed. If the cluster is terminated, then it is immediately removed.
@@ -608,8 +586,7 @@ Function Remove-DatabricksCluster
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -640,8 +617,7 @@ Function Remove-DatabricksCluster
   }
 }
 
-Function Get-DatabricksCluster
-{
+Function Get-DatabricksCluster {
   <#
       .SYNOPSIS
       Retrieves the information for a cluster given its identifier. Clusters can be described while they are running, or up to 30 days after they are terminated.
@@ -668,10 +644,9 @@ Function Get-DatabricksCluster
   }
 
   process {
-    if($ClusterID)
-    {
+    if ($ClusterID) {
       Write-Verbose "ClusterID specified ($ClusterID) - using get endpoint instead of list endpoint..."
-      $apiEndpoint =  "/2.0/clusters/get"
+      $apiEndpoint = "/2.0/clusters/get"
     }
 
     #Set parameters
@@ -681,18 +656,15 @@ Function Get-DatabricksCluster
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    if($ClusterID)
-    {
+    if ($ClusterID) {
       # if a ClusterID was specified, we return the result as it is
       return $result
     }
-    else
-    {
+    else {
       # if no ClusterID was specified, we return the clusters as an array
-      $clusters =  $result.clusters
+      $clusters = $result.clusters
       
-      if(-not $IncludeJobClusters)
-      {
+      if (-not $IncludeJobClusters) {
         $clusters = $clusters | Where-Object { $_.cluster_source -ne "JOB" }
       }
       
@@ -701,8 +673,7 @@ Function Get-DatabricksCluster
   }
 }
 
-Function Pin-DatabricksCluster			
-{
+Function Pin-DatabricksCluster {
   <#
       .SYNOPSIS
       Note
@@ -719,8 +690,7 @@ Function Pin-DatabricksCluster
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -750,8 +720,7 @@ Function Pin-DatabricksCluster
   }
 }
 
-Function Unpin-DatabricksCluster
-{
+Function Unpin-DatabricksCluster {
   <#
       .SYNOPSIS
       Note
@@ -768,8 +737,7 @@ Function Unpin-DatabricksCluster
   (
     #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -799,8 +767,7 @@ Function Unpin-DatabricksCluster
   }
 }
 
-Function Get-DatabricksClusterEvent
-{
+Function Get-DatabricksClusterEvent {
   <#
       .SYNOPSIS
       Retrieves a list of events about the activity of a cluster. This API is paginated. If there are more events to read, the response includes all the parameters necessary to request the next page of events.
@@ -839,8 +806,7 @@ Function Get-DatabricksClusterEvent
     [Parameter(Mandatory = $false, Position = 6)] [int] $Offset = -1, 
     [Parameter(Mandatory = $false, Position = 7)] [int] $Limit = -1
   )
-  DynamicParam
-  {
+  DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
@@ -877,9 +843,8 @@ Function Get-DatabricksClusterEvent
   }
 }
 
-Function Get-DatabricksNodeType
-{
-	<#
+Function Get-DatabricksNodeType {
+  <#
 			.SYNOPSIS
 			Returns a list of supported Spark node types. These node types can be used to launch a cluster.
 			.DESCRIPTION
@@ -889,24 +854,23 @@ Function Get-DatabricksNodeType
 			#AUTOMATED_TEST:List cluster node types
 			Get-DatabricksNodeType
 	#>
-	[CmdletBinding()]
-	param ()
+  [CmdletBinding()]
+  param ()
 
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/clusters/list-node-types"
+  $requestMethod = "GET"
+  $apiEndpoint = "/2.0/clusters/list-node-types"
 
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
+  Write-Verbose "Building Body/Parameters for final API call ..."
+  #Set parameters
+  $parameters = @{}
 
-	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+  $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.node_types
+  return $result.node_types
 }
 
-Function Get-DatabricksZone
-{
-	<#
+Function Get-DatabricksZone {
+  <#
 			.SYNOPSIS
 			Returns a list of availability zones where clusters can be created in (ex: us-west-2a). These zones can be used to launch a cluster.
 			.DESCRIPTION
@@ -917,30 +881,28 @@ Function Get-DatabricksZone
 			Get-DatabricksZone
 			
 	#>
-	[CmdletBinding()]
-	param() 
+  [CmdletBinding()]
+  param() 
 	
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/clusters/list-zones"
+  $requestMethod = "GET"
+  $apiEndpoint = "/2.0/clusters/list-zones"
 	
-	if($script:dbCloudProvider -in  @("Azure"))
-	{
-		Write-Warning "API call '$requestMethod $apiEndpoint' is not supported on Cloud Provider '$script:dbCloudProvider'"
-		return
-	}
+  if ($script:dbCloudProvider -in @("Azure")) {
+    Write-Warning "API call '$requestMethod $apiEndpoint' is not supported on Cloud Provider '$script:dbCloudProvider'"
+    return
+  }
 
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
+  Write-Verbose "Building Body/Parameters for final API call ..."
+  #Set parameters
+  $parameters = @{}
 
-	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+  $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result
+  return $result
 }
 
-Function Get-DatabricksSparkVersion
-{
-	<#
+Function Get-DatabricksSparkVersion {
+  <#
 			.SYNOPSIS
 			Returns the list of available Spark versions. These versions can be used to launch a cluster.
 			.DESCRIPTION
@@ -950,17 +912,17 @@ Function Get-DatabricksSparkVersion
 			#AUTOMATED_TEST:List spark versions
 			Get-DatabricksSparkVersion
 	#>
-	[CmdletBinding()]
-	param ()
+  [CmdletBinding()]
+  param ()
 
-	$requestMethod = "GET"
-	$apiEndpoint = "/2.0/clusters/spark-versions"
+  $requestMethod = "GET"
+  $apiEndpoint = "/2.0/clusters/spark-versions"
 
-	Write-Verbose "Building Body/Parameters for final API call ..."
-	#Set parameters
-	$parameters = @{}
+  Write-Verbose "Building Body/Parameters for final API call ..."
+  #Set parameters
+  $parameters = @{}
 
-	$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+  $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-	return $result.versions
+  return $result.versions
 }
