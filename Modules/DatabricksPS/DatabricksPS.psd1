@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.8.1.0'
+	ModuleVersion     = '1.9.0.0'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -137,6 +137,10 @@
 'Add-DatabricksClusterLibraries', 
 'Remove-DatabricksClusterLibraries', 
 'Add-DatabricksClusterLocalLibrary', 
+'Get-DatabricksPermissions', 
+'Get-DatabricksPermissionLevels', 
+'Set-DatabricksPermissions', 
+'ConvertTo-DatabricksACL', 
 'Pull-DatabricksProject', 
 'Get-DatabricksSCIMUser', 
 'Add-DatabricksSCIMUser', 
@@ -226,4 +230,26 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
