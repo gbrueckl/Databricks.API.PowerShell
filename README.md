@@ -9,9 +9,11 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.5.0: 
+- Added support for ([IP Access Lists API](hhttps://docs.databricks.com/dev-tools/api/latest/ip-access-list.html)
 ### v1.9.0.0: 
 - Added support for ([Permissions API](https://docs.databricks.com/dev-tools/api/latest/permissions.html)
-	- includes pipelining for existing object (e.g. cluster-object, job-object, ...)
+- includes pipelining for existing object (e.g. cluster-object, job-object, ...)
 ### v1.8.1.0: 
 - Update-DatabricksCluster now allows you to specify `-ClusterID` and `-ClusterObject` at the same time where the first one has priority. This can be used to update an existing cluster with the configuration of another cluster.
 ### v1.8.0.1: 

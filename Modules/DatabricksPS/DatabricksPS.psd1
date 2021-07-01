@@ -122,6 +122,10 @@
 'Add-DatabricksInstanceProfile', 
 'Get-DatabricksInstanceProfile', 
 'Remove-DatabricksInstanceProfile', 
+'Get-DatabricksIPAccessList', 
+'Add-DatabricksIPAccessList', 
+'Remove-DatabricksIPAccessList', 
+'Update-DatabricksIPAccessList', 
 'Add-DatabricksJob', 
 'Get-DatabricksJob', 
 'Remove-DatabricksJob', 
@@ -230,6 +234,13 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
+
+
+
+
+
+
 
 
 
