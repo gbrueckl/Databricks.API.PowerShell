@@ -73,7 +73,7 @@ Function Add-DatabricksCluster {
     [Parameter(Mandatory = $false)] [object[]] $InitScripts, 
     [Parameter(Mandatory = $false)] [hashtable] $SparkEnvVars, 
     [Parameter(Mandatory = $false)] [int32] $AutoterminationMinutes, 
-    [Parameter(Mandatory = $false)] [bool] $EnableElasticDisk,
+    [Parameter(Mandatory = $false)] [Nullable[bool]] $EnableElasticDisk,
     [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3",
     [Parameter(Mandatory = $false)] [string] [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
   )
@@ -235,15 +235,11 @@ Function Update-DatabricksCluster {
       .PARAMETER EnableElasticDisk 
       Autoscaling Local Storage: when enabled, this cluster will dynamically acquire additional disk space when its Spark workers are running low on disk space. This feature requires specific AWS permissions to function correctly - refer to Autoscaling local storage for details.
       .EXAMPLE
-      Update-DatabricksCluster -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId "i3.xlarge"
+      Update-DatabricksCluster -ClusterID "1234-211320-brick1" -NumWorkers 2 -ClusterName "MyCluster" -SparkVersion "4.0.x-scala2.11" -NodeTypeId "i3.xlarge"
   #>
   [CmdletBinding(DefaultParametersetName = "ClusterID")]
   param
   (
-    #[Parameter(ParameterSetName = "ClusterID", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] 
-    #[Parameter(ParameterSetName = "ClusterObject", Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)]    
-    #      [Alias("cluster_id")] [string] $ClusterID, 
-
     [Parameter(Mandatory = $false)] [int32] $NumWorkers,
     [Parameter(Mandatory = $false)] [int32] $MinWorkers, 
     [Parameter(Mandatory = $false)] [int32] $MaxWorkers, 
@@ -258,7 +254,7 @@ Function Update-DatabricksCluster {
     [Parameter(Mandatory = $false)] [object[]] $InitScripts, 
     [Parameter(Mandatory = $false)] [hashtable] $SparkEnvVars, 
     [Parameter(Mandatory = $false)] [int32] $AutoterminationMinutes, 
-    [Parameter(Mandatory = $false)] [bool] $EnableElasticDisk,
+    [Parameter(Mandatory = $false)] [Nullable[bool]] $EnableElasticDisk,
     [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion
   )
 	
@@ -267,18 +263,18 @@ Function Update-DatabricksCluster {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
     
     $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
-    New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name "ClusterID" -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
       
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary
-    New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -DPDictionary $Dictionary
+    New-DynamicParam -Name "NodeTypeId" -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name "DriverNodeTypeId" -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 
     $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
-    New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary
-    New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
+    New-DynamicParam -Name "InstancePoolId" -ValidateSet $instancePoolValues -Alias "instance_pool_id" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name "DriverInstancePoolId" -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
+    New-DynamicParam -Name "SparkVersion" -ValidateSet $sparkVersionValues -Alias "spark_version" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -290,6 +286,7 @@ Function Update-DatabricksCluster {
   }
 
   process {
+    # these variables are also populated if a ClusterObject is used as they have -ValueFromPipelineByPropertyName set to true
     $ClusterID = $PSBoundParameters.ClusterID
     $NodeTypeId = $PSBoundParameters.NodeTypeId
     $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
@@ -302,17 +299,12 @@ Function Update-DatabricksCluster {
       Write-Verbose "ClusterObject: "
       Write-Verbose $($ClusterObject | ConvertTo-Json)
       
-      if ($ClusterID -and $parameters.ContainsKey("cluster_id")) {
-        Write-Warning "The cluster_id was provided via parameter -ClusterID and also as part of -ClusterObject. Finally the value from -ClusterID will be used!"
+      if ($ClusterID -and $parameters.ContainsKey("cluster_id") -and $ClusterID -ne $ClusterObject.cluster_id) {
+        Write-Warning "The cluster_id  was provided via parameter -ClusterID ($ClusterID) and also as part of -ClusterObject ($($ClusterObject.cluster_id)). Finally the value from -ClusterID ($ClusterID) will be used!"
       }
     }
     else {
-      if ($ClusterID) {
-        $parameters = @{}
-      }
-      else {
-        Write-Error "Either -ClusterID or -ClusterObject need to be provided to identify which cluster to update!"
-      }
+      $parameters = @{}
     }
 
     if ($PythonVersion) { # check if a PythonVersion was explicitly specified
@@ -350,18 +342,22 @@ Function Update-DatabricksCluster {
       $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force 
     }
     
+    if (-not $parameters["cluster_id"]) {
+      throw "Either -ClusterID or -ClusterObject (with a cluster_id) need to be provided to identify which cluster to update!"
+    }
     if (-not $parameters["num_workers"] -and -not $parameters["autoscale"]) {
-      throw "Either -NumWorkers or -MinWorkers and -MaxWorkers need to be provided!"
+      throw "Either -NumWorkers or -MinWorkers and -MaxWorkers is mandatory for the API and needs to be provided!"
     }
     if (-not $parameters["spark_version"]) {
-      throw "Parameter -SparkVersion needs to be provided!"
+      throw "Parameter -SparkVersion is mandatory for the API and needs to be provided!"
     }
     if (-not $parameters["node_type_id"]) {
-      throw "Parameter -NodeTypeId needs to be provided!"
+      throw "Parameter -NodeTypeId is mandatory for the API and needs to be provided!"
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
+    
+    # the update-cluster call does not return any result. to be consistent with the other scripts, we return the ClusterObject that we have sent to the API
     return (ConvertTo-PSObject -InputObject $parameters)
   }
 }

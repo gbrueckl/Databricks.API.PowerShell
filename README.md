@@ -9,6 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.5.1: 
+- Minor fixes for `Update-DatabricksCluster` cmdlet
 ### v1.9.5.0: 
 - Added support for ([IP Access Lists API](hhttps://docs.databricks.com/dev-tools/api/latest/ip-access-list.html)
 ### v1.9.0.0: 

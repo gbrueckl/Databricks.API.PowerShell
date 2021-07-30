@@ -31,7 +31,7 @@ Function Add-DatabricksSQLEndpoint {
     [Parameter(Mandatory = $true, Position = 4, ValueFromPipelineByPropertyName = $true)] [Alias("max_num_clusters")] [int] $MaxNumClusters,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("auto_stop_mins")] [int] $AutoStopMinutes,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [object] $Tags,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("enable_photon")] [boolean] $EnablePhoton
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("enable_photon")] [Nullable[bool]] $EnablePhoton
   )
 	
   begin {
@@ -143,7 +143,7 @@ Function Update-DatabricksSQLEndpoint {
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("max_num_clusters")] [int] $MaxNumClusters,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("auto_stop_mins")] [int] $AutoStopMinutes,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [object] $Tags,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("enable_photon")] [boolean] $EnablePhoton
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("enable_photon")] [Nullable[bool]] $EnablePhoton
   )
 	
   begin {

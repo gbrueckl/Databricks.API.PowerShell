@@ -26,7 +26,7 @@ Function Add-DatabricksGlobalInitScript {
     [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $Script,
     [Parameter(Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $false)] [switch] $AsPlainText,
     [Parameter(Mandatory = $false, Position = 4, ValueFromPipelineByPropertyName = $true)] [int64] $Position,
-    [Parameter(Mandatory = $false, Position = 5, ValueFromPipelineByPropertyName = $true)] [boolean] $Enabled = $false
+    [Parameter(Mandatory = $false, Position = 5, ValueFromPipelineByPropertyName = $true)] [bool] $Enabled = $false
   )
 	
   begin {
@@ -171,7 +171,7 @@ Function Update-DatabricksGlobalInitScript {
     [Parameter(Mandatory = $false, Position = 2, ValueFromPipelineByPropertyName = $true)] [string] $Script,
     [Parameter(Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $false)] [switch] $AsPlainText,
     [Parameter(Mandatory = $false, Position = 4, ValueFromPipelineByPropertyName = $true)] [int64] $Position,
-    [Parameter(Mandatory = $false, Position = 5, ValueFromPipelineByPropertyName = $true)] [boolean] $Enabled = $false
+    [Parameter(Mandatory = $false, Position = 5, ValueFromPipelineByPropertyName = $true)] [bool] $Enabled = $false
   )
 	
   begin {

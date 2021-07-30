@@ -38,7 +38,7 @@
     #[Parameter(Mandatory = $false, Position = 5)] [string] $NodeTypeId, 
     [Parameter(Mandatory = $false, Position = 6)] [hashtable] $CustomTags,
     [Parameter(Mandatory = $false, Position = 7)] [int32] $IdleInstanceAutoterminationMinutes, 
-    [Parameter(Mandatory = $false, Position = 8)] [bool] $EnableElasticDisk, 
+    [Parameter(Mandatory = $false, Position = 8)] [Nullable[bool]] $EnableElasticDisk, 
     [Parameter(Mandatory = $false, Position = 9)] [hashtable] $DiskSpec
     #[Parameter(Mandatory = $false, Position = 10)] [array] $PreloadedSparkVersions
   )

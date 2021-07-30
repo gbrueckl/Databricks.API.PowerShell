@@ -60,9 +60,9 @@ Function Set-DatabricksWorkspaceConfig {
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "EnableTokensConfig", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)]  [boolean] $EnableTokensConfig,
+    [Parameter(ParameterSetName = "EnableTokensConfig", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)]  [bool] $EnableTokensConfig,
     [Parameter(ParameterSetName = "MaxTokenLifetimeDays", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [string] $MaxTokenLifetimeDays,
-    [Parameter(ParameterSetName = "EnableIpAccessLists", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [boolean] $EnableIpAccessLists
+    [Parameter(ParameterSetName = "EnableIpAccessLists", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [bool] $EnableIpAccessLists
   )
 	
   begin {

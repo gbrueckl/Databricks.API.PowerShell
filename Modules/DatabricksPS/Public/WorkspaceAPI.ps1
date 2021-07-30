@@ -16,7 +16,7 @@ Function Remove-DatabricksWorkspaceItem {
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [string] $Path, 
-		[Parameter(Mandatory = $false, Position = 2)] [bool] $Recursive
+		[Parameter(Mandatory = $false, Position = 2)] [bool] $Recursive = $false
 	)
 	
 	$requestMethod = "POST"
