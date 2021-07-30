@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.9.5.1'
+	ModuleVersion     = '1.9.5.2'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -19,7 +19,7 @@
 	Copyright         = '(c) Gerhard Brueckl. All rights reserved.'
 
 	# Description of the functionality provided by this module
-	Description       = 'A powershell module to interact with the Databricks APIs on Azure, AWS and GCP.'
+	Description       = 'A powershell module to interact with the Databricks APIs on Azure, AWS and GCP. Dedicated cmdlets for import/export of whole Databricks workspaces (notebooks, clusters, jobs, ...) for CI/CD pipelines. Full support for pipelining commands.'
 
 	# Minimum version of the Windows PowerShell engine required by this module
 	PowerShellVersion = '3.0'
@@ -234,6 +234,7 @@
 	# gbrueckl_2019-04-04: removed DefaultCommandPrefix as it does not work well with AutoComplete/IntelliSense
 	# DefaultCommandPrefix = 'Databricks'
 }
+
 
 
 
