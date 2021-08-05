@@ -36,9 +36,9 @@
 	$headers | Add-Property -Name "Content-Type" -Value $ContentType -Force
 	$headers | Add-Property -Name "Accept" -Value $Accept -Force
 	$headersString = $headers | Out-String
-	Write-Verbose "Headers: `n$($headersString -replace '(Bearer) dapi[a-f0-9]*', '$1 dapi1234567890abcdef1234567890abcdef')"
+	Write-Verbose "Headers: `n$($headersString -replace '(Bearer) dapi[a-f0-9]*', '$1 dapiXXX')"
 	Write-Debug "Headers: `n$($headersString)"
-	
+
 	if ($Method -eq "GET") {	
 		Write-Debug "GET request - showing URL parameters as Key-Value pairs ..."
 		Write-Verbose "Body: `n$($Body | Out-String)"
