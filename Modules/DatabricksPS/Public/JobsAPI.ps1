@@ -298,7 +298,7 @@ Function Remove-DatabricksJob {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-    $jobIDValues = (Get-DynamicParamValues { Get-Databricksjob }).job_id
+    $jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
     New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
@@ -346,14 +346,16 @@ Function Update-DatabricksJob {
   [CmdletBinding()]
   param
   (
-    #[Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
-    [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("settings")] [object] $NewSettings
+    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
+    [Parameter(ParameterSetName = "Reset", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("settings", "new_settings")] [object] $NewSettings,
+    [Parameter(ParameterSetName = "Update", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("update_settings")] [object] $UpdateSettings,
+    [Parameter(ParameterSetName = "Update", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("fields_to_remove")] [string[]] $FieldsToRemove
   )
   DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-    $jobIDValues = (Get-DynamicParamValues { Get-Databricksjob }).job_id
+    $jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
     New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
@@ -367,11 +369,24 @@ Function Update-DatabricksJob {
   process {
     $JobID = $PSBoundParameters.JobID
 
+    if ($PSCmdlet.ParameterSetName -eq "Update")
+    {
+      $apiEndpoint = "/2.0/jobs/update"
+    }
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
       job_id       = $JobID 
-      new_settings = $NewSettings 
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq "Update")
+    {
+      $parameters | Add-Property -Name "new_settings" -Value $UpdateSettings -Force 
+      $parameters | Add-Property -Name "fields_to_remove" -Value $FieldsToRemove -Force 
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "Reset"){
+      $parameters | Add-Property -Name "new_settings" -Value $NewSettings -Force 
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -421,7 +436,7 @@ Function Start-DatabricksJob {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-    $jobIDValues = (Get-DynamicParamValues { Get-Databricksjob }).job_id
+    $jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
     New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
@@ -537,7 +552,7 @@ Function New-DatabricksJobRun {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-    $jobIDValues = (Get-DynamicParamValues { Get-Databricksjob }).job_id
+    $jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
     New-DynamicParam -Name JobID -ParameterSetName NotebookJob, PythonkJob, JarJob, SparkJob -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 
     $clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id

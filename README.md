@@ -9,6 +9,9 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.5.3: 
+- Minor extension for `Update-DatabricksCluster` cmdlet
+- fix verbose logging so API key is only displayed in -Debug mode
 ### v1.9.5.1: 
 - Minor fixes for `Update-DatabricksCluster` cmdlet
 ### v1.9.5.0: 

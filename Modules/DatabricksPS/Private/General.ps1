@@ -86,7 +86,7 @@ Function Get-RequestHeader {
 	[CmdletBinding()]
 	param ()
 
-	Write-Verbose "Getting Headers for Databricks API call ..."
+	Write-Debug "Getting Headers for Databricks API call ..."
 	
 	$headers = $script:dbAuthenticationHeader
 	$headers["Content-Type"] = "application/json"
@@ -145,45 +145,45 @@ Function Add-Property {
 	)
 	
 	if ($Value -eq $null -or $Value -eq $NullValue) {
-		Write-Verbose "Found a null-Value to add as $Name ..."
+		Write-Debug "Found a null-Value to add as $Name ..."
 		if ($AllowEmptyValue) {
-			Write-Verbose "Adding null-value  ..."
+			Write-Debug "Adding null-value  ..."
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 		else {
-			Write-Verbose "null-value is omitted."
+			Write-Debug "null-value is omitted."
 			# do nothing as we do not add Empty values
 		}
 	}
 	elseif ($Value.GetType().Name -eq 'Object[]') {
 		# array
-		Write-Verbose "Found an Array-Property to add as $Name ..."
+		Write-Debug "Found an Array-Property to add as $Name ..."
 		if ($Value.Count -gt 0 -or $AllowEmptyValue) {
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
 	elseif ($Value.GetType().Name -eq 'Hashtable') {
 		# hashtable
-		Write-Verbose "Found a Hashtable-Property to add as $Name ..."
+		Write-Debug "Found a Hashtable-Property to add as $Name ..."
 		if ($Value.Count -gt 0 -or $AllowEmptyValue) {
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
 	elseif ($Value.GetType().Name -eq 'String') {
 		# String
-		Write-Verbose "Found a String-Property to add as $Name ..."
+		Write-Debug "Found a String-Property to add as $Name ..."
 		if (-not [string]::IsNullOrEmpty($Value) -or $AllowEmptyValue) {
 			$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 		}
 	}
 	elseif ($Value.GetType().Name -eq 'Boolean') {
 		# Boolean
-		Write-Verbose "Found a Boolean-Property to add as $Name ..."
+		Write-Debug "Found a Boolean-Property to add as $Name ..."
 
 		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value.ToString().ToLower() -Force:$Force
 	}
 	else {
-		Write-Verbose "Found a $($Value.GetType().Name)-Property to add as $Name ..."
+		Write-Debug "Found a $($Value.GetType().Name)-Property to add as $Name ..."
 
 		$Hashtable | Add-PropertyIfNotExists -Name $Name -Value $Value -Force:$Force
 	}

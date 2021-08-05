@@ -31,19 +31,21 @@
 	Write-Verbose "API Call: $Method $apiUrl"
 	
 	#Set headers
-	Write-Verbose "Building Headers ..."
+	Write-Debug "Building Headers ..."
 	$headers = Get-RequestHeader
 	$headers | Add-Property -Name "Content-Type" -Value $ContentType -Force
 	$headers | Add-Property -Name "Accept" -Value $Accept -Force
-	Write-Verbose "Headers: `n$($headers | Out-String)"
+	$headersString = $headers | Out-String
+	Write-Verbose "Headers: `n$($headersString -replace '(Bearer) dapi[a-f0-9]*', '$1 dapi1234567890abcdef1234567890abcdef')"
+	Write-Debug "Headers: `n$($headersString)"
 	
 	if ($Method -eq "GET") {	
-		Write-Verbose "GET request - showing URL parameters as Key-Value pairs ..."
+		Write-Debug "GET request - showing URL parameters as Key-Value pairs ..."
 		Write-Verbose "Body: `n$($Body | Out-String)"
 	}
 	else {
 		# for POST requests we have to convert the body to JSON
-		Write-Verbose "$($Method.ToUpper()) request - converting Body to JSON ..."
+		Write-Debug "$($Method.ToUpper()) request - converting Body to JSON ..."
 		$Body = $Body | ConvertTo-Json -Depth 20
 		
 		Write-Verbose "Body: `n$($Body)"
