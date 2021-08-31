@@ -125,6 +125,19 @@ Set-DatabricksEnvironment -AccessToken "dapi123...def" -ApiRootUrl "https://west
 Import-DatabricksEnvironment -LocalPath "C:\\my_export" -Artifacts @("Workspace", "Clusters", "Jobs")
 ```
 
+## Calling a not yet supported/implemented API
+The Databricks API is update frequently and it is pretty hard to keep everything up-to-date. So in case an API call you are looking for is not yet supported by this moduel, you can always execute the call manually leveraging the existing authentication:
+```powershell
+Set-DatabricksEnvironment -AccessToken "dapi123...def" -ApiRootUrl "https://westeurope.azuredatabricks.net"
+$body = @{
+      cluster_id = "1202-211320-brick1";
+	  num_workers = 4
+    }
+
+Invoke-DatabricksApiRequest -Method "POST" -EndPoint "/2.0/clusters/resize" -Body $body
+```
+
+
 # Authentication
 There are 3 ways to authenticate against the Databricks REST API of which 2 are unique to Azure:
 - Personal Access token 
