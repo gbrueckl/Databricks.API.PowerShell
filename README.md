@@ -9,6 +9,9 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.6.0: 
+- Fixed an issue with `Get-DatabricksSQLHistory` and also improved it
+- Added [Common Snippets](#common-snippets) to this README.md
 ### v1.9.5.3: 
 - Minor extension for `Update-DatabricksCluster` cmdlet
 - fix verbose logging so API key is only displayed in -Debug mode
@@ -102,6 +105,26 @@ Get-DatabricksCluster | Stop-DatabricksCluster
 Get-DatabricksJobRun -JobID 123 | Get-DatabricksJobRunOutput
 ```
 
+# Common snippets
+Below you can find a list of common snippets that I found useful and use very frequently. All snippets use the Personal Access Token for authentication but of course also work with Azure Active Directory user and service principal authentication (see [Authentication](#authentication)).
+## Stop all clusters at the end of the day
+```powershell
+Set-DatabricksEnvironment -AccessToken "dapi123...def" -ApiRootUrl "https://westeurope.azuredatabricks.net"
+Get-DatabricksCluster | Stop-DatabricksCluster
+```
+
+## Export a whole or single parts of a Databricks workspace
+```powershell
+Set-DatabricksEnvironment -AccessToken "dapi123...def" -ApiRootUrl "https://westeurope.azuredatabricks.net"
+Export-DatabricksEnvironment -CleanLocalRootPath -LocalPath "C:\\my_export" -Artifacts @("Workspace", "Clusters", "Jobs")
+```
+
+## Import a whole or single parts of a Databricks workspace
+```powershell
+Set-DatabricksEnvironment -AccessToken "dapi123...def" -ApiRootUrl "https://westeurope.azuredatabricks.net"
+Import-DatabricksEnvironment -LocalPath "C:\\my_export" -Artifacts @("Workspace", "Clusters", "Jobs")
+```
+
 # Authentication
 There are 3 ways to authenticate against the Databricks REST API of which 2 are unique to Azure:
 - Personal Access token 
@@ -166,8 +189,8 @@ Set-DatabricksEnvironment -ClientID $clientId -Credential $credSP -AzureResource
 - Instance Pools API ([Azure](https://docs.azuredatabricks.net/api/latest/instance-pools.html), [AWS](https://docs.databricks.com/dev-tools/api/latest/instance-pools.html))
 - Cluster Policies API ([Azure](https://docs.azuredatabricks.net/api/latest/policies.html), [AWS](https://docs.databricks.com/dev-tools/api/latest/policies.html))
 - Instance Profiles API ([AWS](https://docs.databricks.com/dev-tools/api/latest/instance-profiles.html))
-- Global Init Scripts API
-- Tokens API
-- Workspace Config API
-- SQL Analytics API
-- SQL Analytics Query History API
+- Global Init Scripts API ([AWS](https://docs.databricks.com/dev-tools/api/latest/global-init-scripts.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/dev-tools/api/latest/global-init-scripts))
+- Tokens API ([AWS](https://docs.databricks.com/dev-tools/api/latest/tokens.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/dev-tools/api/latest/tokens))
+- Workspace Config API ([AWS](https://docs.databricks.com/sql/api/sql-endpoints.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/sql/api/sql-endpoints))
+- SQL Analytics API ([AWS](https://docs.databricks.com/sql/api/sql-endpoints.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/sql/api/sql-endpoints))
+- SQL Analytics Query History API ([AWS](https://docs.databricks.com/sql/api/query-history.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/sql/api/query-history))

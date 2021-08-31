@@ -23,14 +23,18 @@ Function Get-DatabricksSQLHistory {
       Get-DatabricksSQLHistory -SQLEndpintIds @("1234567890abcdef") -UserIds @("12345") -Statuses @("RUNNING", "QUEUED") -MaxResults 100
       
   #>
-  [CmdletBinding()]
+  [CmdletBinding(DefaultParametersetname = "Start/End MS")]
   param
   (
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "sql_endpoint_ids")] [string[]] $SQLEndpointIds,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "sql_endpoint_ids", "id")] [string[]] $SQLEndpointIds,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("user_id", "user_ids")] [string[]] $UserIds,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("statuses")] [string[]] [ValidateSet("QUEUED", "RUNNING", "CANCELED", "FAILED", "FINISHED")] $Statuses,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("query_start_time_from_ms", "user_ids")] [int64] $StartTimeFrom,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("query_start_time_to_ms", "user_ids")] [int64] $StartTimeTo,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("status")] [string[]] [ValidateSet("QUEUED", "RUNNING", "CANCELED", "FAILED", "FINISHED")] $Statuses,
+    
+    [Parameter(ParameterSetName = "Start/End MS", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("query_start_time_from_ms")] [int64] $StartTimeFromMS = -1,
+    [Parameter(ParameterSetName = "Start/End MS", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("query_start_time_to_ms")] [int64] $StartTimeToMS = -1,
+    [Parameter(ParameterSetName = "Start/End DateTime", Mandatory = $true)] [Alias("query_start_time_from")] [datetime] $StartTimeFrom,
+    [Parameter(ParameterSetName = "Start/End DateTime", Mandatory = $true)] [Alias("query_start_time_to")] [datetime] $StartTimeTo,
+    
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("max_results")] [int] $MaxResults = -1,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("page_token", "next_page_token")] [string] $NextPageToken
   )
@@ -42,15 +46,21 @@ Function Get-DatabricksSQLHistory {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    $startTimes = @{}
-    $filters | Add-Property -Name "start_time_ms" -Value $StartTimeFrom
-    $filters | Add-Property -Name "end_time_ms" -Value $StartTimeTo
+    $timeFilter = @{}
+    
+    if ($PSCmdlet.ParameterSetName -eq "Start/End DateTime") {
+      $StartTimeFromMS = [Math]::Round(($StartTimeFrom).ToFileTime() / 10000000 - 11644473600)
+      $StartTimeToMS = [Math]::Round(($StartTimeTo).ToFileTime() / 10000000 - 11644473600)
+    }
+
+    $timeFilter | Add-Property -Name "start_time_ms" -Value $StartTimeFromMS -NullValue -1
+    $timeFilter | Add-Property -Name "end_time_ms" -Value $StartTimeToMS -NullValue -1
 
     $filters = @{}
     $filters | Add-Property -Name "sql_endpoint_ids" -Value $SQLEndpointIds -NullValue @()
     $filters | Add-Property -Name "user_ids" -Value $UserIds -NullValue @()
     $filters | Add-Property -Name "statuses" -Value $Statuses -NullValue @()
-    $filters | Add-Property -Name "query_start_time_range" -Value $startTimes -NullValue @{}
+    $filters | Add-Property -Name "query_start_time_range" -Value $timeFilter -NullValue @{}
 
     #Set parameters
     $parameters = @{}
@@ -59,7 +69,10 @@ Function Get-DatabricksSQLHistory {
     $parameters | Add-Property -Name "max_results" -Value $MaxResults -NullValue -1
     $parameters | Add-Property -Name "page_token" -Value $NextPageToken
 
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+    # GET requests do not support a complex body/parameters so we need to convert it to JSON and append it to the URL/endpoint directly
+    $urlParams = [System.Web.HttpUtility]::UrlEncode($($parameters | ConvertTo-Json -Depth 5 -Compress))
+
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint "$apiEndpoint$('?')$urlParams"
 
     return $result
   }
