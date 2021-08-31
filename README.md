@@ -9,6 +9,9 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.6.1: 
+- Fixed an issue with `Get-DatabricksSQLHistory` and Windows PowerShell
+- Filters with `Get-DatabricksSQLHistory` are only supported with PowerShell CORE ([details](https://github.com/dotnet/runtime/issues/25485))
 ### v1.9.6.0: 
 - Fixed an issue with `Get-DatabricksSQLHistory` and also improved it
 - Added [Common Snippets](#common-snippets) to this README.md

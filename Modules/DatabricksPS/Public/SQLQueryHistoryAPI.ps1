@@ -26,7 +26,7 @@ Function Get-DatabricksSQLHistory {
   [CmdletBinding(DefaultParametersetname = "Start/End MS")]
   param
   (
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "sql_endpoint_ids", "id")] [string[]] $SQLEndpointIds,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "sql_endpoint_ids", "endpoint_id", "endpoint_ids", "id")] [string[]] $SQLEndpointIds,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("user_id", "user_ids")] [string[]] $UserIds,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("status")] [string[]] [ValidateSet("QUEUED", "RUNNING", "CANCELED", "FAILED", "FINISHED")] $Statuses,
     
@@ -57,22 +57,29 @@ Function Get-DatabricksSQLHistory {
     $timeFilter | Add-Property -Name "end_time_ms" -Value $StartTimeToMS -NullValue -1
 
     $filters = @{}
-    $filters | Add-Property -Name "sql_endpoint_ids" -Value $SQLEndpointIds -NullValue @()
+    $filters | Add-Property -Name "endpoint_ids" -Value $SQLEndpointIds -NullValue @()
     $filters | Add-Property -Name "user_ids" -Value $UserIds -NullValue @()
     $filters | Add-Property -Name "statuses" -Value $Statuses -NullValue @()
     $filters | Add-Property -Name "query_start_time_range" -Value $timeFilter -NullValue @{}
 
     #Set parameters
     $parameters = @{}
-
     $parameters | Add-Property -Name "filter_by" -Value $filters -NullValue @{}
     $parameters | Add-Property -Name "max_results" -Value $MaxResults -NullValue -1
     $parameters | Add-Property -Name "page_token" -Value $NextPageToken
 
     # GET requests do not support a complex body/parameters so we need to convert it to JSON and append it to the URL/endpoint directly
-    $urlParams = [System.Web.HttpUtility]::UrlEncode($($parameters | ConvertTo-Json -Depth 5 -Compress))
+    # https://stackoverflow.com/questions/3981564/cannot-send-a-content-body-with-this-verb-type
 
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint "$apiEndpoint$('?')$urlParams"
+    if($PSVersionTable.PSVersion.Major -gt 5)
+    {
+      $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body ($parameters | ConvertTo-Json -Depth 5)
+    }
+    else {
+      Write-Warning "Windows PowerShell and the .NET Framework do not allow complex GET request as used by this API.`nAll parameters except -MaxResults and -NextPageToken will be ignored!`nYou can consider using PowerShell CORE where this is supported.`nDetails can be found here https://github.com/dotnet/runtime/issues/25485"
+      $parameters.Remove("filter_by")
+      $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+    }
 
     return $result
   }
