@@ -9,6 +9,12 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.7.0: 
+- Added support for ([Repos API](https://docs.databricks.com/dev-tools/api/latest/repos.html)
+- Added support for ([Jobs API v2.1](https://docs.databricks.com/dev-tools/api/latest/jobs.html) via a switch `JobsAPI_v2_1` on `Set-DatabricksEnvironment`
+- Deprecation Projects API (`Pull-DatabricksProject`)
+### v1.9.6.2: 
+- Fix some documentation
 ### v1.9.6.1: 
 - Fixed an issue with `Get-DatabricksSQLHistory` and Windows PowerShell
 - Filters with `Get-DatabricksSQLHistory` are only supported with PowerShell CORE ([details](https://github.com/dotnet/runtime/issues/25485))
@@ -21,7 +27,7 @@ Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 ### v1.9.5.1: 
 - Minor fixes for `Update-DatabricksCluster` cmdlet
 ### v1.9.5.0: 
-- Added support for ([IP Access Lists API](hhttps://docs.databricks.com/dev-tools/api/latest/ip-access-list.html)
+- Added support for ([IP Access Lists API](https://docs.databricks.com/dev-tools/api/latest/ip-access-list.html)
 ### v1.9.0.0: 
 - Added support for ([Permissions API](https://docs.databricks.com/dev-tools/api/latest/permissions.html)
 - includes pipelining for existing object (e.g. cluster-object, job-object, ...)

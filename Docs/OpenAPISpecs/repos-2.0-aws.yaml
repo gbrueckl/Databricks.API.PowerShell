@@ -1,0 +1,352 @@
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: Repos API
+  description: >-
+    The repos API allows users to manage their
+    [repos](https://docs.databricks.com/repos.html). Users can use the API to
+    access all repos that they have manage permissions on.
+servers:
+  - url: https://<databricks-instance>/api/2.0
+    description: >-
+      In the URL, substitute `<databricks-instance>` with the domain name of
+      your deployment. Use the form `<account>.cloud.databricks.com`.
+paths:
+  /repos:
+    description: This endpoint manages repos for a workspace.
+    get:
+      summary: Get repos
+      description: >-
+        Returns repos that the calling user has Manage permissions on. Results
+        are paginated with each page containing twenty repos.
+      operationId: get-repos
+      parameters:
+        - in: query
+          name: path_prefix
+          schema:
+            type: string
+          description: Filters repos that have paths starting with the given path prefix.
+        - in: query
+          name: next_page_token
+          schema:
+            type: string
+          description: >-
+            Token used to get the next page of results. If not specified,
+            returns the first page of results as well as a next page token if
+            there are more results.
+      responses:
+        '200':
+          description: Repos were successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetReposResponse'
+        '404':
+          $ref: '#/components/responses/ReposNotEnabled'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create a repo
+      description: >-
+        Creates a repo in the workspace and links it to the remote Git repo
+        specified. Note that repos created programmatically must be linked to a
+        remote Git repo, unlike repos created in the browser.
+      operationId: create-repo
+      requestBody:
+        description: Details required to create and clone a repo object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRepoRequest'
+      responses:
+        '200':
+          description: The repo was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRepoResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/DirectoryNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /repos/{repo_id}:
+    description: This endpoint manages a specific repo.
+    parameters:
+      - name: repo_id
+        in: path
+        schema:
+          type: string
+        description: The ID for the corresponding repo to access.
+        required: true
+    get:
+      summary: Get a repo
+      description: Returns the repo with the given repo ID.
+      operationId: get-repo
+      responses:
+        '200':
+          description: The repo was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRepoResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/RepoNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      summary: Updates the repo to a different branch or tag
+      description: Updates the repo to the given branch or tag.
+      operationId: update-repo
+      requestBody:
+        description: Details required to update the repo
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/Branch'
+                - $ref: '#/components/schemas/Tag'
+      responses:
+        '200':
+          description: The repo was successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRepoResponse'
+        '400':
+          $ref: '#/components/responses/UnknownRef'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/RepoNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Deletes the repo
+      description: Deletes the specified repo
+      operationId: delete-repo
+      responses:
+        '200':
+          description: The repo was successfully deleted.
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/RepoNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  schemas:
+    id:
+      type: integer
+      format: int64
+      description: ID of the repo object in the workspace.
+      example: 5249608814509279
+    url:
+      type: string
+      description: URL of the Git repository to be linked.
+      example: https://github.com/jsmith/test
+    provider:
+      type: string
+      description: >-
+        Git provider. This field is case-insensitive. The available Git
+        providers are gitHub, bitbucketCloud, gitLab, azureDevOpsServices,
+        gitHubEnterprise, bitbucketServer and gitLabEnterpriseEdition.
+      example: gitHub
+    path:
+      type: string
+      description: >-
+        Desired path for the repo in the workspace. Must be in the format
+        /Repos/{folder}/{repo-name}.
+      example: /Repos/Production/testrepo
+    branch:
+      type: string
+      description: Branch that the local version of the repo is checked out to.
+      example: main
+    tag:
+      type: string
+      description: >-
+        Tag that the local version of the repo is checked out to. Updating the
+        repo to a tag puts the repo in a detached HEAD state. Before committing
+        new changes, you must update the repo to a branch instead of the
+        detached HEAD.
+      example: v1.0
+    head_commit_id:
+      type: string
+      description: SHA-1 hash representing the commit ID of the current HEAD of the repo.
+      example: 7e0847ede61f07adede22e2bcce6050216489171
+    next_page_token:
+      type: string
+      description: >-
+        Token that can be specified as a query parameter to the GET /repos
+        endpoint to retrieve the next page of results.
+      example: eyJyZXBvX3RyZWVub2RlX2lkIjo1MjQ5NjA4ODE0NTA5Mjc5fQ==
+    GetRepoResponse:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/id'
+        url:
+          $ref: '#/components/schemas/url'
+        provider:
+          $ref: '#/components/schemas/provider'
+        path:
+          $ref: '#/components/schemas/path'
+        branch:
+          $ref: '#/components/schemas/branch'
+        head_commit_id:
+          $ref: '#/components/schemas/head_commit_id'
+    GetReposResponse:
+      type: object
+      properties:
+        repos:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetRepoResponse'
+        next_page_token:
+          $ref: '#/components/schemas/next_page_token'
+    CreateRepoRequest:
+      type: object
+      required:
+        - url
+        - provider
+      properties:
+        url:
+          $ref: '#/components/schemas/url'
+        provider:
+          $ref: '#/components/schemas/provider'
+        path:
+          $ref: '#/components/schemas/path'
+    Branch:
+      type: object
+      required:
+        - branch
+      properties:
+        branch:
+          $ref: '#/components/schemas/branch'
+    Tag:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          $ref: '#/components/schemas/tag'
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message describing the cause of the error.
+  responses:
+    BadRequest:
+      description: The request is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalid_repo_path:
+              value:
+                error_code: BAD_REQUEST
+                message: Invalid repo path specified
+    UnknownRef:
+      description: The specified ref is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            unknown_ref:
+              value:
+                error_code: GIT_UNKNOWN_REF
+                message: Remote branch does not exist
+    Forbidden:
+      description: The user does not have access to the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            bad_request:
+              value:
+                error_code: PERMISSION_DENIED
+                message: >-
+                  PERMISSION_DENIED: jsmith@example.com does not have Manage
+                  permissions on /Repos/Production/testrepo. Please contact the
+                  owner or an administrator for access.
+    RepoNotFound:
+      description: The specified repo does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            repo_not_found:
+              value:
+                error_code: RESOURCE_DOES_NOT_EXIST
+                message: Repo could not be found
+    DirectoryNotFound:
+      description: The specified directory does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            directory_not_found:
+              value:
+                error_code: RESOURCE_DOES_NOT_EXIST
+                message: >-
+                  RESOURCE_DOES_NOT_EXIST: Parent directory /Repos/testfolder
+                  does not exist.
+    ReposNotEnabled:
+      description: Repos is not enabled for the workspace.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            bad_request:
+              value:
+                error_code: FEATURE_DISABLED
+                message: 'FEATURE_DISABLED: Repos is not enabled.'
+    InternalError:
+      description: The request is not handled correctly due to a server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            internal_error:
+              value:
+                error_code: INTERNAL_ERROR
+                message: >-
+                  There was an error performing the operation. Please try again
+                  or open a support ticket.
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: String
+      in: header
+      name: Token
+      description: >-
+        You can authenticate with a Databricks personal access token that you
+        create for yourself within the application user interface.
+    basicAuth:
+      type: http
+      scheme: basic
+      in: header
+      name: HTTP Basic authentication
+      description: >-
+        HTTP Basic authentication with a name and password for non-SSO
+        authentication.
+security:
+  - bearerAuth: []
+  - basicAuth: []

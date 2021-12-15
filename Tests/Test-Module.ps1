@@ -56,7 +56,7 @@ Import-Module "$rootPath\Modules\DatabricksPS" -Verbose
 # find examples for automated tests: '.EXAMPLE\n#AUTOMATED_TEST:TestName\n' ... '.EXAMPLE' or '#>'
 $regEx = "\s*\.EXAMPLE\s+#AUTOMATED_TEST:(.*)\n((?:.|\r|\n)+?)\s+(?=\.EXAMPLE|#>)"
 
-$activeEnvironments = $config.environments | Where-Object { $_.isActive }
+$activeEnvironments = $config.environments | Out-GridView -PassThru
 foreach ($environment in $activeEnvironments) { 
 	try {
 		Write-Information "Testing Environment $($environment.name) ..."

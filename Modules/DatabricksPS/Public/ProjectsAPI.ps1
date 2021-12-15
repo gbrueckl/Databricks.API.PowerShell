@@ -20,7 +20,7 @@ Function Pull-DatabricksProject {
       Pull-DatabricksProject -Path "/Projects/user@example.com/project" -Branch "master"
       .EXAMPLE
       Pull-DatabricksProject -Path "/Projects/user@example.com/project" -Branch "branch-0.1" -StartPoint "tags/release-0.1"
-  #>
+    #>
   [CmdletBinding()]
   param
   (
@@ -32,19 +32,19 @@ Function Pull-DatabricksProject {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/projects/fetch-and-checkout"
   }
-	
+    
   process {    
+    Write-Warning "This cmdlet is legacy and may not be supported in the future anymore. `nThe underlying API was in preview and was replaced by the Repos API. `nPlease use 'Update-DatabricksRepo' cmdlets instead!"
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
-      path = $Path
+      path   = $Path
       branch = $Branch
     }
 
     $parameters | Add-Property -Name "start_point" -Value $StartPoint -Force
-			
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-		
+
+
     return $result
   }
 }

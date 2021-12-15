@@ -30,6 +30,7 @@ Function Clear-ScriptVariables {
 	$script:dbApiCallRetryCount = $null
 	$script:dbApiCallRetryWait = $null
 	$script:dbCachedDynamicParamValues = @{}
+	$script:dbJobsAPIVersion = $null
 }
 
 function Join-Parts {
@@ -92,17 +93,6 @@ Function Get-RequestHeader {
 	$headers["Content-Type"] = "application/json"
 	
 	return $headers
-	<#
-			switch($script:dbAuthenticationProvider)
-			{
-			"DatabricksApi" {	
-			return @{
-			"Authorization" = "Bearer $script:dbAccessToken"
-			"Content-Type" = "application/json"
-			}
-			}
-			}
-	#>
 }
 
 Function Get-ApiUrl {

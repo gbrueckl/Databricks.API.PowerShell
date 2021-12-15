@@ -1,0 +1,2831 @@
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: Account API
+  description:
+    "The Account API offers centralized management of multiple Databricks workspaces and related resources.\n
+
+    Use this API for the following tasks:\n
+
+    * **Create new workspaces** — This feature is available if your account is on the [E2 version of the platform](https://docs.databricks.com/getting-started/overview.html#e2-architecture) or on a select custom plan that allows multiple workspaces per account.\n
+
+    * **Configure log delivery (billable usage or audit logs)** — This feature is Public Preview and works with all account IDs.\n
+
+    * **Download billable usage logs** — This feature works with all account IDs.\n
+
+    ### New workspaces\n
+
+    Use this API to programmatically deploy, update, and delete workspaces. All workspaces have associated cloud credential configurations and storage configurations. This feature is available if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account. For additional details and steps, see
+    [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html).\n
+
+    There are additional optional features that you can associate with your workspace for
+    deployment types and subscription types that support them. If you use these features
+    you will create additional configurations with this API. If you have questions about
+    availability, contact your Databricks representative:\n
+
+    *  **[Customer-managed VPC](http://docs.databricks.com/administration-guide/cloud-configurations/aws/customer-managed-vpc.html)** — Provide your own VPC. See the note below about regions for VPCs. To configure your workspace to use [AWS PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html) ([Public Preview](http://docs.databricks.com/release-notes/release-types.html)) for any type of connection, it is required that your workspace use a customer-managed VPC.\n
+
+    *  **[Secure cluster connectivity](http://docs.databricks.com/security/secure-cluster-connectivity.html)** — Network architecture with no VPC open ports and no Databricks runtime worker public IP addresses. This is the default in workspaces for accounts on the E2 version of the platform as of September 1, 2020.\n
+
+    * **[Customer-managed keys for managed services](http://docs.databricks.com/security/keys/customer-managed-keys-managed-services-aws.html)** — (Public Preview) Provide KMS keys to encrypt notebook and secret data in the control plane, as well as Databricks SQL queries and query history. This feature requires the Enterprise pricing tier and is available only for [some AWS regions](https://docs.databricks.com/administration-guide/cloud-configurations/aws/regions.html).\n
+
+    * **[Customer-managed keys for storage](https://docs.databricks.com/security/keys/customer-managed-keys-storage-aws.html)** — (Public Preview) Provide KMS keys to encrypt the workspace's S3 bucket in the customer's AWS account, which contains the DBFS root and system data, as well as optionally encrypting cluster EBS instances. This feature requires the Enterprise pricing tier and is available only for [some AWS regions](https://docs.databricks.com/administration-guide/cloud-configurations/aws/regions.html). \n
+
+    * **[AWS PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html)** - ([Public Preview](http://docs.databricks.com/release-notes/release-types.html)) AWS PrivateLink provides private connectivity between VPCs, AWS services, and on-premises networks, without exposing the traffic to the public Internet. Workspaces on the E2 version of the platform support adding PrivateLink connections for two connection types. A front-end PrivateLink connection configure users to connect to the <Databricks> web application or REST API over a PrivateLink endpoint. A back-end PrivateLink connection configures Databricks Runtime clusters connect to the control plane using two VPC endpoints (one for REST APIs, one for the secure cluster connectivity relay). PrivateLink is available only for some AWS regions. Your account must be enabled for PrivateLink to use these APIs. Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html). You can use the workspace creation API to add PrivateLink to a new workspace. If you want to add PrivateLink to an existing workspace, for the final workspace configuration update, you cannot use this API. Instead, contact your Databricks representative to make the change.\n
+
+    To create a new workspace, use the [Create a workspace](#operation/create-workspace) operation. For detailed instructions of creating a new workspace with this API, see
+    [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html).\n
+
+    To update an existing workspace, use the [Update a workspace](#operation/patch-workspace) operation. You can update only specific fields, and the set varies depending on whether it is a failed workspace or a running workspace.
+
+    ### Log delivery\n
+
+    Use this API to manage log delivery. It supports two log types:
+    
+    * `BILLABLE_USAGE` — Learn more at [Configure billable usage log delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html). For the CSV schema, see the [Usage page](https://docs.databricks.com/administration-guide/account-settings/usage.html).\n
+
+    * `AUDIT_LOGS` — Learn more at [Configure audit logging](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html), including the JSON schema.\n
+    
+    For the API reference, see [log delivery configurations](#tag/Log-delivery-configurations).
+
+    ### Download Billable Usage Logs\n
+
+    Use this API to download a CSV file that contains billable usage logs for the specified account and date range.\n
+
+    To programmatically process and analyze billable usage, Databricks recommends that you configure continuous billable usage delivery to an S3 bucket as documented on the [Deliver and access billable usage logs](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html) page.
+    You can also use the Account API to directly download billable usage.\n
+
+    See [Billable Usage Download](#tag/Billable-usage-download) for the API reference.
+
+    ### Configure Budgets\n
+
+    Use this API to configure usage budgets for workspaces in your account, set up notifications for exceeding budget and query budget status.
+    
+    # Authentication
+
+    The Account API is different from most Databricks REST APIs:
+    
+    * It is published on `accounts.cloud.databricks.com`, not on the domain that matches your workspace URL. 
+    
+    * Authenticate with your account name and password on the API, rather than a personal access token. For details, see [Create a new workspace using the Account API](https://docs.databricks.com/administration-guide/account-api/new-workspace.html).
+    "
+tags:
+  - name: Credential configurations
+    description:
+      "These APIs manage credential configurations for this workspace. Databricks needs
+      access to a cross-account service IAM role in your AWS account so that Databricks
+      can deploy clusters in the appropriate VPC for the new workspace. A credential
+      configuration encapsulates this role information, and its ID is used when creating a
+      new workspace."
+  - name: Storage configurations
+    description:
+      "These APIs manage storage configurations for this workspace. A root storage S3
+      bucket in your account is required to store objects like cluster logs, notebook
+      revisions, and job results. You can also use the root storage S3 bucket for storage
+      of non-production DBFS data. A storage configuration encapsulates this bucket
+      information, and its ID is used when creating a new workspace. "
+  - name: Network configurations
+    description:
+      "These APIs manage network configurations for customer-managed VPCs (optional). A
+      network configuration encapsulates the IDs for AWS VPCs, subnets, and security
+      groups. Its ID is used when creating a new workspace if you use customer-managed
+      VPCs."
+  - name: Key configurations
+    description:
+      "These APIs manage encryption key configurations for this workspace (optional). A key
+      configuration encapsulates the AWS KMS key information and some information about how the key
+      configuration can be used. There are two possible uses for key configurations:\n
+
+      * Managed services: A key configuration can be used to encrypt a workspace's notebook and secret data in the control plane, as well as Databricks SQL queries and query history.\n
+
+      * Storage: A key configuration can be used to encrypt a workspace's DBFS and EBS data in the data plane.\n
+
+      In both of these cases, the key configuration's ID is used when creating a new workspace.\n
+
+      This Preview feature is available if your account is on the E2 version of the platform. Updating a running workspace with workspace storage encryption requires that the workspace is on the E2 version of the platform. If you have an older workspace, it might not be on the E2 version of the platform. If you are not sure, contact your Databricks reprsentative."
+  - name: Workspaces
+    description:
+      "These APIs manage workspaces for this account. A Databricks workspace is an environment for
+      accessing all of your Databricks assets. The workspace organizes objects (notebooks,
+      libraries, and experiments) into folders, and provides access to data and
+      computational resources such as clusters and jobs.\n
+      
+      These endpoints are available if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+  - name: Log delivery configurations
+    description:
+      "These APIs manage log delivery configurations for this account. The two supported log types for this API are _billable usage logs_ and _audit logs_. This feature is in Public Preview. This feature works with all account ID types.\n
+      
+      Log delivery works with all account types. However, if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account, you can optionally configure different storage destinations for each workspace.\n
+
+      Log delivery status is also provided to know the latest status of log delivery attempts.\n
+
+      The high-level flow of billable usage delivery:\n
+
+      1. **Create storage**: In AWS, [create a new AWS S3 bucket](https://docs.databricks.com/administration-guide/account-api/aws-storage.html) with a specific bucket policy. Using Databricks APIs, call the Account API to create a [storage configuration object](#operation/create-storage-config) that uses the bucket name.\n
+
+      2. **Create credentials**: In AWS, create the appropriate AWS IAM role. For full details, including the required IAM role policies and trust relationship, see [Billable usage log delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html). Using Databricks APIs, call the Account API to create a [credential configuration object](#operation/create-credential-config) that uses the IAM role's ARN. \n
+
+      3. **Create log delivery configuration**: Using Databricks APIs, call the Account API to [create a log delivery configuration](#operation/create-log-delivery-config) that uses the credential and storage configuration objects from previous steps. You can specify if the logs should include all events of that log type in your account (_Account level_ delivery) or only events for a specific set of workspaces (_workspace level_ delivery). Account level log delivery applies to all current and future workspaces plus account level logs, while workspace level log delivery solely delivers logs related to the specified workspaces. You can create multiple types of delivery configurations per account.\n
+
+      For billable usage delivery:\n
+      
+      * For more information about billable usage logs, see [Billable usage log delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html). For the CSV schema, see the [Usage page](https://docs.databricks.com/administration-guide/account-settings/usage.html).
+      
+      * The delivery location is `<bucket-name>/<prefix>/billable-usage/csv/`, where `<prefix>` is the name of the optional delivery path prefix you set up during log delivery configuration. Files are named `workspaceId=<workspace-id>-usageMonth=<month>.csv`.
+      
+      * All billable usage logs apply to specific workspaces (_workspace level_ logs). You can aggregate usage for your entire account by creating an _account level_ delivery configuration that delivers logs for all current and future workspaces in your account.
+
+      * The files are delivered daily by overwriting the month's CSV file for each workspace.\n
+
+      For audit log delivery:\n
+      
+      * For more information about about audit log delivery, see [Audit log delivery](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html), which includes information about the used JSON schema. 
+      
+      * The delivery location is `<bucket-name>/<delivery-path-prefix>/workspaceId=<workspaceId>/date=<yyyy-mm-dd>/auditlogs_<internal-id>.json`. Files may get overwritten with the same content multiple times to achieve exactly-once delivery.
+
+      * If the audit log delivery configuration included specific workspace IDs, only _workspace-level_ audit logs for those workspaces are delivered. If the log delivery configuration applies to the entire account (_account level_ delivery configuration), the audit log delivery includes workspace-level audit logs for all workspaces in the account as well as account-level audit logs. See [Audit log delivery](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html) for details.
+
+      * Auditable events are typically available in logs within 15 minutes."
+  - name: "Billable usage download"
+    description:
+      "This API allows you to download billable usage logs for the specified account and date range.\n
+
+      This feature works with all account types."
+  - name: "Budgets"
+    description:
+      "**Budgets feature is in [Private Preview](http://docs.databricks.com/release-notes/release-types.html).**\n
+
+      These APIs manage budget configuration including notifications for exceeding a budget for a period. They can also retrieve the status of each budget.
+      "
+  - name: "AWS PrivateLink: private access settings"
+    description:
+      "**PrivateLink is in [Public Preview](http://docs.databricks.com/release-notes/release-types.html).**\n 
+      
+      These APIs manage private access settings for this account. A private access settings object specifies how your workspace is accessed using AWS PrivateLink. Each workspace that has any PrivateLink connections must include the ID for a private access settings object is in its workspace configuration object. Your account must be enabled for PrivateLink to use these APIs. Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html)."
+  - name: "AWS PrivateLink: VPC endpoint configurations"
+    description:
+      "**PrivateLink is in [Public Preview](http://docs.databricks.com/release-notes/release-types.html).**\n
+
+      These APIs manage VPC endpoint configurations for this account. This object registers an AWS VPC endpoint in your Databricks account so your workspace can use it with AWS PrivateLink. Your VPC endpoint connects to one of two VPC endpoint services -- one for workspace (both for front-end connection and for back-end connection to REST APIs) and one for the back-end secure cluster connectivity relay from the data plane. Your account must be enabled for PrivateLink to use these APIs. Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html)."
+servers:
+  - url: 'https://accounts.cloud.databricks.com/api/2.0'
+    description:
+      "The Account API is published on `accounts.cloud.databricks.com` for all AWS
+      regional deployments."
+paths:
+  '/accounts/{account_id}/credentials':
+    parameters:
+      - $ref: '#/components/parameters/account_id_dual_use'
+    get:
+      summary: Get all credential configurations
+      operationId: get-credential-configs
+      description:
+        "Get all Databricks credential configurations associated with an account specified
+        by ID."
+      tags:
+        - Credential configurations
+      responses:
+        '200':
+          description: Credential configurations were returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCredentialsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create credential configuration
+      operationId: create-credential-config
+      description:
+        "Create a Databricks credential configuration that represents cloud cross-account
+        credentials for a specified account. Databricks uses this to set up network
+        infrastructure properly to host Databricks clusters. For your AWS IAM role, you
+        need to trust the External ID (the Databricks Account API account ID)  in the returned credential object, and configure the
+        required access policy.\n
+
+        Save the response's `credentials_id` field, which is the ID for your new
+        credential configuration object.\n
+
+        For detailed instructions of creating a new workspace with this API, see
+        [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html)"
+      tags:
+        - Credential configurations
+      requestBody:
+        description: Properties of the new credential configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCredentialRequest'
+      responses:
+        '201':
+          description: The credential configuration creation request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/credentials/{credentials_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_dual_use'
+      - name: credentials_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks Account API credential configuration ID
+    get:
+      summary: Get credential configuration
+      operationId: get-credential-config
+      description:
+        "Get a Databricks credential configuration object for an
+        account, both specified by ID."
+      tags:
+        - Credential configurations
+      responses:
+        '200':
+          description: The credential configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete credential configuration
+      operationId: delete-credential-config
+      description:
+        "Delete a Databricks credential configuration object for an account, both
+        specified by ID. You cannot delete a credential that is associated with any
+        workspace."
+      tags:
+        - Credential configurations
+      responses:
+        '200':
+          description: The credential configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/storage-configurations':
+    parameters:
+      - $ref: '#/components/parameters/account_id_dual_use'
+    get:
+      summary: Get all storage configurations
+      operationId: get-storage-configs
+      description:
+        "Get a list of all Databricks storage configurations for your
+         account, specified by ID."
+      tags:
+        - Storage configurations
+      responses:
+        '200':
+          description: The storage configurations were successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListStorageConfigurationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create new storage configuration
+      operationId: create-storage-config
+      description:
+        "Create new storage configuration for an account, specified by ID. Uploads a storage configuration object that represents the root AWS S3 bucket
+        in your account. Databricks stores related workspace assets including DBFS,
+        cluster logs, and job results. For AWS S3 bucket, you need to configure the required bucket
+        policy.\n
+
+        For detailed instructions of creating a new workspace with this API, see
+        [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html)"
+      tags:
+        - Storage configurations
+      requestBody:
+        description: Properties of the new storage configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStorageConfigurationRequest'
+      responses:
+        '201':
+          description: The storage configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/storage-configurations/{storage_configuration_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_dual_use'
+      - name: storage_configuration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks Account API storage configuration ID.
+    get:
+      summary: Get storage configuration
+      operationId: get-storage-config
+      description:
+        "Get a Databricks storage configuration for an account, both specified by ID."
+      tags:
+        - Storage configurations
+      responses:
+        '200':
+          description: The storage configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfiguration'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete storage configuration
+      operationId: delete-storage-config
+      description:
+        "Delete a Databricks storage configuration. You cannot delete a storage
+        configuration that is currently being associated to any workspace."
+      tags:
+        - Storage configurations
+      responses:
+        '200':
+          description: The storage configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfiguration'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/networks':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    get:
+      summary: Get all network configurations
+      operationId: get-network-configs
+      description:
+        "Get a list of all Databricks network configurations for an
+        account, specified by ID.\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Network configurations
+      responses:
+        '200':
+          description: The network configurations were successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListNetworksResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create network configuration
+      operationId: create-network-config
+      description:
+        "Create a Databricks network configuration that represents an
+        AWS VPC and its resources. The VPC will be used for new Databricks
+        clusters. This requires a pre-created VPC and subnets.
+        For VPC requirements, see
+        [Customer-managed VPC](http://docs.databricks.com/administration-guide/cloud-configurations/aws/customer-managed-vpc.html).\n
+
+        **Important**: You can share one customer-managed VPC with multiple workspaces in
+        a single account. Therefore, you can share one VPC across multiple Account API
+        network configurations. However, you **cannot** reuse subnets or Security Groups
+        between workspaces.  Because a Databricks Account API network configuration
+        encapsulates this information, you cannot reuse a Databricks Account API
+        network configuration across workspaces. If you plan to share one VPC with
+        multiple workspaces, be sure to size your VPC and subnets accordingly.
+
+        For detailed instructions of creating a new workspace with this API, see
+        [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Network configurations
+      requestBody:
+        description: Properties of the new network configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNetworkRequest'
+      responses:
+        '201':
+          description: The network configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/networks/{network_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: network_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks Account API network configuration ID.
+    get:
+      summary: Get a network configuration
+      operationId: get-network-config
+      description:
+        "Get a Databricks network configuration, which represents an AWS VPC and its
+        resources.  This requires a pre-created VPC and subnets. For VPC requirements, see
+        [Customer-managed
+        VPC](http://docs.databricks.com/administration-guide/cloud-configurations/aws/customer-managed-vpc.html).\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Network configurations
+      responses:
+        '200':
+          description: The network configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Network'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete network configuration
+      operationId: delete-network-config
+      description:
+        "Delete a Databricks network configuration, which represents an AWS VPC and its
+        resources. You cannot delete a network that is associated with a workspace.\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Network configurations
+      responses:
+        '200':
+          description: The network configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Network'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/customer-managed-keys':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    get:
+      summary: Get all encryption key configurations
+      operationId: get-key-configs
+      description:
+        "Get all customer-managed key configuration objects for an account. If the key is specified as a
+        workspace's managed services customer-managed key, Databricks will use the key to encrypt
+        the workspace's notebooks and secrets in the control plane, as well as Databricks SQL queries and query history. If the key is specified as a workspace's
+        storage customer-managed key, the key is used to encrypt the workspace's root S3 bucket and optionally can encrypt cluster EBS volumes
+        data in the data plane.\n
+
+        **Important**: Customer-managed keys are supported only for some deployment types,
+        subscription types, and AWS regions.\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Key configurations
+      responses:
+        '200':
+          description: The encryption key configurations were successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCustomerManagedKeysResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create encryption key configuration
+      operationId: create-key-config
+      description:
+        "Create a customer-managed key configuration object for an account, specified by
+        ID. This operation uploads a reference to a customer-managed key to Databricks. If the key is assigned
+        as a workspace's customer-managed key for managed services, Databricks uses the key to
+        encrypt the workspaces notebooks and secrets in the control plane, as well as Databricks SQL queries and query history. If it is specified as a
+        workspace's customer-managed key for workspace storage, the key encrypts the workspace's
+        root S3 bucket (which contains the workspace's root DBFS and system data) and optionally cluster EBS volume data.\n
+
+        **Important**: Customer-managed keys are supported only for some deployment types,
+        subscription types, and AWS regions.\n
+        
+        This operation is available only if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+      tags:
+        - Key configurations
+      requestBody:
+        description: Properties of the encryption key configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerManagedKeyRequest'
+            examples:
+              All:
+                value:
+                  aws_key_info:
+                    key_arn: "arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321"
+                    key_alias: "alias/projectKey"
+                    reuse_key_for_cluster_volumes: true
+                  use_cases: [MANAGED_SERVICES, STORAGE]
+              Storage:
+                value:
+                  aws_key_info:
+                    key_arn: "arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321"
+                    key_alias: "alias/projectKey"
+                    reuse_key_for_cluster_volumes: false
+                  use_cases: [STORAGE]
+              Managed Services:
+                value:
+                  aws_key_info:
+                    key_arn: "arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321"
+                    key_alias: "alias/projectKey"
+                  use_cases: [MANAGED_SERVICES]
+      responses:
+        '201':
+          description: The encryption key configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerManagedKey'
+              examples:
+                All:
+                  value:
+                    customer_managed_key_id: "680290f4-6931-497c-a6b4-514f6694e228"
+                    account_id: "449e7a5c-69d3-4b8a-aaaf-5c9b713ebc65"
+                    aws_key_info:
+                      key_arn: "arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321"
+                      key_alias: "alias/projectKey"
+                      key_region: us-west-2
+                      reuse_key_for_cluster_volumes: true
+                    creation_time: 0
+                    use_cases: [MANAGED_SERVICES, STORAGE]
+                Storage:
+                  value:
+                    customer_managed_key_id: "680290f4-6931-497c-a6b4-514f6694e228"
+                    account_id: "449e7a5c-69d3-4b8a-aaaf-5c9b713ebc65"
+                    aws_key_info:
+                      key_arn: "arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321"
+                      key_alias: "alias/projectKey"
+                      key_region: us-west-2
+                      reuse_key_for_cluster_volumes: false
+                    creation_time: 0
+                    use_cases: [STORAGE]
+                Managed Services:
+                  value:
+                    customer_managed_key_id: "680290f4-6931-497c-a6b4-514f6694e228"
+                    account_id: "449e7a5c-69d3-4b8a-aaaf-5c9b713ebc65"
+                    aws_key_info:
+                      key_arn: "arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321"
+                      key_alias: "alias/projectKey"
+                      key_region: us-west-2
+                    creation_time: 0
+                    use_cases: [MANAGED_SERVICES]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/customer-managed-keys/{customer_managed_key_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: customer_managed_key_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks encryption key configuration ID.
+    get:
+      summary: Get encryption key configuration
+      operationId: get-key-config
+      description:
+        "Get a customer-managed key configuration object for an account, specified by
+        ID. This operation uploads a reference to a customer-managed key to Databricks. If assigned
+        as a workspace's customer-managed key for managed services, Databricks uses the key to
+        encrypt the workspaces notebooks and secrets in the control plane, as well as Databricks SQL queries and query history. If it is specified as a
+        workspace's customer-managed key for storage, the key encrypts the workspace's
+        root S3 bucket (which contains the workspace's root DBFS and system data) and optionally cluster EBS volume data.\n
+
+        **Important**: Customer-managed keys are supported only for some deployment types,
+        subscription types, and AWS regions.\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Key configurations
+      responses:
+        '200':
+          description: The encryption key configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerManagedKey'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete encryption key configuration
+      operationId: delete-key-config
+      description:
+        "Delete a customer-managed key configuration object for an account.
+        You cannot delete a configuration that is associated with a running
+        workspace."
+      tags:
+        - Key configurations
+      responses:
+        '200':
+          description: The encryption key configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerManagedKey'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/customer-managed-key-history':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    get:
+      summary: Get history of a key's associations with workspaces
+      operationId: get-key-workspace-history
+      description:
+        "Get a list of records of how key configurations were associated with workspaces.\n
+
+        **Important**: Customer-managed keys are supported only for some deployment types, subscription types, and AWS regions.\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Key configurations
+      responses:
+        '200':
+          description: The key's workspace association history was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkspaceEncryptionKeyRecordsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/workspaces':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    get:
+      summary: Get all workspaces
+      operationId: get-workspaces
+      description:
+        "Get a list of all workspaces associated with an account, specified by ID.\n
+
+        This operation is available only if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+      tags:
+        - Workspaces
+      responses:
+        '200':
+          description: The workspaces were returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkspacesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create a new workspace
+      operationId: create-workspace
+      description:
+        "Create a new workspace using a credential configuration and a storage
+        configuration, an optional network configuration (if using a customer-managed
+        VPC), an optional managed services key configuration (if using customer-managed keys for
+        managed services), and an optional storage key configuration (if using customer-managed keys for
+        storage). The key configurations used for managed services and storage encryption may be the
+        same or different.\n
+
+        **Important**: This operation is asynchronous. A response with HTTP status code 200
+        means the request has been accepted and is in progress, but does not mean that the
+        workspace deployed successfully and is running. The initial workspace status is
+        typically  `PROVISIONING`. Use the workspace ID (`workspace_id`) field in the
+        response to identify the new workspace and make repeated `GET` requests with the
+        workspace ID and check its status. The workspace becomes available when the status
+        changes to `RUNNING`.\n
+
+        You can share one customer-managed VPC with multiple workspaces in
+        a single account. It is not required to create a new VPC for each workspace.
+        However, you **cannot** reuse subnets or Security Groups between workspaces. If
+        you plan to share one VPC with multiple workspaces, be sure to size your VPC and
+        subnets accordingly. Because a Databricks Account API network configuration
+        encapsulates this information, you cannot reuse a Databricks Account API
+        network configuration across workspaces.
+
+        For detailed instructions of creating a new workspace with this API **including
+        error handling** see [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html).\n
+
+        **Important**: Customer-managed VPCs, PrivateLink, and customer-managed keys are supported on a limited set of deployment and subscription types. If you have questions about availability, contact your Databricks representative.\n
+        
+        This operation is available only if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+      tags:
+        - Workspaces
+      requestBody:
+        description: Properties of the new workspace.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+      responses:
+        '201':
+          description: Workspace creation request was received. Check workspace status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/workspaces/{workspace_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Workspace ID.
+    get:
+      summary: Get workspace
+      operationId: get-workspace
+      description:
+        "Get information including status for a Databricks workspace, specified by ID. In
+        the response, the `workspace_status` field indicates the current status. After
+        initial workspace creation (which is asynchronous), make repeated `GET` requests
+        with the workspace ID and check its status. The workspace becomes available when
+        the status changes to `RUNNING`.\n
+
+        For detailed instructions of creating a new workspace with this API **including
+        error handling** see [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html).\n
+        
+        This operation is available only if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+      tags:
+        - Workspaces
+      responses:
+        '200':
+          description: The workspace configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      summary: Update workspace configuration
+      operationId: patch-workspace
+      description:
+        "The `PATCH` operation on this endpoint can update a workspace configuration for either a running workspace or a failed workspace. The elements that can be updated varies between these two use cases.\n
+
+        ## Failed Workspaces
+
+        You can update a Databricks workspace configuration for failed workspace deployment for some but not all fields. This request supports updating only the following fields of a failed workspace:
+
+        - AWS region
+
+        - Credential configuration ID
+
+        - Storage configuration ID
+
+        - Network configuration ID. Used only if you use customer-managed VPC.
+
+        - Key configuration ID for managed services. Used only if you use customer-managed keys
+        for managed services.
+
+        - Key configuration ID for workspace storage . Used only if you use customer-managed keys for workspace storage.\n
+
+        After calling the `PATCH` operation to update the workspace configuration, make repeated `GET` requests with the workspace ID and check the workspace status. The workspace is successful if the status changes to `RUNNING`.\n
+
+        For detailed instructions of creating a new workspace with this API **including error handling** see [Create a new workspace using the Account API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html).\n
+
+        ## Running Workspaces
+
+        You can update a Databricks workspace configuration for running workspaces for some but not all fields. This request supports updating only the following fields of a running workspace:
+
+        - Credential configuration ID\n
+
+        - Network configuration ID. Used only if you already use use customer-managed VPC. This change is supported only if you specified a network configuration ID in your original workspace creation. In other words, you cannot switch from a Databricks-managed VPC to a customer-managed VPC. Note: You cannot use a network configuration update in this API to add support for PrivateLink (in Public Preview). To add PrivateLink to an existing workspace, contact your Databricks representative. \n
+
+        - Key configuration ID for workspace storage. You can set this only if the workspace does not already have a customer-managed key configuration for workspace storage. \n
+
+        **Important**: For updating running workspaces, this API is unavailable on Mondays, Tuesdays, and Thursdays from 4:30pm-7:30pm PST due to routine maintenance. Plan your workspace updates accordingly. For questions about this schedule, contact your Databricks representative.\n
+
+        **Important**: To update a running workspace, your workspace must have no running cluster instances, which includes all-purpose clusters, job clusters, and pools that may have running clusters. Terminate all cluster instances in the workspace before calling this API. \n
+
+        After calling the `PATCH` operation to update the workspace configuration, make repeated `GET` requests with the workspace ID and check the workspace status and the status of the fields.
+        
+        * For workspaces with a Databricks-managed VPC, the workspace status becomes `PROVISIONING` temporarily (typically under 20 minutes). If the workspace update is successful, the workspace status changes to `RUNNING`. Note that you can also check the workspace status in the [Account Console](https://docs.databricks.com/administration-guide/account-settings-e2/account-console-e2.html). However, you cannot use or create clusters for another 20 minutes after that status change. This results in a total of up to 40 minutes in which you cannot create clusters. If you create or use clusters before this time interval elapses, clusters do not launch successfully, fail, or could cause other unexpected behavior.  \n
+        
+        * For workspaces with a customer-managed VPC, the workspace status stays at status `RUNNING` and the VPC change happens immediately. A change to the storage customer-managed key configuration ID may take a few minutes to update, so continue to check the workspace until you observe it has updated. If the update fails, the workspace may revert silently to its original configuration. Once the workspace has updated, you cannot use or create clusters for another 20 minutes. If you create or use clusters before this time interval elapses, clusters do not launch successfully, fail, or could cause other unexpected behavior.\n
+
+        If you update the storage customer-managed key configuration ID, it takes 20 minutes for the changes to fully take effect. During the 20 minute wait, if you make regular calls to the DBFS API, it is important that you stop all REST API calls to the DBFS API during this time. \n
+
+        **Important**: Customer-managed keys and customer-managed VPCs are supported by only some deployment types and subscription types. If you have questions about availability, contact your Databricks representative.\n
+        
+        This operation is available only if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+      tags:
+        - Workspaces
+      requestBody:
+        description: Changes of the workspace properties.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequest'
+      responses:
+        '200':
+          description: The workspace update request is accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '509':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      summary: Delete workspace
+      operationId: delete-workspace
+      description:
+        "Terminate and delete a Databricks workspace. From an API perspective, deletion is
+        immediate. However, it may take a few minutes for all workspaces resources to be
+        deleted, depending on the size and number of workspace resources.\n
+        
+        This operation is available only if your account is on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account."
+      tags:
+        - Workspaces
+      responses:
+        '200':
+          description: The workspace was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/workspaces/{workspace_id}/customer-managed-key-history':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: workspace_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: Workspace ID.
+    get:
+      summary: Get the history of a workspace's associations with keys
+      operationId: get-workspace-key-history
+      description:
+        "Given a workspace specified by ID, this request gets a list of all associations
+        with key configuration objects that encapsulate customer-managed keys that encrypt
+        managed services, workspace storage, or in some cases both.\n
+
+        **Important**: In the current implementation, keys cannot be rotated or removed from a
+        workspace. It is possible for a workspace to show a storage customer-managed key having been
+        attached and then detached if the workspace was updated to use the key and the update
+        operation failed.\n
+
+        **Important**: Customer-managed keys are supported only for some deployment types and
+        subscription types.\n
+        
+        This operation is available only if your account is on the E2 version of the platform."
+      tags:
+        - Workspaces
+      responses:
+        '200':
+          description: The workspace's key history was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkspaceEncryptionKeyRecordsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/log-delivery':
+    parameters:
+      - $ref: '#/components/parameters/account_id'
+    get:
+      parameters:
+        - name: status
+          in: query
+          description: Filter by status `ENABLED` or `DISABLED`.
+          schema:
+            $ref: '#/components/schemas/LogDeliveryConfigStatus'
+        - name: credentials_id
+          in: query
+          description: Filter by credential configuration ID.
+          schema:
+            type: string
+        - name: storage_configuration_id
+          in: query
+          description: Filter by storage configuration ID.
+          schema:
+            type: string
+      summary: Get all log delivery configurations
+      operationId: get-log-delivery-configs
+      description:
+        "Get all Databricks log delivery configurations associated with an
+        account specified by ID."
+      tags:
+        - Log delivery configurations
+      responses:
+        '200':
+          description: Log delivery configurations were returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WrappedLogDeliveryConfigurations'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create a new log delivery configuration
+      operationId: create-log-delivery-config
+      description:
+        "Create a new Databricks log delivery configuration to enable delivery of the specified type of logs to your storage location. This requires that you already created a [credential object](#operation/create-credential-config) (which encapsulates a cross-account service IAM role) and a [storage configuration object](#operation/create-storage-config) (which encapsulates an S3 bucket).\n
+
+        For full details, including the required IAM role policies and bucket policies, see [Billable usage log delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html) or [Audit log delivery](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html).\n
+
+        Note: There is a limit on the number of log delivery configurations available per account (each limit applies separately to each log type including billable usage and audit logs). You can create a maximum of two enabled account-level delivery configurations (configurations without a workspace filter) per type. Additionally, you can create two enabled workspace level delivery configurations per workspace for each log type, meaning the same workspace ID can occur in the workspace filter for no more than two delivery configurations per log type.\n
+
+        You cannot delete a log delivery configuration, but you can disable it (see [Enable or disable log delivery configuration](#operation/patch-log-delivery-config-status))."
+
+      tags:
+        - Log delivery configurations
+      requestBody:
+        description: Properties of the new log delivery configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WrappedCreateLogDeliveryConfiguration'
+      responses:
+        '200':
+          description: The log delivery configuration creation request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WrappedLogDeliveryConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/log-delivery/{log_delivery_configuration_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id'
+      - name: log_delivery_configuration_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks log delivery configuration ID
+    get:
+      summary: Get log delivery configuration
+      operationId: get-log-delivery-config
+      description: >-
+        Get a Databricks log delivery configuration object for an account, both
+        specified by ID.
+      tags:
+        - Log delivery configurations
+      responses:
+        '200':
+          description: The log delivery configuration was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WrappedLogDeliveryConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      summary: Enable or disable log delivery configuration
+      operationId: patch-log-delivery-config-status
+      description: >-
+        Enable or disable a log delivery configuration. Deletion of delivery configurations is not supported, so disable log delivery configurations that are no longer needed.
+        Note that you can't re-enable a delivery configuration if this would violate the delivery configuration limits described under [Create log delivery](#operation/create-log-delivery-config).
+
+      tags:
+        - Log delivery configurations
+      requestBody:
+        description: The new status for this log delivery configuration object.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLogDeliveryConfigurationStatusRequest'
+      responses:
+        '200':
+          description: The log delivery configuration was successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WrappedLogDeliveryConfiguration'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/usage/download':
+    parameters:
+      - $ref: '#/components/parameters/account_id'
+    get:
+      parameters:
+        - name: start_month
+          in: query
+          description: "Format: `YYYY-MM`. First month to return billable usage logs for. This field is required."
+          schema:
+            $ref: '#/components/schemas/UsageDownloadMonth'
+          required: true
+        - name: end_month
+          in: query
+          description: "Format: `YYYY-MM`. Last month to return billable usage logs for. This field is required."
+          schema:
+            $ref: '#/components/schemas/UsageDownloadMonth'
+          required: true
+        - name: personal_data
+          in: query
+          description: Specify whether to include personally identifiable information in the billable usage logs, for example the email addresses of cluster creators. Handle this information with care. Defaults to false.
+          schema:
+            type: boolean
+          default: false
+      summary: Return billable usage logs in CSV format for the specified account and date range.
+      operationId: download-billable-usage
+      description:
+        "Return billable usage logs in CSV format for the specified account and date range. See [CSV file schema](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html#csv-file-schema) for the data schema. Note that this method may take multiple seconds to complete."
+      tags:
+        - Billable usage download
+      responses:
+        '200':
+          description: Billable usage data was returned successfully.
+          content:
+            application/csv:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/budget':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    post:
+      summary: Create a new budget
+      operationId: create-budget
+      tags:
+        - Budgets
+      description:
+        "Create a new budget in this account."
+      requestBody:
+        description: Properties of the new budget
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - budget
+              properties:
+                budget:
+                  $ref: '#/components/schemas/BudgetCreateRequest'
+      responses:
+        '200':
+          description: The budget was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetWithStatus'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      summary: Get all budgets associated with this account
+      operationId: get-budgets
+      tags:
+        - Budgets
+      description:
+        "Get all budgets associated with this account, including non-cumulative status for each day the budget is configured for."
+      responses:
+        '200':
+          description: The list of budgets was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/budget/{budget_id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: budget_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Budget ID
+    get:
+      summary: Get budget and its status
+      operationId: get-budget
+      tags:
+        - Budgets
+      description:
+        "Get budget specified by its UUID, including non-cumulative status for each day the budget is configured for."
+      responses:
+        '200':
+          description: The budget was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetWithStatus'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete budget
+      operationId: delete-budget
+      tags:
+        - Budgets
+      description:
+        "Delete budget specified by its UUID."
+      responses:
+        '200':
+          description: The budget that was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetWithStatus'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      summary: Modify a budget
+      operationId: modify-budget
+      tags:
+        - Budgets
+      description:
+        "Modify a budget in this account. Budget properties will be fully overwritten."
+      requestBody:
+        description: Properties to set the budget to
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - budget
+              properties:
+                budget:
+                  $ref: '#/components/schemas/BudgetCreateRequest'
+  '/accounts/{account_id}/private-access-settings':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    get:
+      summary: Get all private access settings objects
+      operationId: get-private-access-settings-objects
+      description:
+        "Get a list of all private access settings objects for an account, specified by ID.\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: private access settings"
+      responses:
+        '200':
+          description: The private access settings object was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPrivateAccessSettingsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create private access settings
+      operationId: create-private-access-settings
+      description:
+        "Create a private access settings object, which specifies how your workspace is accessed over [AWS PrivateLink](https://aws.amazon.com/privatelink). To use AWS PrivateLink, a workspace must have a private access settings object referenced by ID in the workspace's `private_access_settings_id` property.\n
+
+        You can share one private access settings with multiple workspaces in a single account.However, private access settings are region specific, so only workspaces in the same region may use a given private access settings object.\n
+        
+        Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: private access settings"
+      requestBody:
+        description: Properties of the new private access settings object.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertPrivateAccessSettingsRequest'
+      responses:
+        '200':
+          description: The private access settings object was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateAccessSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/private-access-settings/{private-access-settings-id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: private-access-settings-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks Account API private access settings ID.
+    get:
+      summary: Get a private access settings object
+      operationId: get-private-access-settings-object
+      description:
+        "Get a private access settings object, which specifies how your workspace
+         is accessed over [AWS PrivateLink](https://aws.amazon.com/privatelink).\n
+         
+         Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: private access settings"
+      responses:
+        '200':
+          description: The private access settings object was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateAccessSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete a private access settings object
+      operationId: delete-private-access-settings-object
+      description:
+        "Delete a private access settings object, which determines how your workspace
+         is accessed over [AWS PrivateLink](https://aws.amazon.com/privatelink).\n
+
+         Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: private access settings"
+      responses:
+        '200':
+          description: The private access settings was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateAccessSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      summary: Replace private access settings
+      operationId: replace-private-access-settings
+      description:
+        "Update an existing private access settings object, which specifies how your workspace is accessed over [AWS PrivateLink](https://aws.amazon.com/privatelink). To use AWS PrivateLink, a workspace must have a private access settings object referenced by ID in the workspace's `private_access_settings_id` property.\n
+
+        This operation fully overwrites your existing private access settings object attached to your workspaces. All
+        workspaces attached to the private access settings will see the effects of any change. If updating `public_access_enabled`,
+        `private_access_level`, or `allowed_vpc_endpoint_ids`, effects of the change may take a couple minutes to propagate
+       to the workspace API.
+
+        You can share one private access settings with multiple workspaces in a single account. However, private access settings are region specific, so only workspaces in the same region may use a given private access settings object.\n
+
+        Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: private access settings"
+      requestBody:
+        description: Properties of the new private access settings object.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertPrivateAccessSettingsRequest'
+      responses:
+        '200':
+          description: The private access settings object was successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateAccessSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/vpc-endpoints':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+    get:
+      summary: Get all VPC endpoint configurations
+      operationId: get-vpc-endpoints
+      description:
+        "Get a list of all VPC endpoints for an account, specified by ID.\n
+
+        Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: VPC endpoint configurations"
+      responses:
+        '200':
+          description: The VPC endpoints were successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListVPCEndpointsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      summary: Create VPC endpoint configuration
+      operationId: create-vpc-endpoint
+      description:
+        "Create a VPC endpoint configuration, which represents a [VPC endpoint](https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html) object in AWS used to communicate privately with Databricks over [AWS PrivateLink](https://aws.amazon.com/privatelink).\n
+
+        **IMPORTANT**: When you register a VPC endpoint to the Databricks workspace VPC endpoint service for any workspace, **in this release <Databricks> enables front-end (web application and REST API) access from the source network of the VPC endpoint to all workspaces in that AWS region in your <Databricks> account if the workspaces have any PrivateLink connections in their workspace configuration**. If you have questions about this behavior, contact your Databricks representative.\n
+
+        Within AWS, your VPC endpoint stays in `pendingAcceptance` state until you register it in a VPC endpoint configuration through the Account API. Upon doing so, the Databricks [endpoint service](https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-service.html) automatically accepts the VPC endpoint and it eventually transitions to the `available` state.\n
+
+        Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: VPC endpoint configurations"
+      requestBody:
+        description: Properties of the new VPC endpoint configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVPCEndpointRequest'
+      responses:
+        '200':
+          description: The VPC endpoint configuration was successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VPCEndpoint'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  '/accounts/{account_id}/vpc-endpoints/{vpc-endpoint-id}':
+    parameters:
+      - $ref: '#/components/parameters/account_id_e2'
+      - name: vpc-endpoint-id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Databricks VPC endpoint ID.
+    get:
+      summary: Get a VPC endpoint configuration
+      operationId: get-vpc-endpoint-config
+      description:
+        "Get a VPC endpoint configuration, which represents a [VPC endpoint](https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html) object in AWS used to communicate privately with Databricks over [AWS PrivateLink](https://aws.amazon.com/privatelink).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: VPC endpoint configurations"
+      responses:
+        '200':
+          description: The VPC endpoint was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VPCEndpoint'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      summary: Delete VPC endpoint configuration
+      operationId: delete-vpc-endpoint
+      description:
+        "Delete a VPC endpoint configuration, which represents an [AWS VPC endpoint](https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints.html) that can communicate privately with Databricks over [AWS PrivateLink](https://aws.amazon.com/privatelink).\n
+
+        Upon deleting a VPC endpoint configuration, the VPC endpoint in AWS changes its state from `accepted` to `rejected`, meaning it will no longer be usable from your VPC.\n
+
+        Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html).\n
+
+        This operation is available only if your account is on the E2 version of the platform and your Databricks account is enabled for PrivateLink (Public Preview). Contact your Databricks representative to enable your account for PrivateLink."
+      tags:
+        - "AWS PrivateLink: VPC endpoint configurations"
+      responses:
+        '200':
+          description: The VPC endpoint configuration was successfully deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateAccessSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    account_id_dual_use:
+      name: account_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Databricks account ID. When you create or manage workspaces, your account must be on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account. If you are configuring log delivery, all account types are supported. For non-E2 account types, get your account ID from the [Accounts Console](https://docs.databricks.com/administration-guide/account-settings/usage.html).
+    account_id_e2:
+      name: account_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Databricks account ID. Your account must be on the E2 version of the platform or on a select custom plan that allows multiple workspaces per account.
+    account_id:
+      name: account_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Databricks account ID of any type. For non-E2 account types, get your account ID from the [Accounts Console](https://docs.databricks.com/administration-guide/account-settings/usage.html).
+  schemas:
+    Credential:
+      type: object
+      properties:
+        credentials_id:
+          type: string
+          format: uuid
+          description: Databricks credential configuration ID.
+        credentials_name:
+          type: string
+          description: The human-readable name of the credential configuration object.
+          minLength: 4
+          maxLength: 256
+        aws_credentials:
+          type: object
+          properties:
+            sts_role:
+              type: object
+              properties:
+                role_arn:
+                  type: string
+                  description: The Amazon Resource Name (ARN) of the cross-account role.
+                external_id:
+                  type: string
+                  description: >-
+                    The external ID that needs to be trusted by the cross-account role. This
+                    is always your Databricks account ID.
+        account_id:
+          type: string
+          format: uuid
+          description:
+            "The Databricks account ID that hosts the credential."
+        creation_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the credential was created.
+    CreateCredentialRequest:
+      type: object
+      required:
+        - credentials_name
+        - aws_credentials
+      properties:
+        credentials_name:
+          type: string
+          description: The human-readable name of the credential configuration object.
+          example: credential_1
+          minLength: 4
+          maxLength: 256
+        aws_credentials:
+          type: object
+          properties:
+            sts_role:
+              type: object
+              properties:
+                role_arn:
+                  type: string
+                  description: The Amazon Resource Name (ARN) of the cross account role.
+                  example: 'arn-aws-iam::111110000000:role/test_role'
+    ListCredentialsResponse:
+      description: List of credential configuration objects.
+      type: array
+      items:
+        $ref: '#/components/schemas/Credential'
+    StorageConfiguration:
+      type: object
+      properties:
+        storage_configuration_id:
+          type: string
+          format: uuid
+          description: Databricks storage configuration ID.
+        storage_configuration_name:
+          type: string
+          description: The human-readable name of the storage configuration.
+          minLength: 4
+          maxLength: 256
+        root_bucket_info:
+          description: "Root S3 bucket information."
+          type: object
+          properties:
+            bucket_name:
+              type: string
+              description: The name of the S3 bucket.
+        account_id:
+          type: string
+          format: uuid
+          description:
+            "The Databricks account ID that hosts the credential."
+        creation_time:
+          type: integer
+          format: int64
+          description: >-
+            Time in epoch milliseconds when the storage configuration was
+            created.
+    CreateStorageConfigurationRequest:
+      type: object
+      required:
+        - storage_configuration_name
+        - root_bucket_info
+      properties:
+        storage_configuration_name:
+          type: string
+          description: The human-readable name of the storage configuration.
+          example: storage_conf_1
+          minLength: 4
+          maxLength: 256
+        root_bucket_info:
+          description: "Root S3 bucket information."
+          type: object
+          properties:
+            bucket_name:
+              type: string
+              description: The name of the S3 bucket.
+              example: test-s3-bucket
+    ListStorageConfigurationsResponse:
+      description: "Storage configuration objects."
+      type: array
+      items:
+        $ref: '#/components/schemas/StorageConfiguration'
+    Network:
+      type: object
+      properties:
+        network_id:
+          type: string
+          format: uuid
+          description: The Databricks network configuration ID.
+        network_name:
+          type: string
+          description: The human-readable name of the network configuration.
+          minLength: 4
+          maxLength: 256
+        vpc_id:
+          type: string
+          description: >-
+            The ID of the VPC associated with this network configuration. VPC IDs can be used
+            in multiple networks.
+        subnet_ids:
+          type: array
+          items:
+            type: string
+            description: >-
+              The ID of a subnet associated with this network configuration. Subnet IDs **cannot** be
+              used in multiple network configurations.
+          minLength: 2
+        security_group_ids:
+          type: array
+          items:
+            type: string
+            description:
+              "ID of a security group associated with this network configuration. Security group
+              IDs **cannot** be used in multiple networks."
+          minLength: 1
+          maxLength: 5
+        vpc_status:
+          type: string
+          enum:
+            - UNATTACHED
+            - VALID
+            - BROKEN
+            - WARNED
+          description:
+            "The status of this network configuration object in terms of its use in a
+            workspace:\n
+
+            * `UNATTACHED`: Unattached.\n\n
+            * `VALID`: Valid.\n\n
+            * `BROKEN`: Broken.\n\n
+            * `WARNED`: Warned."
+        warning_messages:
+          description: Array of warning messages about the network configuration.
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkWarning'
+        error_messages:
+          description: Array of error messages about the network configuration.
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkHealth'
+        workspace_id:
+          type: integer
+          format: int64
+          description: Workspace ID associated with this network configuration.
+        account_id:
+          type: string
+          format: uuid
+          description:
+            "The Databricks account ID associated with this network configuration."
+        creation_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the network was created.
+        vpc_endpoints:
+          $ref: '#/components/schemas/NetworkVpcEndpoints'
+    NetworkWarning:
+      type: object
+      properties:
+        warning_type:
+          type: string
+          enum:
+            - subnet
+            - securityGroup
+          description: >-
+            The AWS resource associated with this warning: a subnet or a security group.
+        warning_message:
+          type: string
+          description: >-
+            Details of the warning.
+    NetworkHealth:
+      type: object
+      properties:
+        error_type:
+          type: string
+          enum:
+            - credentials
+            - vpc
+            - subnet
+            - securityGroup
+            - networkAcl
+          description:
+            "The AWS resource associated with this error: credentials, VPC, subnet,
+            security group, or network ACL."
+        error_message:
+          type: string
+          description: Details of the error.
+    NetworkVpcEndpoints:
+      type: object
+      description:
+        "If specified, contains the VPC endpoints used to allow cluster communication from this VPC over [AWS PrivateLink](https://aws.amazon.com/privatelink/)."
+      required:
+        - rest_api
+        - dataplane_relay
+      properties:
+        rest_api:
+          items:
+            type: string
+            format: uuid
+          description:
+            "The VPC endpoint ID used by this Network to access the Databricks REST API. Databricks clusters make calls to our REST API as part of cluster creation, mlflow tracking, and many other features. Thus, this is required even if your workspace allows public access to the REST API.\n
+
+            This is a list type for future compatibility, but currently only one VPC endpoint ID should be supplied.\n
+
+            Note: This is the Databricks-specific ID of the VPC endpoint object in the Account API, not the AWS VPC endpoint ID that you see for your endpoint in the AWS Console."
+        dataplane_relay:
+          items:
+            type: string
+            format: uuid
+          description:
+            "The VPC endpoint ID used by this Network to access the Databricks secure cluster connectivity relay. See [Secure Cluster Connectivity](https://docs.databricks.com/security/secure-cluster-connectivity.html).\n
+
+            This is a list type for future compatibility, but currently only one VPC endpoint ID should be
+            supplied.\n
+
+            Note: This is the Databricks-specific ID of the VPC endpoint object in the Account API, not the AWS VPC endpoint ID that you see for your endpoint in the AWS Console."
+    CreateNetworkRequest:
+      type: object
+      required:
+        - network_name
+        - vpc_id
+        - subnet_ids
+        - security_group_ids
+      properties:
+        network_name:
+          type: string
+          description: The human-readable name of the network configuration.
+          minLength: 4
+          maxLength: 256
+        vpc_id:
+          type: string
+          description: >-
+            The ID of the VPC associated with this network. VPC IDs can be used
+            in multiple network configurations.
+        subnet_ids:
+          description:
+            "IDs of at least 2 subnets associated with this network. Subnet IDs **cannot** be
+            used in multiple network configurations."
+          type: array
+          items:
+            type: string
+            description:
+              "ID of subnet associated with this network. Subnet IDs **cannot** be
+              used in multiple network configurations."
+          minLength: 2
+        security_group_ids:
+          description:
+            "IDs of 1 to 5 security groups associated with this network. Security groups
+            IDs **cannot** be used in multiple network configurations."
+          type: array
+          items:
+            type: string
+            description:
+              "ID of security group associated with this network. Security group
+              IDs *cannot** be used in multiple network configurations."
+          minLength: 1
+          maxLength: 5
+        vpc_endpoints:
+          $ref: '#/components/schemas/NetworkVpcEndpoints'
+    ListNetworksResponse:
+      description: Array of network configuration objects.
+      type: array
+      items:
+        $ref: '#/components/schemas/Network'
+    CustomerManagedKey:
+      type: object
+      properties:
+        customer_managed_key_id:
+          type: string
+          format: uuid
+          description: ID of the encryption key configuration object.
+        account_id:
+          type: string
+          format: uuid
+          description:
+            "The Databricks account ID that holds the customer-managed key."
+        aws_key_info:
+          $ref: '#/components/schemas/AwsKeyInfo'
+        creation_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the customer key was created.
+        use_cases:
+            type: array
+            items: string
+            description:
+              "The cases that the key can be used for. Include one or both of these options:\n
+                * `MANAGED_SERVICES`: Encrypts notebook and secret data in the control plane\n
+                * `STORAGE`: Encrypts the workspace's root S3 bucket (root DBFS and system data) and optionally cluster EBS volumes."
+            example: [MANAGED_SERVICES, STORAGE]
+    CreateAwsKeyInfo:
+      type: object
+      required:
+        - key_arn
+      properties:
+        key_arn:
+          type: string
+          description: The AWS KMS key's Amazon Resource Name (ARN). Note that the key's AWS region is inferred from the ARN.
+          example: >-
+            arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321
+        key_alias:
+          type: string
+          description: The AWS KMS key alias.
+          example: alias/projectKey1
+        reuse_key_for_cluster_volumes:
+          type: boolean
+          description: This field applies only if the `use_cases` property includes `STORAGE`. If this is set to `true` or omitted, the key is also used to encrypt cluster EBS volumes. To not use this key also for encrypting EBS volumes, set this to `false`.
+          example: true
+    AwsKeyInfo:
+      type: object
+      required:
+        - key_arn
+        - key_region
+      properties:
+        key_arn:
+          type: string
+          description: The AWS KMS key's Amazon Resource Name (ARN).
+          example: >-
+            arn:aws:kms:us-west-2:111122223333:key/0987dcba-09fe-87dc-65ba-ab0987654321
+        key_alias:
+          type: string
+          description: The AWS KMS key alias.
+          example: alias/projectKey1
+        key_region:
+          type: string
+          description: The AWS KMS key region.
+          example: us-east-1
+        reuse_key_for_cluster_volumes:
+          type: boolean
+          description: This field applies only if the `use_cases` property includes `STORAGE`. If this is set to `true` or omitted, the key is also used to encrypt cluster EBS volumes. If you do not want to use this key for encrypting EBS volumes, set to `false`..
+          example: true
+    CreateCustomerManagedKeyRequest:
+      type: object
+      required:
+        - aws_key_info
+        - use_cases
+      properties:
+        aws_key_info:
+          $ref: '#/components/schemas/CreateAwsKeyInfo'
+        use_cases:
+          type: array
+          items: string
+          description:
+            "The cases that the key can be used for. Include one or both of these options:\n
+                * `MANAGED_SERVICES`: Encrypts notebook and secret data in the control plane\n
+                * `STORAGE`: Encrypts the workspace's root S3 bucket (root DBFS and system data) and optionally cluster EBS volumes."
+          example: [MANAGED_SERVICES, STORAGE]
+    ListCustomerManagedKeysResponse:
+      description: Array of key configuration objects.
+      type: array
+      items:
+        $ref: '#/components/schemas/CustomerManagedKey'
+    WorkspaceEncryptionKeyRecord:
+      type: object
+      properties:
+        record_id:
+          type: string
+          format: uuid
+          description: ID for the workspace-key mapping record
+        workspace_id:
+          type: integer
+          format: int64
+          description: Workspace ID.
+        customer_managed_key_id:
+          type: string
+          format: uuid
+          description: >-
+            ID of the encryption key configuration object.
+        update_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the record was added.
+        key_status:
+          type: string
+          enum:
+            - UNKNOWN
+            - ATTACHED
+            - DETACHED
+          example: ATTACHED
+        aws_key_info:
+          $ref: '#/components/schemas/AwsKeyInfo'
+        use_case:
+          type: string
+          enum:
+            - MANAGED_SERVICES
+            - STORAGE
+          description:
+            "Possible values are:\n
+             - `MANAGED_SERVICES`: Encrypts notebook and secret data in the control plane\n
+             - `STORAGE`: Encrypts the workspace's root S3 bucket (root DBFS and system data) and optionally cluster EBS volumes."
+          example: STORAGE
+    ListWorkspaceEncryptionKeyRecordsResponse:
+      type: object
+      properties:
+        workspaceEncryptionKeyRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceEncryptionKeyRecord'
+    Workspace:
+      type: object
+      properties:
+        workspace_id:
+          type: integer
+          format: int64
+          description: Workspace ID.
+        workspace_name:
+          type: string
+          description: The human-readable name of the workspace.
+          minLength: 1
+          maxLength: 100
+        deployment_name:
+          type: string
+          description:
+            "The deployment name defines part of the subdomain for the workspace.
+            The workspace URL for web application and REST APIs is `<deployment-name>.cloud.databricks.com`.\n
+
+            This value must be unique across all non-deleted deployments across all AWS regions."
+          maxLength: 64
+        aws_region:
+          type: string
+          description: >-
+            The AWS region of the workspace Data Plane. For example, `us-west-2`.
+        credentials_id:
+          type: string
+          format: uuid
+          description: ID of the workspace's credential configuration object.
+        storage_configuration_id:
+          type: string
+          format: uuid
+          description: ID of the workspace's storage configuration object.
+        account_id:
+          type: string
+          format: uuid
+          description: Databricks account ID
+        workspace_status:
+          type: string
+          enum:
+            - NOT_PROVISIONED
+            - PROVISIONING
+            - RUNNING
+            - FAILED
+            - BANNED
+            - CANCELLING
+          description:
+            "The status of the workspace.
+
+            For workspace creation, it is typically initially `PROVISIONING`. Continue to
+            check the status until the status is `RUNNING`. For detailed instructions of
+            creating a new workspace with this API **including error handling** see
+            [Create a new workspace using the Account Management
+            API](http://docs.databricks.com/administration-guide/account-api/new-workspace.html)."
+          example: RUNNING
+        workspace_status_message:
+          type: string
+          description: Message describing the current workspace status.
+          example: Workspace resources are being set up.
+        managed_services_customer_managed_key_id:
+          type: string
+          format: uuid
+          description: ID of the key configuration for encrypting managed services.
+        private_access_settings_id:
+          type: string
+          format: uuid
+          description:
+            "Only used for PrivateLink, which is in Public Preview. This is the ID of the workspace's private access settings object. This ID must be specified for customers using [AWS PrivateLink](https://aws.amazon.com/privatelink/) for either front-end (user-to-workspace connection), back-end (data plane to control plane connection), or both connection types.\n
+            
+            Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html)."
+        creation_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the workspace was created.
+        pricing_tier:
+          type: string
+          enum:
+            - UNKNOWN
+            - COMMUNITY_EDITION
+            - STANDARD
+            - PREMIUM
+            - ENTERPRISE
+            - DEDICATED
+          description:
+            "The pricing tier of the workspace.
+
+            See https://databricks.com/product/aws-pricing for available pricing tier information."
+          example: PREMIUM
+        storage_customer_managed_key_id:
+          type: string
+          format: uuid
+          description: ID of the key configuration for encrypting workspace storage.
+    CreateWorkspaceRequest:
+      type: object
+      required:
+        - workspace_name
+        - aws_region
+        - credentials_id
+        - storage_configuration_id
+      properties:
+        workspace_name:
+          type: string
+          description: >-
+            The workspace's human-readable name.
+          example: My workspace 1
+        deployment_name:
+          type: string
+          pattern: '^(([a-z0-9][a-z0-9-]*[a-z0-9])|([a-z0-9]))|(EMPTY)$'
+          description:
+            "The deployment name defines part of the subdomain for the workspace.
+            The workspace URL for web application and REST APIs is `<workspace-deployment-name>.cloud.databricks.com`.
+            For example, if the deployment name is `abcsales`, your workspace URL will be `https://abcsales.cloud.databricks.com`.
+            Hyphens are allowed.  This property supports only the set of characters that are allowed in a subdomain.\n
+
+            If your account has a non-empty deployment name prefix at workspace creation time,
+            the workspace deployment name changes so that the beginning has the account prefix and a hyphen.
+            For example, if your account's deployment prefix is `acme` and the workspace deployment name is `workspace-1`,
+            the `deployment_name` field becomes `acme-workspace-1` and that is the value that will be returned in JSON responses for the `deployment_name` field.
+            The workspace URL is `acme-workspace-1.cloud.databricks.com`.\n
+
+            If your account has a non-empty deployment name prefix and you set `deployment_name` to the reserved keyword `EMPTY`,
+            `deployment_name` is just the account prefix only. For example, if your account's deployment prefix is `acme`
+            and the workspace deployment name is `EMPTY`, `deployment_name` becomes `acme` only and the workspace URL is `acme.cloud.databricks.com`.\n
+
+            Contact your Databricks representatives to add an account deployment name prefix to your account.
+            If you do not have a deployment name prefix, the special deployment name value `EMPTY` is invalid.\n
+
+            This value must be unique across all non-deleted deployments across all AWS regions.\n
+
+            If a new workspace omits this property, the server generates a unique deployment name for you with the pattern `dbc-xxxxxxxx-xxxx`."
+          example: workspace_1
+        aws_region:
+          type: string
+          description: The AWS region of the workspace's Data Plane.
+          example: us-west-2
+        credentials_id:
+          type: string
+          format: uuid
+          description: ID of the workspace's credential configuration object
+          example: ccc64f28-ebdc-4c89-add9-5dcb6d7727d8
+        storage_configuration_id:
+          type: string
+          format: uuid
+          description: The ID of the workspace's storage configuration object.
+          example: b43a6064-04c1-4e1c-88b6-d91e5b136b13
+        network_id:
+          type: string
+          format: uuid
+          description:
+            "The ID of the workspace's network configuration object. To use [AWS PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html) (Public Preview), this field is required."
+          example: fd0cc5bc-683c-47e9-b15e-144d7744a496
+        managed_services_customer_managed_key_id:
+          type: string
+          format: uuid
+          description:
+            "The ID of the workspace's managed services encryption key configuration object. This is used to encrypt the workspace's notebook and secret data in the control plane, as well as Databricks SQL queries and query history. The provided key configuration object property `use_cases` must contain `MANAGED_SERVICES`."
+          example: 849b3d6b-e68e-468d-b3e5-deb08b03c56d
+        private_access_settings_id:
+          type: string
+          format: uuid
+          description:
+            "Only used for PrivateLink, which is in Public Preview. This is the ID of the workspace's private access settings object. This ID must be specified for customers using [AWS PrivateLink](https://aws.amazon.com/privatelink/) for either front-end (user-to-workspace connection), back-end (data plane to control plane connection), or both connection types.\n
+            
+            Before configuring PrivateLink, it is important to read the [Databricks article about PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html)."
+        pricing_tier:
+          type: string
+          enum:
+            - STANDARD
+            - PREMIUM
+            - ENTERPRISE
+          description:
+            "The pricing tier of the workspace. If you do not provide this, the API will default to
+            the highest pricing tier available to your account.
+
+            See https://databricks.com/product/aws-pricing for available pricing tier information."
+          example: PREMIUM
+        storage_customer_managed_key_id:
+          type: string
+          format: uuid
+          description:
+            "The ID of the workspace's storage encryption key configuration object. This is used to encrypt the workspace's root S3 bucket (root DBFS and system data) and optionally cluster EBS volumes. The provided key configuration object property `use_cases` must contain `STORAGE`."
+    UpdateWorkspaceRequest:
+      type: object
+      properties:
+        aws_region:
+          type: string
+          description: >-
+            The AWS region of the workspace's Data Plane. For example, `us-west-2`. This parameter is available only for updating failed workspaces.
+          example: us-west-2
+        credentials_id:
+          type: string
+          format: uuid
+          description: ID of the workspace's credential configuration object. This parameter is available for updating both failed and running workspaces.
+        storage_configuration_id:
+          type: string
+          format: uuid
+          description: The ID of the workspace's storage configuration object. This parameter is available only for updating failed workspaces.
+        network_id:
+          type: string
+          format: uuid
+          description: 
+            "The ID of the workspace's network configuration object. Used only if you already use a customer-managed VPC. This change is supported only if you specified a network configuration ID when the workspace was created. In other words, you cannot switch from a Databricks-managed VPC to a customer-managed VPC. This parameter is available for updating both failed and running workspaces. Note: You cannot use a network configuration update in this API to add support for PrivateLink (in Public Preview). To add PrivateLink to an existing workspace, contact your Databricks representative."
+        managed_services_customer_managed_key_id:
+          type: string
+          format: uuid
+          description: The ID of the workspace's managed services encryption key configuration object. This parameter is available only for updating failed workspaces.
+        storage_customer_managed_key_id:
+          type: string
+          format: uuid
+          description: The ID of the key configuration object for workspace storage. This parameter is available for updating both failed and running workspaces.
+    ListWorkspacesResponse:
+      description: An array of workspaces.
+      type: array
+      items:
+        $ref: '#/components/schemas/Workspace'
+    WorkspaceId:
+      type: integer
+      format: int64
+    LogDeliveryConfigStatus:
+      type: string
+      enum:
+        - ENABLED
+        - DISABLED
+      description: Status of log delivery configuration. Set to `ENABLED` (enabled) or `DISABLED` (disabled). Defaults to `ENABLED`. You can [enable or disable the configuration](#operation/patch-log-delivery-config-status) later. Deletion of a configuration is not supported, so disable a log delivery configuration that is no longer needed.
+    CreateLogDeliveryConfigurationParams:
+      type: object
+      properties:
+        config_name:
+          type: string
+          minLength: 0
+          maxLength: 255
+          description: The optional human-readable name of the log delivery configuration. Defaults to empty.
+        status:
+          $ref: '#/components/schemas/LogDeliveryConfigStatus'
+        log_type:
+          type: string
+          enum:
+            - BILLABLE_USAGE
+            - AUDIT_LOGS
+          description:
+            "Log delivery type. Supported values are:\n
+            
+            * `BILLABLE_USAGE` — Configure [billable usage log delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html). For the CSV schema, see the [View billable usage](https://docs.databricks.com/administration-guide/account-settings/usage.html).\n
+
+            * `AUDIT_LOGS` — Configure [audit log delivery](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html). For the JSON schema, see [Configure audit logging](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html)"
+
+        output_format:
+          type: string
+          enum:
+            - CSV
+            - JSON
+          description:
+            "The file type of log delivery.\n
+            
+            *  If `log_type` is `BILLABLE_USAGE`, this value must be `CSV`. Only the CSV (comma-separated values) format is supported. For the schema, see the [View billable usage](https://docs.databricks.com/administration-guide/account-settings/usage.html)
+
+            * If `log_type` is `AUDIT_LOGS`, this value must be `JSON`. Only the JSON (JavaScript Object Notation) format is supported. For the schema, see the [Configuring audit logs](https://docs.databricks.com/administration-guide/account-settings/audit-logs.html)."
+        credentials_id:
+          type: string
+          format: uuid
+          description:
+            "The ID for a [Databricks credential configuration](#operation/create-credential-config) that represents the AWS IAM role with policy and trust relationship as described in the main billable usage documentation page. See [Configure billable usage delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html)."
+        storage_configuration_id:
+          type: string
+          format: uuid
+          description: >-
+            "The ID for a [Databricks storage configuration](#operation/create-storage-config)  that represents the S3 bucket with bucket policy as described in the main billable usage documentation page. See [Configure billable usage delivery](https://docs.databricks.com/administration-guide/account-settings/billable-usage-delivery.html)."
+        workspace_ids_filter:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkspaceId'
+          description:
+            "Optional filter of workspace IDs to deliver logs for. By default the workspace filter is empty and log delivery applies at the account level, delivering workspace level logs for all workspaces in your account, plus account level logs. You can optionally set this field to an array of workspace IDs (each one is an `int64`) to which log delivery should apply to, in which case only workspace level logs relating to the specified workspaces will be delivered.
+
+            If you plan to use different log delivery configurations for different workspaces, set this field explicitly. Be aware that delivery configurations mentioning specific workspaces won't apply to new workspaces created in the future, and delivery won't include account level logs.
+
+            For some types of Databricks deployments there is only one workspace per account ID, so this field is unnecessary."
+        delivery_path_prefix:
+          type: string
+          description: The optional delivery path prefix within AWS S3 storage. Defaults to empty, which means that logs are delivered to the root of the bucket. This must be a valid S3 object key. This must not start or end with a slash character.
+        delivery_start_time:
+          type: string
+          pattern: "2[0-9][0-9][0-9]-(0[1-9]|1[012])"
+          description: This field applies only if `log_type` is `BILLABLE_USAGE`. This is the optional start month and year for delivery, specified in `YYYY-MM` format. Defaults to current year and month.  `BILLABLE_USAGE` logs are not available for usage before March 2019 (`2019-03`).
+    LogDeliveryConfiguration:
+      allOf:
+        - $ref: '#/components/schemas/CreateLogDeliveryConfigurationParams'
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: >-
+            The Databricks account ID that hosts the log delivery configuration.
+        config_id:
+          type: string
+          format: uuid
+          description: Databricks log delivery configuration ID.
+        creation_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the log delivery configuration was created.
+        update_time:
+          type: integer
+          format: int64
+          description: Time in epoch milliseconds when the log delivery configuration was updated.
+        log_delivery_status:
+          type: object
+          description: Databricks log delivery status.
+          properties:
+            status:
+              type: string
+              enum:
+                - CREATED
+                - SUCCEEDED
+                - USER_FAILURE
+                - SYSTEM_FAILURE
+                - NOT_FOUND
+              description:
+                "The status string for log delivery. Possible values are:
+                * `CREATED`: There were no log delivery attempts since the config was created.
+                * `SUCCEEDED`: The latest attempt of log delivery has succeeded completely.
+                * `USER_FAILURE`: The latest attempt of log delivery failed because of misconfiguration of customer provided permissions on role or storage.
+                * `SYSTEM_FAILURE`: The latest attempt of log delivery failed because of an Databricks internal error. Contact support if it doesn't go away soon.
+                * `NOT_FOUND`: The log delivery status as the configuration has been disabled since the release of this feature or there are no workspaces in the account."
+            message:
+              type: string
+              description: Informative message about the latest log delivery attempt. If the log delivery fails with USER_FAILURE, error details will be provided for fixing misconfigurations in cloud permissions.
+            last_attempt_time:
+              type: string
+              format: date-time
+              description: The UTC time for the latest log delivery attempt.
+            last_successful_attempt_time:
+              type: string
+              format: date-time
+              description: The UTC time for the latest successful log delivery.
+    WrappedLogDeliveryConfiguration:
+      type: object
+      properties:
+        log_delivery_configuration:
+          allOf:
+            - $ref: '#/components/schemas/LogDeliveryConfiguration'
+    WrappedLogDeliveryConfigurations:
+      type: object
+      properties:
+        log_delivery_configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogDeliveryConfiguration'
+    WrappedCreateLogDeliveryConfiguration:
+      type: object
+      properties:
+        log_delivery_configuration:
+          allOf:
+            - $ref: '#/components/schemas/CreateLogDeliveryConfigurationParams'
+          required:
+            - log_type
+            - output_format
+            - credentials_id
+            - storage_configuration_id
+    UpdateLogDeliveryConfigurationStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/LogDeliveryConfigStatus'
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Cause of the error
+    PrivateAccessSettings:
+      type: object
+      properties:
+        private_access_settings_id:
+          type: string
+          format: uuid
+          description: Databricks private access settings ID.
+        private_access_settings_name:
+          type: string
+          description: The human-readable name of the private access settings object.
+          minLength: 4
+          maxLength: 256
+        public_access_enabled:
+          type: boolean
+          description:
+            "Determines if the workspace can be accessed over public internet. For fully private workspaces, you can optionally specify `false`, but only if you implement both the front-end and the back-end PrivateLink connections. Otherwise, specify `true`, which means that public access is still enabled."
+        region:
+          type: string
+          description: The AWS region for workspaces attached to this private access settings object.
+        account_id:
+          type: string
+          format: uuid
+          description:
+            "The Databricks account ID that hosts the credential."
+        private_access_level:
+          type: string
+          enum:
+            - ANY
+            - ACCOUNT
+            - ENDPOINT
+          example: "ENDPOINT"
+          description:
+            "The private access level controls which VPC endpoints can connect to the UI or API of any workspace that attaches
+            this private access settings object.
+
+            * `ANY` (the default): Any VPC endpoint can connect to your workspace.
+
+            * `ACCOUNT` level access lets only VPC endpoints that are registered in your Databricks account connect to your workspace.
+
+            * `ENDPOINT` level access lets only specified VPC endpoints connect to your workspace. See the `allowed_vpc_endpoint_ids`
+             for details."
+        allowed_vpc_endpoint_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description:
+            "An array of Databricks VPC endpoint IDs. This is the Databricks ID returned when registering the VPC endpoint configuration in
+            your Databricks account. This is _not_ the ID of the VPC endpoint in AWS.
+
+
+            Only used when `private_access_level` is set to `ENDPOINT`. This is an allow list of VPC endpoints registered in
+            your Databricks account that can connect to your workspace over AWS PrivateLink.
+
+
+            Note: if hybrid access to your workspace is enabled by setting `public_access_enabled` to `true`, then this
+            control only works for PrivateLink connections. To control how your workspace is accessed via public internet,
+            see the article on [IP access lists](https://docs.databricks.com/security/network/ip-access-list.html)."
+    UpsertPrivateAccessSettingsRequest:
+      type: object
+      required:
+        - private_access_settings_name
+        - region
+      properties:
+        private_access_settings_name:
+          type: string
+          description: The human-readable name of the private access settings object.
+          minLength: 4
+          maxLength: 256
+        region:
+          type: string
+          description: The AWS region for workspaces associated with this private access settings object. This must be a [region that Databricks supports for PrivateLink](https://docs.databricks.com/administration-guide/cloud-configurations/aws/regions.html). 
+        public_access_enabled:
+          description:
+            "Determines if the workspace can be accessed over public internet. For fully private workspaces, you can optionally specify `false`, but only if you implement both the front-end and the back-end PrivateLink connections. Otherwise, specify `true`, which means that public access is still enabled."
+          type: boolean
+          default: false
+        private_access_level:
+          type: string
+          enum:
+            - ANY
+            - ACCOUNT
+            - ENDPOINT
+          example: "ENDPOINT"
+          default: ANY
+          description:
+            "The private access level controls which VPC endpoints can connect to the UI or API of any workspace that attaches
+            this private access settings object.
+
+            * `ANY` level access lets any VPC endpoint connect to your workspace.
+
+            * `ACCOUNT` level access lets only VPC endpoints that are registered in your Databricks account connect to your workspace.
+
+            * `ENDPOINT` level access lets only specified VPC endpoints connect to your workspace. Please see the `allowed_vpc_endpoint_ids`
+            documentation for more details."
+        allowed_vpc_endpoint_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description:
+            "An array of Databricks VPC endpoint IDs. This is the Databricks ID that is returned when registering the VPC endpoint configuration in
+            your Databricks account. This is not the ID of the VPC endpoint in AWS.
+
+
+            Only used when `private_access_level` is set to `ENDPOINT`. This is an allow list of VPC endpoints that in
+            your account that can connect to your workspace over AWS PrivateLink.
+
+
+            If hybrid access to your workspace is enabled by setting `public_access_enabled` to `true`, then this
+            control only works for PrivateLink connections. To control how your workspace is accessed via public internet,
+            see the article for [IP access lists](https://docs.databricks.com/security/network/ip-access-list.html)."
+    ListPrivateAccessSettingsResponse:
+      description: "Private access settings objects."
+      type: array
+      items:
+        $ref: '#/components/schemas/PrivateAccessSettings'
+    VPCEndpoint:
+      type: object
+      properties:
+        vpc_endpoint_id:
+          type: string
+          format: uuid
+          description:
+            "Databricks VPC endpoint ID. This is the Databricks-specific name of the VPC endpoint. Do not confuse this with the `aws_vpc_endpoint_id`, which is the ID within AWS of the VPC endpoint."
+        vpc_endpoint_name:
+          type: string
+          description: The human-readable name of the storage configuration.
+          minLength: 4
+          maxLength: 256
+        aws_vpc_endpoint_id:
+          description:
+            "The ID of the VPC endpoint object in AWS."
+          type: string
+        aws_endpoint_service_id:
+          type: string
+          description:
+            "The ID of the Databricks [endpoint service](https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-service.html) that this VPC endpoint is connected to. Please find the list of endpoint service IDs for each supported region in the [Databricks
+            PrivateLink documentation](https://docs.databricks.com/administration-guide/cloud-configurations/aws/privatelink.html)."
+        use_case:
+          type: string
+          enum:
+            - WORKSPACE_ACCESS
+            - DATAPLANE_RELAY_ACCESS
+          description:
+            "This enumeration represents the type of Databricks VPC [endpoint service](https://docs.aws.amazon.com/vpc/latest/privatelink/endpoint-service.html) that was used when creating this VPC endpoint.\n
+            
+            If the VPC endpoint connects to the Databricks control plane for either the front-end connection or the back-end REST API connection, the value is `WORKSPACE_ACCESS`.\n
+            
+            If the VPC endpoint connects to the Databricks workspace for the back-end [secure cluster connectivity](https://docs.databricks.com/security/secure-cluster-connectivity.html) relay, the value is `DATAPLANE_RELAY_ACCESS`."
+        region:
+          type: string
+          description: The AWS region in which this VPC endpoint object exists.
+        account_id:
+          type: string
+          format: uuid
+          description:
+            "The Databricks account ID that hosts the VPC endpoint configuration."
+        aws_account_id:
+          type: string
+          description: The AWS Account in which the VPC endpoint object exists.
+        state:
+          type: string
+          description:
+            "The current state (such as `available` or `rejected`) of the VPC endpoint. Derived from AWS. For the full set of values, see [AWS DescribeVpcEndpoint documentation](https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-vpc-endpoints.html)
+            for details."
+    CreateVPCEndpointRequest:
+      type: object
+      required:
+        - vpc_endpoint_name
+        - aws_vpc_endpoint_id
+        - region
+      properties:
+        vpc_endpoint_name:
+          type: string
+          description: The human-readable name of the storage configuration.
+          minLength: 4
+          maxLength: 256
+        aws_vpc_endpoint_id:
+          description:
+            "The ID of the VPC endpoint object in AWS."
+          type: string
+        region:
+          type: string
+          description: The AWS region in which this VPC endpoint object exists
+    ListVPCEndpointsResponse:
+      description: "List VPC endpoint configurations."
+      type: array
+      items:
+        $ref: '#/components/schemas/VPCEndpoint'
+    UsageDownloadMonth:
+      type: string
+      pattern: "2[0-9][0-9][0-9]-(0[1-9]|1[012])"
+      description: Format specification for month in the format `YYYY-MM`. This is used to specify billable usage `start_month` and `end_month` properties. Note that billable usage logs are unavailable before March 2019 (`2019-03`).
+    BudgetAlert:
+      type: object
+      properties:
+        min_percentage:
+          description: Percentage of the target amount used in the currect period that will trigger a notification
+          type: integer
+          minimum: 1
+          maximum: 100000
+        email_notifications:
+          description: List of email addresses to be notified when budget percentage is exceeded in the given period
+          type: array
+          items:
+            type: string
+            example: foo@bar.com
+    BudgetFilter:
+      type: string
+      description:
+        "
+        SQL-like filter expression with workspaceId, SKU and tag. Usage in your account that matches this expression will be counted in this budget.\n
+
+        Supported properties on left-hand side of comparison:\n
+        * `workspaceId` - the ID of the workspace\n
+        * `sku` - SKU of the cluster, e.g. `STANDARD_ALL_PURPOSE_COMPUTE` \n
+        * `tag.tagName`, `tag.'tag name'` - tag of the cluster \n
+
+        Supported comparison operators:\n
+        * `=` - equal \n
+        * `!=` - not equal \n
+
+        Supported logical operators: `AND`, `OR`.\n
+
+        Examples:\n
+        * `workspaceId=123 OR (sku='STANDARD_ALL_PURPOSE_COMPUTE' AND tag.'my tag'='my value')`\n
+        * `workspaceId!=456`\n
+        * `sku='STANDARD_ALL_PURPOSE_COMPUTE' OR sku='PREMIUM_ALL_PURPOSE_COMPUTE'`\n
+        * `tag.name1='value1' AND tag.name2='value2'`\n
+        "
+      example: "workspaceId=123 OR (sku='STANDARD_ALL_PURPOSE_COMPUTE' AND tag.'my tag'='my value')"
+    BudgetPeriod:
+      type: string
+      description:
+        "
+        Period length in years, months, weeks and/or days.\n
+        Examples: `1 month`, `30 days`, `1 year, 2 months, 1 week, 2 days`\n
+        "
+      example: "1 month"
+    BudgetCreateRequest:
+      description: Budget configuration to be created
+      type: object
+      required:
+        - name
+        - period
+        - start_date
+        - target_amount
+        - filter
+      properties:
+        name:
+          type: string
+          description: Human-readable name of the budget
+        period:
+          $ref: '#/components/schemas/BudgetPeriod'
+        start_date:
+          type: string
+          format: date
+          description: Start date of the budget period calculation
+        end_date:
+          type: string
+          format: date
+          description: Optional end date of the budget
+        target_amount:
+          type: string
+          description: Target amount of the budget per period in USD
+          example: "1234.56"
+        filter:
+          $ref: '#/components/schemas/BudgetFilter'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetAlert'
+    BudgetWithStatus:
+      description: Budget configuration with daily status
+      type: object
+      properties:
+        budget_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Human-readable name of the budget
+        period:
+          $ref: '#/components/schemas/BudgetPeriod'
+        start_date:
+          type: string
+          format: date
+          description: Start date of the budget period calculation
+        end_date:
+          type: string
+          format: date
+          description: Optional end date of the budget
+        target_amount:
+          type: string
+          description: Target amount of the budget per period in USD
+          example: "1234.56"
+        filter:
+          $ref: '#/components/schemas/BudgetFilter'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetAlert'
+        status_daily:
+          description: Amount used in the budget for each day (non-cumulative)
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              amount:
+                description: Amount used in this day in USD
+                type: string
+                example: "123.45"
+        creation_time:
+          type: string
+          format: date-time
+        update_time:
+          type: string
+          format: date-time
+    BudgetList:
+      description: "List of Budgets"
+      type: object
+      properties:
+        budgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetWithStatus'
+  responses:
+    BadRequest:
+      description: The request is malformed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthenticated:
+      description: The request is unauthenticated. The user's credentials are missing or incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: The request is forbidden from being fulfilled.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: The request conflicts with the current state of the target resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: The request is not handled correctly due to a server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailable:
+      description: The service is unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+security:
+  - basicAuth: []

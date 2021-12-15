@@ -1,19 +1,19 @@
 ﻿Function Invoke-DatabricksApiRequest {
 	<#
-			.SYNOPSIS
-			Lists all jobs or returns a specific job for a given JobID.
-			.DESCRIPTION
-			Lists all jobs or returns a specific job for a given JobID. 
-			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#list
-			Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
-			.PARAMETER Method 
-			The type of request you want to invoke. Will usually be GET or POST
-			.PARAMETER EndPoint
-			The API endpoint that you want to invoke. Please check the API reference for valid values. Example: "/2.0/jobs/list"
-			.PARAMETER Body
-			Some endpoints also support a body to supply additional information. This can be specified here. For POST requests, this is usually a JSON-string whereas for GET it is usually a hashtable which is then converted to URL parameters
-			.EXAMPLE
-			Invoke-DatabricksApiRequest -Method GET -EndPoint "/2.0/jobs/list"
+		.SYNOPSIS
+		Lists all jobs or returns a specific job for a given JobID.
+		.DESCRIPTION
+		Lists all jobs or returns a specific job for a given JobID. 
+		Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#list
+		Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
+		.PARAMETER Method 
+		The type of request you want to invoke. Will usually be GET or POST
+		.PARAMETER EndPoint
+		The API endpoint that you want to invoke. Please check the API reference for valid values. Example: "/2.0/jobs/list"
+		.PARAMETER Body
+		Some endpoints also support a body to supply additional information. This can be specified here. For POST requests, this is usually a JSON-string whereas for GET it is usually a hashtable which is then converted to URL parameters
+		.EXAMPLE
+		Invoke-DatabricksApiRequest -Method GET -EndPoint "/2.0/jobs/list"
 	#>
 	[CmdletBinding()]
 	param 
@@ -94,62 +94,64 @@
 
 Function Set-DatabricksEnvironment {
 	<#
-			.SYNOPSIS
-			Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
-			.DESCRIPTION
-			Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
-			.PARAMETER AccessToken
-			The AccessToken to use to access the Databricks API
-			For example: dapi1234abcd32101691ded20b53a1326285
-			.PARAMETER ApiRootUrl
-			The URL of the API. 
-			For Azure, this could be 'https://westeurope.azuredatabricks.net'
-			For AWS, this could be 'https://abc-12345-xaz.cloud.databricks.com'
-			.PARAMETER CloudProvider
-			The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
-			If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
-			.PARAMETER Credential
-			The Powershell credential to use when using AAD authentication.
-			.PARAMETER ClientID
-			The ID of the Azure Active Directory (AAD) application that was deployed to use AAD authentication with Databricks.
-			If used in combination with -ServicePrincipal this value is ignored and is overwritten using the Usernamen from -Credential.
-			.PARAMETER TenantID
-			The ID of the Azure Active Directory (AAD). (optional)
-			.PARAMETER AzureResourceID
-			This is the ID of the workspace appliance resource in Azure. You must​ provide this ID if the Databricks workspace is not provisioned yet (such that there is no effective workspace org ID). It can be composed using the Azure subscription ID, resource group name, and workspace resource name. 
-			Example: /subscriptions/<<SubscriptionID>>/resourceGroups/<<ResourceGroupName>>/providers/Microsoft.Databricks/workspaces/<<WorkspaceName>>
-			.PARAMETER OrgID
-			The organization ID of the Databricks workspace.
-			You can find the workspace org ID in the Databricks URL, for example: https://<region>.azuredatabricks.net/?o=<​org_id​> 
-			.PARAMETER SubscriptionID
-			The Azure subscription ID in which the Databricks workspace resides.
-			A GUID, e.g. 058a2e1e-1234-1234-1234-5c4c3e31e36e
-			.PARAMETER ResourceGroupName
-			The name of the ResourceGroup in which the Databricks workspace resides.
-			.PARAMETER WorkspaceName
-			The name of the Databricks workspace.
-			.PARAMETER ServicePrincipal
-			A switch indicating -Credential is a Service Principal which will be used for Authentication.
-			.PARAMETER DynamicParameterCacheTimeout
-			To improve performance during development dynamic paramters can be cached. This setting controls the number of seconds these values are persisted before the API is queried again for more recent values.
-			.PARAMETER ApiCallRetryCount
-			Number of times an API call is tried before an actual error is thrown.
-			.PARAMETER ApiCallRetryWait
-			Number of seconds to wait before retrying an API call.
-			.PARAMETER AzureActiveDirectoryAuthorityUrl
-			A custom URL to obtain the Azure Active Directory access token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://login.microsoftonline.com/"
-			The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryAuthority
-			.PARAMETER AzureActiveDirectoryServiceEndpointResourceId
-			A custom URL to obtain the Azure Management Resource endpoint token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://management.core.windows.net/"
-			The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryServiceEndpointResourceId
-			.EXAMPLE
-			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
-			.EXAMPLE
-			Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://westeurope.azuredatabricks.net"
-			.EXAMPLE
-			$azureResourceId = '/subscriptions/fb1e20c4-1234-1234-1234-f92a9ac35db4/resourceGroups/myResourceGroupName/providers/Microsoft.Databricks/workspaces/myDatabricksResource'
-			$cred = Get-Credential
-			Set-DatabricksEnvironment -ClientID '058a2e1e-1234-1234-1234-5c4c3e31e36e' -Credential $cred -AzureResourceID $azureResourceId -ApiRootUrl "https://westeurope.azuredatabricks.net"
+		.SYNOPSIS
+		Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
+		.DESCRIPTION
+		Sets global module config variables AccessToken, CloudProvider and ApirRootUrl    
+		.PARAMETER AccessToken
+		The AccessToken to use to access the Databricks API
+		For example: dapi1234abcd32101691ded20b53a1326285
+		.PARAMETER ApiRootUrl
+		The URL of the API. 
+		For Azure, this could be 'https://westeurope.azuredatabricks.net'
+		For AWS, this could be 'https://abc-12345-xaz.cloud.databricks.com'
+		.PARAMETER CloudProvider
+		The CloudProvider where the Databricks workspace is hosted. Can either be 'Azure' or 'AWS'.
+		If not provided, it is derived from the ApiRootUrl parameter and/or the type of authentication
+		.PARAMETER Credential
+		The Powershell credential to use when using AAD authentication.
+		.PARAMETER ClientID
+		The ID of the Azure Active Directory (AAD) application that was deployed to use AAD authentication with Databricks.
+		If used in combination with -ServicePrincipal this value is ignored and is overwritten using the Usernamen from -Credential.
+		.PARAMETER TenantID
+		The ID of the Azure Active Directory (AAD). (optional)
+		.PARAMETER AzureResourceID
+		This is the ID of the workspace appliance resource in Azure. You must​ provide this ID if the Databricks workspace is not provisioned yet (such that there is no effective workspace org ID). It can be composed using the Azure subscription ID, resource group name, and workspace resource name. 
+		Example: /subscriptions/<<SubscriptionID>>/resourceGroups/<<ResourceGroupName>>/providers/Microsoft.Databricks/workspaces/<<WorkspaceName>>
+		.PARAMETER OrgID
+		The organization ID of the Databricks workspace.
+		You can find the workspace org ID in the Databricks URL, for example: https://<region>.azuredatabricks.net/?o=<​org_id​> 
+		.PARAMETER SubscriptionID
+		The Azure subscription ID in which the Databricks workspace resides.
+		A GUID, e.g. 058a2e1e-1234-1234-1234-5c4c3e31e36e
+		.PARAMETER ResourceGroupName
+		The name of the ResourceGroup in which the Databricks workspace resides.
+		.PARAMETER WorkspaceName
+		The name of the Databricks workspace.
+		.PARAMETER ServicePrincipal
+		A switch indicating -Credential is a Service Principal which will be used for Authentication.
+		.PARAMETER DynamicParameterCacheTimeout
+		To improve performance during development dynamic paramters can be cached. This setting controls the number of seconds these values are persisted before the API is queried again for more recent values.
+		.PARAMETER ApiCallRetryCount
+		Number of times an API call is tried before an actual error is thrown.
+		.PARAMETER ApiCallRetryWait
+		Number of seconds to wait before retrying an API call.
+		.PARAMETER AzureActiveDirectoryAuthorityUrl
+		A custom URL to obtain the Azure Active Directory access token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://login.microsoftonline.com/"
+		The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryAuthority
+		.PARAMETER AzureActiveDirectoryServiceEndpointResourceId
+		A custom URL to obtain the Azure Management Resource endpoint token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://management.core.windows.net/"
+		The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryServiceEndpointResourceId
+		.PARAMETER JobsAPI_v2_1
+		Switch to automatically use Jobs API v2.1 instead of old v2.0. Default is v2.0 for backwards compatibility!
+		.EXAMPLE
+		Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
+		.EXAMPLE
+		Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://westeurope.azuredatabricks.net"
+		.EXAMPLE
+		$azureResourceId = '/subscriptions/fb1e20c4-1234-1234-1234-f92a9ac35db4/resourceGroups/myResourceGroupName/providers/Microsoft.Databricks/workspaces/myDatabricksResource'
+		$cred = Get-Credential
+		Set-DatabricksEnvironment -ClientID '058a2e1e-1234-1234-1234-5c4c3e31e36e' -Credential $cred -AzureResourceID $azureResourceId -ApiRootUrl "https://westeurope.azuredatabricks.net"
 	#>
 	[CmdletBinding()]
 	param
@@ -185,6 +187,7 @@ Function Set-DatabricksEnvironment {
 		[Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
 		[Parameter(Mandatory = $false, Position = 3)] [int] $ApiCallRetryCount = -1,
 		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10,
+		[Parameter(Mandatory = $false, Position = 5)] [switch] $JobsAPI_v2_1,
 
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 8)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 8)]
@@ -217,6 +220,16 @@ Function Set-DatabricksEnvironment {
 		#region Dynamic Parameter Caching
 		Write-Verbose "Setting API Call Retry Wait to $ApiCallRetryWait seconds ..."
 		$script:dbApiCallRetryWait = $ApiCallRetryWait
+		#endregion
+
+		
+		#region Jobs API Version
+		Write-Verbose "Setting API Call Retry Wait to $ApiCallRetryWait seconds ..."
+		$script:dbJobsAPIVersion = "2.0"
+		if($JobsAPI_v2_1)
+		{
+			$script:dbJobsAPIVersion = "2.1"
+		}
 		#endregion
 
 		#region check ApiRootUrl
@@ -313,14 +326,17 @@ Function Set-DatabricksEnvironment {
 				}
 
 				Write-Verbose "API Call: POST $AzureActiveDirectoryAuthorityUrl"
-				Write-Verbose "Body: `n$($Body | Out-String)"
+				$bodySecure = $body.Clone()
+				$bodySecure.client_secret = "<REDACTED>"
+				Write-Verbose "Body: `n$($bodySecure | Out-String)"
+				Write-Debug "Body: `n$($body | Out-String)"
 				
 				$authResultLoginApp = Invoke-RestMethod -Uri $AzureActiveDirectoryAuthorityUrl -Method POST -Headers $headers -Body $body
 
 				$body["resource"] = $AzureActiveDirectoryServiceEndpointResourceId
 
 				Write-Verbose "API Call: POST $authUrl"
-				Write-Verbose "Body: `n$($Body | Out-String)"
+				Write-Verbose "Body: `n$($body | Out-String)"
 				
 				$authResultMgmt = Invoke-RestMethod -Uri $AzureActiveDirectoryAuthorityUrl -Method POST -Headers $headers -Body $body
 
@@ -339,7 +355,10 @@ Function Set-DatabricksEnvironment {
 					"scope"      = "openid"
 				}
 				Write-Verbose "API Call: POST $AzureActiveDirectoryAuthorityUrl"
-				Write-Verbose "Body: `n$($Body | Out-String)"
+				$bodySecure = $body.Clone()
+				$bodySecure.password = "<REDACTED>"
+				Write-Verbose "Body: `n$($bodySecure | Out-String)"
+				Write-Debug "Body: `n$($body | Out-String)"
 				
 				$authResult = Invoke-RestMethod -Uri $AzureActiveDirectoryAuthorityUrl -Method POST -Body $body
 				
@@ -354,12 +373,12 @@ Function Set-DatabricksEnvironment {
 
 Function Clear-DatabricksEnvironment {
 	<#
-			.SYNOPSIS
-			Clears the current DatabricksPS environment and removes all settings and references
-			.DESCRIPTION
-			Clears the current DatabricksPS environment and removes all settings and references
-			.EXAMPLE
-			Clear-DatabricksEnvironment
+		.SYNOPSIS
+		Clears the current DatabricksPS environment and removes all settings and references
+		.DESCRIPTION
+		Clears the current DatabricksPS environment and removes all settings and references
+		.EXAMPLE
+		Clear-DatabricksEnvironment
 	#>
 	[CmdletBinding()]
 	param ()
@@ -369,13 +388,13 @@ Function Clear-DatabricksEnvironment {
 
 Function Test-DatabricksEnvironment {
 	<#
-			.SYNOPSIS
-			Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
-			.DESCRIPTION
-			Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
-			Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#list
-			.EXAMPLE
-			Test-DatabricksEnvironment
+		.SYNOPSIS
+		Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
+		.DESCRIPTION
+		Runs the most simple operation possible that should work on any Databricks environment - listing all items in DBFS under "/"
+		Official API Documentation: https://docs.databricks.com/api/latest/workspace.html#list
+		.EXAMPLE
+		Test-DatabricksEnvironment
 	#>
 	[CmdletBinding()]
 	param ()
@@ -396,14 +415,14 @@ Function Test-DatabricksEnvironment {
 
 Function Clear-DatabricksCachedDynamicParameterValue {
 	<#
-			.SYNOPSIS
-			Clears all cached values for Dynamic Parameters if -UseDynamicParameterValueCaching was used during Set-DatabricksEnvironment
-			.DESCRIPTION
-			Clears all cached values for Dynamic Parameters if -UseDynamicParameterValueCaching was used during Set-DatabricksEnvironment
-			.PARAMETER DynamicParameterName
-			Unique Name of the Dynamic Parameter
-			.EXAMPLE
-			Clear-DatabricksCachedDynamicParameterValue
+		.SYNOPSIS
+		Clears all cached values for Dynamic Parameters if -UseDynamicParameterValueCaching was used during Set-DatabricksEnvironment
+		.DESCRIPTION
+		Clears all cached values for Dynamic Parameters if -UseDynamicParameterValueCaching was used during Set-DatabricksEnvironment
+		.PARAMETER DynamicParameterName
+		Unique Name of the Dynamic Parameter
+		.EXAMPLE
+		Clear-DatabricksCachedDynamicParameterValue
 	#>
 	[CmdletBinding()]
 	param ()
@@ -434,14 +453,14 @@ Function Clear-DatabricksCachedDynamicParameterValue {
 
 Function Set-DatabricksDynamicParameterCacheTimeout {
 	<#
-			.SYNOPSIS
-			Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
-			.DESCRIPTION
-			Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
-			.PARAM Seconds
-			Number of seconds the Cached Dynamic Parameter Values are valid
-			.EXAMPLE
-			Set-DatabricksDynamicParameterCacheTimeout -Seconds 10
+		.SYNOPSIS
+		Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
+		.DESCRIPTION
+		Set the timeout in seconds for how long Cached Dynamic Parameter Values are valid (e.g. ClusterID, JobID, ...)
+		.PARAM Seconds
+		Number of seconds the Cached Dynamic Parameter Values are valid
+		.EXAMPLE
+		Set-DatabricksDynamicParameterCacheTimeout -Seconds 10
 	#>
 	[CmdletBinding()]
 	param (
@@ -491,14 +510,14 @@ Function Get-DatabricksPSStatus {
 Function Get-DatabricksApiRootUrl
 {
 	<#
-			.SYNOPSIS
-			Returns a list of common API Root URLs for databricks default locations.
-			.DESCRIPTION
-			Returns a list of common API Root URLs for databricks default locations.
-			This list is not necessary complete!
-			.EXAMPLE
-			#AUTOMATED_TEST:List common API Root URLs
-			Get-DatabricksApiRootUrl
+		.SYNOPSIS
+		Returns a list of common API Root URLs for databricks default locations.
+		.DESCRIPTION
+		Returns a list of common API Root URLs for databricks default locations.
+		This list is not necessary complete!
+		.EXAMPLE
+		#AUTOMATED_TEST:List common API Root URLs
+		Get-DatabricksApiRootUrl
 	#>
 	[CmdletBinding()]
 	param ()

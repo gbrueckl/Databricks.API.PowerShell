@@ -210,27 +210,44 @@ Function Set-DatabricksPermissions {
       Sets permission for the objects inside the Databricks workspace.
       Official API Documentation: https://docs.databricks.com/dev-tools/api/latest/permissions.html
       .PARAMETER ObjectType 
-      The type of the object for which you want to retrieve the permission(s). e.g. Cluster, Job, Directory, ...
+      The type of the object for which you want to set the permission(s). e.g. Cluster, Job, Directory, ...
       .PARAMETER ObjectID 
-      The unique ID of the object for which you want to retrieve the permission(s). e.g. a cluster_id if ObjectType = Cluster
+      The unique ID of the object for which you want to set the permission(s). e.g. a cluster_id if ObjectType = Cluster
       .PARAMETER ClusterID 
-      The unique ID of the cluster for which you want to retrieve the permission(s). 
+      The unique ID of the cluster for which you want to set the permission(s). 
       .PARAMETER JobID 
-      The unique ID of the job for which you want to retrieve the permission(s). 
+      The unique ID of the job for which you want to set the permission(s). 
       .PARAMETER InstancePoolID 
-      The unique ID of the instance pool for which you want to retrieve the permission(s). 
+      The unique ID of the instance pool for which you want to set the permission(s). 
       .PARAMETER WorkspaceObjectType 
-      The type of the workspace item for which you want to retrieve the permission(s). The workspace item itself is specified using -ObjectID.
+      The type of the workspace item for which you want to set the permission(s). The workspace item itself is specified using -ObjectID.
       .PARAMETER Raw
       Can be used to retrieve the raw output of the API call. Otherwise an object with all the permissions is returned.
-      .PARAMETER UpdateType
-      Can either be "ADD" or "OVERWRITE"
+      .PARAMETER Overwrite
+      If sepcified, the existing permissions will be overwritten by the ones specified in this call, otherwise they will be added.
       .EXAMPLE
-      Get-DatabricksPermissions -ObjectType "CLUSTERS" -ObjectID "1202-211320-brick1"
+      $acl = @(
+          @{
+            user_name        = "user1@domain.com"
+            permission_level = "CAN_RESTART"        
+          }
+        )
+
+      Set-DatabricksPermissions -ClusterID "0712-123003-rail519" -AccessControlList $acl
       .EXAMPLE
-      Get-DatabricksPermissions -ObjectType "JOBS" -ObjectID "1" -Raw
       .EXAMPLE
-      (Get-DatabricksCluster)[0] | Get-DatabricksPermissions
+      $acl = @(
+          @{
+            user_name        = "user1@domain.com"
+            permission_level = "IS_OWNER"        
+          },
+          @{
+            user_name        = "user2@domain.com"
+            permission_level = "CAN_VIEW"        
+          }
+        )
+
+      Set-DatabricksPermissions -JobID 123 -AccessControlList $acl -Overwrite
   #>
   [CmdletBinding()]
   param
@@ -248,7 +265,7 @@ Function Set-DatabricksPermissions {
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
 
-    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [object[]] $AccessControlList,
+    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [Alias("ACL")][object[]] $AccessControlList,
     [Parameter(Mandatory = $false)] [switch] $Overwrite,
     [Parameter(Mandatory = $false)] [switch] $Raw
   )

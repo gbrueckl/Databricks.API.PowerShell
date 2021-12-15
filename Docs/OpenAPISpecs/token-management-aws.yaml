@@ -1,0 +1,370 @@
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: Token Management API
+  description:
+    "The Token Management API has several groups of endpoints:
+
+    * **[Workspace configuration for tokens](#tag/Workspace-configuration-for-tokens)** — Set maximum lifetime for a token. Enable or disable personal access tokens for the workspace.\n
+
+    * **[Token management](#tag/Token-management)** — View or revoke existing tokens.\n
+
+    To grant or revoke user and group permissions to use tokens, instead use the [Permissions API](https://docs.databricks.com/dev-tools/api/latest/permissions.html).\n
+    
+    **Important:** To access Databricks REST APIs, you must [authenticate](https://docs.databricks.com/dev-tools/api/latest/authentication.html)."
+    # change URL for azure
+tags:
+  - name: Workspace configuration for tokens
+    description: 
+      "There are multiple token management tasks you can do with the APIs in this group:
+      
+      * Manage the lifetime of new tokens. **WARNING:** This limit only applies to new tokens, so there may be tokens with lifetimes longer than this value, including unlimited lifetime. Such tokens may have been created before the current maximum token lifetime was set. To review existing tokens, see the [get tokens API](#operation/get-tokens).\n
+
+      * Enable or disable personal access tokens for this workspace."
+  - name: Token management
+    description: 
+      "Manage all the tokens in this workspace."
+
+servers:
+  - url: https://<databricks-instance>/api/2.0
+    description: >-
+      In the URL, substitute `<databricks-instance>` with the domain name of your
+      deployment. Use the form `<account>.cloud.databricks.com`.
+paths:
+  /workspace-conf:
+    description:
+      "This endpoint configures the maximum token lifetime for any token in a workspace."
+      # ^^ endpoint description outside verb get/post/etc is not exposed in current redoc version
+    get:
+      tags:
+        - Workspace configuration for tokens
+      summary: Get workspace config for tokens (max lifetime, enabled/disabled)
+      operationId: get-configuration
+      description:
+        "This request gets different information based on what you pass to `keys` parameter:\n
+        
+        * `enableTokensConfig` — Enable or disable personal access tokens for this workspace.\n
+
+        * `maxTokenLifetimeDays` — Get the maximum token lifetime in days that a new token can have in a workspace. If set, users cannot create new tokens with a lifetime greater than this value. **WARNING:** This limit only applies to new tokens, so there may be tokens with lifetimes longer than this value, including unlimited lifetime. Such tokens may have been created before the current maximum token lifetime was set. To review existing tokens, see the [get tokens API](#operation/get-tokens)."
+      parameters:
+        - name: keys
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - maxTokenLifetimeDays
+              - enableTokensConfig
+          description: 
+            "Pass one of the following:\n
+            
+            * `enableTokensConfig` — Enable or disable personal access tokens for this workspace.\n
+
+            * `maxTokenLifetimeDays` — Get the maximum token lifetime in days that a new token can have in a workspace. If set, users cannot create new tokens with a lifetime greater than this value. **WARNING:** This limit only applies to new tokens, so there may be tokens with lifetimes longer than this value, including unlimited lifetime. Such tokens may have been created before the current maximum token lifetime was set. To review existing tokens, see the [get tokens API](#operation/get-tokens)."
+
+          example: maxTokenLifetimeDays
+      responses:
+        200:
+          description: Getting token lifetime status was returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceConfObject'
+        400:
+          $ref: '#/components/responses/WorkspaceConfBadRequest'
+    patch:
+      tags:
+        - Workspace configuration for tokens
+      summary: Set workspace config for tokens (max lifetime, enabled/disabled)
+      operationId: set-configuration
+      description:
+        "This request sets different workspace settings based on the parameters that you set. For example, enable or disable personal access tokens, or set maximum token lifetime for new tokens. See parameters for details."
+      requestBody:
+        description: >-
+          To configure maximum token lifetime in days set an integer value for the number of days.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceConfObject'
+      responses:
+        204:
+          description: Configuring maximum token lifetime was successful.
+        400:
+          $ref: '#/components/responses/WorkspaceConfBadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          $ref: '#/components/responses/InternalError'
+
+  /token-management/tokens:
+    description: 
+      "This endpoint enables administrators to get all tokens and delete tokens for other users. Admins can either get every token, get a specific token by ID, or get all tokens for a particular user."
+      # ^^ endpoint description outside verb get/post/etc is not exposed in current redoc version
+    get:
+      tags:
+        - Token management
+      summary: Get all tokens in this workspace (optionally filter by user).
+      operationId: get-tokens
+      description:
+        "List all tokens belonging to a workspace or a user."
+        # presumably admins can see everything. what about non-admins, can they see thiers? or not call it?
+      parameters:
+        - name: created_by_id
+          in: query
+          schema:
+            type: string
+          description: User ID of the user that created the token.
+          required: false
+        - name: created_by_username
+          in: query
+          schema:
+            type: string
+          description: Username of the user that created the token.
+          required: false
+      responses:
+        200:
+          description: Tokens were successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTokenManagementResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/FeatureDisabled'
+
+
+  /token-management/tokens/{token_id}:
+    description:
+      "This endpoint enables admins to get a specific token."
+      # ^^ endpoint description outside verb get/post/etc is not exposed in current redoc version
+    parameters:
+      - name: token_id
+        in: path
+        schema:
+          type: string
+        description: The ID of the token to get.
+        required: true
+    get:
+      tags:
+        - Token management
+      summary: Get a token
+      operationId: get-token
+      description: Get a token, specified by its ID.
+      responses:
+        200:
+          description:  Token with specified Token ID was successfully returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenInfoObject'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Token management
+      summary: Delete a token
+      operationId: delete-token
+      description: Delete a token, specified by its ID.
+      responses:
+        200:
+          description: The token was successfully deleted.
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+
+components:
+  schemas:
+    WorkspaceConfObject:
+      type: object
+      properties:
+        maxTokenLifetimeDays:
+          type: string
+          description:
+            "Maximum token lifetime of new tokens in days, as an integer. If zero, new tokens are permitted to have no lifetime limit. Negative numbers are unsupported. **WARNING:** This limit only applies to new tokens, so there may be tokens with lifetimes longer than this value, including unlimited lifetime. Such tokens may have been created before the current maximum token lifetime was set. To review existing tokens, see the [get tokens API](#operation/get-tokens)."
+          example: "90"
+        enableTokensConfig:
+          type: boolean
+          description:
+            "Enable or disable personal access tokens for this workspace."
+    token_id:
+      type: string
+      format: string
+      description: ID of the token
+      example: 5684c955822ac792a51ae2aeb80190f13457bab3e2e2934c133a08b38454816c
+    creation_time:
+      type: number
+      description: Timestamp when the token was created
+      example: 1580265020299
+    expiry_time:
+      type: number
+      description: Timestamp when the token expires
+      example: 1580265020299
+    comment:
+      type: string
+      description: Comment that describes the purpose of the token. This was entered by the user at the time of the creation.
+      example: "This is for the ABC department automation scripts."
+    created_by_id:
+      type: number
+      description: User ID of the user that created the token.
+      example: 202480738464078
+    created_by_username:
+      type: string
+      description: Username of the user that created the token.
+      example: "jsmith@example.com"
+    object_id:
+      type: string
+      enum:
+        - authorization/tokens
+      description: Always the value `authorization/tokens`. This field is returned for consistency with other Databricks object permissions APIs.
+      example: "authorization/tokens"
+    object_type:
+      type: string
+      enum:
+        - tokens
+      description: Always the value `tokens`. This field is returned for consistency with other Databricks object permissions APIs.
+      example: "tokens"
+
+    TokenInfoObject:
+      type: object
+      properties:
+        token_id:
+          $ref: '#/components/schemas/token_id'
+        creation_time:
+          $ref: '#/components/schemas/creation_time'
+        expiry_time:
+          $ref: '#/components/schemas/expiry_time'
+        comment:
+          $ref: '#/components/schemas/comment'
+        created_by_id:
+          $ref: '#/components/schemas/created_by_id'
+        created_by_username:
+          $ref: '#/components/schemas/created_by_username'
+
+    GetTokenManagementResponse:
+      type: object
+      properties:
+        token_infos:
+          type: array
+          items:
+            $ref: '#/components/schemas/TokenInfoObject'
+
+
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message describe the cause of the error.
+  responses:
+    WorkspaceConfBadRequest:
+      description: The request is malformed. See the error code and message for details.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Bad Request - Invalid Keys:
+              value:
+                error_code: "BAD_REQUEST"
+                message:
+                  - "Invalid keys: <key-name>"
+            Bad Request - Invalid Values:
+              value:
+                error_code: "BAD_REQUEST"
+                message:
+                  - "Some values are not allowed: <message>"
+    Unauthorized:
+      description: The request is unauthorized.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error_code: "PERMISSION_DENIED"
+            message: "Only Admins can access token management APIs"
+    FeatureDisabled:
+      description: The requested feature is not available
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Feature disabled:
+              value:
+                error_code: "FEATURE_DISABLED"
+                message: "<feature-name> is not enabled for this feature tier"
+    NotFound:
+      description: The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Feature disabled:
+              value:
+                error_code: "FEATURE_DISABLED"
+                message: "<feature-name> is not enabled for this feature tier"
+            Resource does not exist:
+              value:
+                error_code: "RESOURCE_DOES_NOT_EXIST"
+                message: "Token with ID <token-id> does not exist"
+    InternalError:
+      description: The request is not handled correctly due to a server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PermissionsUnauthorized:
+      description: The request is unauthorized.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error_code: "PERMISSION_DENIED"
+            message: "Please contact the owner or an administrator for access."
+    PermissionsBadRequest:
+      description: The request is malformed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            bad_request:
+              value:
+                error_code: "BAD_REQUEST"
+                message: "Bad object ID: <error-message>"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: String
+        # Strictly speaking, users can auth to the Tokens API with a token and create
+        # a new token programmatically. Also, on Azure, customers can use AAD tokens.
+        # For the cloud-agnostic OpenAPI docs, we don't need to go into that detail. See:
+        # AWS: https://docs.databricks.com/dev-tools/api/latest/authentication.html
+        # Azure: https://docs.microsoft.com/en-us/azure/databricks/dev-tools/api/latest/authentication
+      # For Azure, note that Databricks PAT token is non-JWT String but AAD token is JWT.
+      description: >-
+        You can authenticate with a Databricks personal access token (PAT) that you
+        create for yourself within the application user interface.
+    basicAuth:
+      type: http
+      scheme: basic
+      description: >-
+        HTTP Basic authentication with a name and password for native (non-SSO)
+        authentication.
+security:
+  - bearerAuth: []
+  - basicAuth: []
