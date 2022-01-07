@@ -14,8 +14,12 @@
       Allows you to specify filters for the returned users. Details can be found here https://docs.databricks.com/dev-tools/api/latest/scim.html#scim-filters
       .PARAMETER UserID
       Return a specific user based on the ID
+      .PARAMETER Me
+      Switch to return information about the currently authenticated user
       .EXAMPLE
       Get-DatabricksSCIMUser
+      .EXAMPLE
+      Get-DatabricksSCIMUser -Me
       .EXAMPLE
       Get-DatabricksSCIMUser -Filter 'displayName co John'
   #>
@@ -23,7 +27,8 @@
   param (
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] [ValidateSet('List', 'Raw')] $Format = 'List',
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] $Filter,
-    [Parameter(ParameterSetName = 'ByUserID', Mandatory = $True)] [string] $UserID
+    [Parameter(ParameterSetName = 'ByUserID', Mandatory = $True)] [string] $UserID,
+    [Parameter(ParameterSetName = 'Me', Mandatory = $True)] [switch] $Me
   )
 	
   begin {
@@ -32,6 +37,10 @@
     
     if ($PSCmdlet.ParameterSetName -eq "ByUserID") { 
       $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq "Me") { 
+      $apiEndpoint = "/2.0/preview/scim/v2/Me"
     }
   }
 	

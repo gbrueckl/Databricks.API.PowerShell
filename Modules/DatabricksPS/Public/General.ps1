@@ -142,8 +142,8 @@ Function Set-DatabricksEnvironment {
 		.PARAMETER AzureActiveDirectoryServiceEndpointResourceId
 		A custom URL to obtain the Azure Management Resource endpoint token. This can be used when connecting to Databricks in a non-standard Azure environment like AzureChinaCloud or AzureUSGovernment. The default value is "https://management.core.windows.net/"
 		The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryServiceEndpointResourceId
-		.PARAMETER JobsAPI_v2_1
-		Switch to automatically use Jobs API v2.1 instead of old v2.0. Default is v2.0 for backwards compatibility!
+		.PARAMETER JobsAPIVersion
+		Can be used to switch the version of the Jobs API (v2.0 or v2.1)
 		.EXAMPLE
 		Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
 		.EXAMPLE
@@ -187,7 +187,7 @@ Function Set-DatabricksEnvironment {
 		[Parameter(Mandatory = $false, Position = 2)] [int] $DynamicParameterCacheTimeout = 5,
 		[Parameter(Mandatory = $false, Position = 3)] [int] $ApiCallRetryCount = -1,
 		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10,
-		[Parameter(Mandatory = $false, Position = 5)] [switch] $JobsAPI_v2_1,
+		[Parameter(Mandatory = $false, Position = 5)] [string] [ValidateSet("2.0", "2.1")]$JobsAPIVersion = "2.0",
 
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 8)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 8)]
@@ -222,14 +222,9 @@ Function Set-DatabricksEnvironment {
 		$script:dbApiCallRetryWait = $ApiCallRetryWait
 		#endregion
 
-		
 		#region Jobs API Version
 		Write-Verbose "Setting API Call Retry Wait to $ApiCallRetryWait seconds ..."
-		$script:dbJobsAPIVersion = "2.0"
-		if($JobsAPI_v2_1)
-		{
-			$script:dbJobsAPIVersion = "2.1"
-		}
+		$script:dbJobsAPIVersion = $JobsAPIVersion
 		#endregion
 
 		#region check ApiRootUrl

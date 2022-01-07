@@ -712,7 +712,8 @@ Function Pin-DatabricksCluster {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    return $result
+    # this API call returns no result
+    #return $result
   }
 }
 
@@ -759,7 +760,8 @@ Function Unpin-DatabricksCluster {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    return $result
+    # this API call returns no result
+    #return $result
   }
 }
 

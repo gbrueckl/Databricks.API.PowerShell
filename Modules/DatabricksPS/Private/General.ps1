@@ -871,7 +871,12 @@ Function Get-DynamicParamValues {
 		if (-not $script:dbInitialized) {
 			return $null
 		}
-		return $null
+		
+		if ($Host.name -ne 'Windows PowerShell ISE Host') {
+			# DISABLED for all editors except PowerShell ISE
+			return $null
+		}
+
 		$commandText = $Command.ToString()
 		$commandTextGeneric = (($commandText -split 'Get-')[1] -split ' ')[0].Trim()
     

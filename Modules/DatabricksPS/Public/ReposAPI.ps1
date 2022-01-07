@@ -120,7 +120,7 @@ Function Add-DatabricksRepo {
 
 Function Update-DatabricksRepo {
 	<#
-		.SYNOPSIS 
+		.SYNOPSIS
 		Updates the repo to the given branch or tag.
 		.DESCRIPTION
 		Updates the repo to the given branch or tag. 

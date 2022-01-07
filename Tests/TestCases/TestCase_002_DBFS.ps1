@@ -29,7 +29,7 @@ try {
 	if (Compare-Object $origFile $downloadedFile) {
 		Write-Warning "Expected Content:"
 		Write-Warning $origFile
-		Write-Warning "Actuald Content:"
+		Write-Warning "Actual Content:"
 		Write-Warning $downloadedFile
 		Write-Error "DBFS upload and download did not match!"
 	}

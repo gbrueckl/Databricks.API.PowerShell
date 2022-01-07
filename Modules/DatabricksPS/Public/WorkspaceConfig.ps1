@@ -1,3 +1,5 @@
+
+$script:WorkspaceCconfigKeys = @("enableTokensConfig", "maxTokenLifetimeDays", "enableIpAccessLists", "enableProjectTypeInWorkspace")
 Function Get-DatabricksWorkspaceConfig {
   <#
       .SYNOPSIS
@@ -15,19 +17,36 @@ Function Get-DatabricksWorkspaceConfig {
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [ValidateSet("enableTokensConfig", "maxTokenLifetimeDays", "enableIpAccessLists", "enableProjectTypeInWorkspace")] [Alias("Config", "Keys")] [string] $Key
+    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet({$script:configKeys})] [Alias("Config", "Key")] [string[]] $Keys
   )
+  DynamicParam {
+    #Create the RuntimeDefinedParameterDictionary
+    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+      
+    New-DynamicParam -Name Keys -Type string[] -ValidateSet $script:WorkspaceCconfigKeys -Alias "Key" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+        
+    #return RuntimeDefinedParameterDictionary
+    return $Dictionary
+  }
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/workspace-conf"
   }
 	
   process {
+    if(-not $PSBoundParameters.ContainsKey('Keys'))
+    {
+      $Keys = $script:WorkspaceCconfigKeys
+    }
+    else
+    {
+      $Keys = $PSBoundParameters.Keys
+    }
     Write-Verbose "Building Body/Parameters for final API call ..."
 
     #Set parameters
     $parameters = @{
-      keys = $Key
+      keys = $Keys -join ","
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
@@ -60,9 +79,10 @@ Function Set-DatabricksWorkspaceConfig {
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "EnableTokensConfig", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)]  [bool] $EnableTokensConfig,
-    [Parameter(ParameterSetName = "MaxTokenLifetimeDays", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [string] $MaxTokenLifetimeDays,
-    [Parameter(ParameterSetName = "EnableIpAccessLists", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [bool] $EnableIpAccessLists
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [bool] $EnableTokensConfig,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $MaxTokenLifetimeDays,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [bool] $EnableIpAccessLists,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [bool] $EnableProjectTypeInWorkspace
   )
 	
   begin {
@@ -76,11 +96,21 @@ Function Set-DatabricksWorkspaceConfig {
     #Set parameters
     $parameters = @{ }
 
-    switch($PSCmdlet.ParameterSetName) 
+    if($PSBoundParameters.ContainsKey('EnableTokensConfig'))
     { 
-      "EnableTokensConfig"    { $parameters | Add-Property -Name "enableTokensConfig" -Value $EnableTokensConfig -Force } 
-      "MaxTokenLifetimeDays"  { $parameters | Add-Property -Name "maxTokenLifetimeDays" -Value $MaxTokenLifetimeDays -Force }
-      "EnableIpAccessLists"   { $parameters | Add-Property -Name "enableIpAccessLists" -Value $EnableIpAccessLists.toString().toLower() -Force } # has to be a string
+      $parameters | Add-Property -Name "enableTokensConfig" -Value $EnableTokensConfig -Force
+    }
+    if($PSBoundParameters.ContainsKey('MaxTokenLifetimeDays'))
+    { 
+      $parameters | Add-Property -Name "maxTokenLifetimeDays" -Value $MaxTokenLifetimeDays -Force
+    }
+    if($PSBoundParameters.ContainsKey('EnableIpAccessLists'))
+    { 
+      $parameters | Add-Property -Name "enableIpAccessLists" -Value $EnableIpAccessLists.toString().toLower() -Force # has to be a string
+    }
+    if($PSBoundParameters.ContainsKey('EnableProjectTypeInWorkspace'))
+    { 
+      $parameters | Add-Property -Name "enableProjectTypeInWorkspace" -Value $EnableProjectTypeInWorkspace
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

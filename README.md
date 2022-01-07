@@ -9,9 +9,15 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.8.0: 
+- Added support for [Token Management API](https://docs.databricks.com/dev-tools/api/latest/token-management.html) 
+	- using new `-Admin` switch
+- Improve usability of Workspace Config API
+- added automated tests for Token API and Token Management API
+- add new `-Me` switch to `Get-DatabricksSCIMUser` to get information of the currently authenticated user
 ### v1.9.7.0: 
-- Added support for ([Repos API](https://docs.databricks.com/dev-tools/api/latest/repos.html)
-- Added support for ([Jobs API v2.1](https://docs.databricks.com/dev-tools/api/latest/jobs.html) via a switch `JobsAPI_v2_1` on `Set-DatabricksEnvironment`
+- Added support for [Repos API](https://docs.databricks.com/dev-tools/api/latest/repos.html)
+- Added support for [Jobs API v2.1](https://docs.databricks.com/dev-tools/api/latest/jobs.html) via a switch `JobsAPIVersion` on `Set-DatabricksEnvironment`
 - Deprecation Projects API (`Pull-DatabricksProject`)
 ### v1.9.6.2: 
 - Fix some documentation
@@ -27,9 +33,9 @@ Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 ### v1.9.5.1: 
 - Minor fixes for `Update-DatabricksCluster` cmdlet
 ### v1.9.5.0: 
-- Added support for ([IP Access Lists API](https://docs.databricks.com/dev-tools/api/latest/ip-access-list.html)
+- Added support for [IP Access Lists API](https://docs.databricks.com/dev-tools/api/latest/ip-access-list.html)
 ### v1.9.0.0: 
-- Added support for ([Permissions API](https://docs.databricks.com/dev-tools/api/latest/permissions.html)
+- Added support for [Permissions API](https://docs.databricks.com/dev-tools/api/latest/permissions.html)
 - includes pipelining for existing object (e.g. cluster-object, job-object, ...)
 ### v1.8.1.0: 
 - Update-DatabricksCluster now allows you to specify `-ClusterID` and `-ClusterObject` at the same time where the first one has priority. This can be used to update an existing cluster with the configuration of another cluster.
