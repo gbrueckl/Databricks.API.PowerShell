@@ -82,7 +82,7 @@ Function Add-DatabricksCluster {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary -Mandatory
+    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
     New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
 
     $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
@@ -90,7 +90,7 @@ Function Add-DatabricksCluster {
     New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary -Mandatory
+    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
 
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -154,14 +154,14 @@ Function Add-DatabricksCluster {
     $parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
     $parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
     $parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
-    $parameters | Add-Property -Name "spark_conf" -Value $SparkConf -Force
+    $parameters | Add-Property -Name "spark_conf" -Value $SparkConf -NullValue @{} -Force  
     $parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
     $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
-    $parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -Force
-    $parameters | Add-Property -Name "custom_tags" -Value $CustomTags -Force
+    #$parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -NullValue @() -Force 
+    $parameters | Add-Property -Name "custom_tags" -Value $CustomTags -NullValue @{} -Force 
     $parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
-    $parameters | Add-Property -Name "init_scripts" -Value $InitScripts -Force
-    $parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars -Force
+    $parameters | Add-Property -Name "init_scripts" -Value $InitScripts -NullValue @() -Force 
+    $parameters | Add-Property -Name "spark_env_vars" -Value $SparkEnvVars -NullValue @{} -Force 
     $parameters | Add-Property -Name "autotermination_minutes" -Value $AutoterminationMinutes -NullValue 0 -Force
     $parameters | Add-Property -Name "enable_elastic_disk" -Value $EnableElasticDisk -Force
 	
@@ -170,7 +170,16 @@ Function Add-DatabricksCluster {
       "Autoscale" { $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force }
     } 
 
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+    $nonEmptyParameters = @{}
+    foreach ($prop in $parameters.GetEnumerator())
+    {
+      #Write-Host $($prop.Value | ConvertTo-Json -Compress)
+      if($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -ne "{}") { 
+        $nonEmptyParameters.Add($prop.Name, $prop.Value)
+      }
+    }
+
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $nonEmptyParameters
 	
     return $result
   }
@@ -300,7 +309,7 @@ Function Update-DatabricksCluster {
       Write-Verbose $($ClusterObject | ConvertTo-Json)
       
       if ($ClusterID -and $parameters.ContainsKey("cluster_id") -and $ClusterID -ne $ClusterObject.cluster_id) {
-        Write-Warning "The cluster_id  was provided via parameter -ClusterID ($ClusterID) and also as part of -ClusterObject ($($ClusterObject.cluster_id)). Finally the value from -ClusterID ($ClusterID) will be used!"
+        Write-Verbose "The cluster_id  was provided via parameter -ClusterID ($ClusterID) and also as part of -ClusterObject ($($ClusterObject.cluster_id)). Finally the value from -ClusterID ($ClusterID) will be used!"
       }
     }
     else {
@@ -355,7 +364,16 @@ Function Update-DatabricksCluster {
       throw "Parameter -NodeTypeId is mandatory for the API and needs to be provided!"
     }
 
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
+    $nonEmptyParameters = @{}
+    foreach ($prop in $parameters.GetEnumerator())
+    {
+      #Write-Host $($prop.Value | ConvertTo-Json -Compress)
+      if($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -ne "{}") { 
+        $nonEmptyParameters.Add($prop.Name, $prop.Value)
+      }
+    }
+
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $nonEmptyParameters
     
     # the update-cluster call does not return any result. to be consistent with the other scripts, we return the ClusterObject that we have sent to the API
     return (ConvertTo-PSObject -InputObject $parameters)

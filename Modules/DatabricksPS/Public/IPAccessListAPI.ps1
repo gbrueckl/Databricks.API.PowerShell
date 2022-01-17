@@ -8,6 +8,7 @@ Function Get-DatabricksIPAccessList {
 		.PARAMETER IPAccessListID 
 		The ID of the IP Access List (optional).
 		.EXAMPLE
+		#AUTOMATED_TEST:List IP Access Lists
 		Get-DatabricksIPAccessList
 		.EXAMPLE
 		Get-DatabricksIPAccessList -IPAccessListID "b2c3970b-8cf7-4203-b37b-8f4be63fdd69"

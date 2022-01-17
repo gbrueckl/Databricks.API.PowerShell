@@ -64,6 +64,7 @@ Function Get-DatabricksGlobalInitScript {
       .PARAMETER ScriptID 
       (Optional) The ID of a single script to return. If not specified, all scripts are returned
       .EXAMPLE
+      #AUTOMATED_TEST:List Global Init Scripts
       Get-DatabricksGlobalInitScript
       .EXAMPLE
       Get-DatabricksGlobalInitScript -ScriptID 63D1236F6D2950C8

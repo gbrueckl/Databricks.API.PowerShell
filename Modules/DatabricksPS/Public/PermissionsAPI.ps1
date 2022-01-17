@@ -17,6 +17,8 @@ Function Get-DatabricksPermissions {
       The unique ID of the instance pool for which you want to retrieve the permission(s). 
       .PARAMETER WorkspaceObjectType 
       The type of the workspace item for which you want to retrieve the permission(s). The workspace item itself is specified using -ObjectID.
+      .PARAMETER SQLEndpointID 
+      The unique ID of the SQL endponit for which you want to retrieve the permission(s). 
       .PARAMETER Raw
       Can be used to retrieve the raw output of the API call. Otherwise an object with all the permissions is returned.
       .EXAMPLE
@@ -24,6 +26,7 @@ Function Get-DatabricksPermissions {
       .EXAMPLE
       Get-DatabricksPermissions -ObjectType "JOBS" -ObjectID "1" -Raw
       .EXAMPLE
+      #AUTOMATED_TEST:List Cluster Permissions
       (Get-DatabricksCluster)[0] | Get-DatabricksPermissions
   #>
   [CmdletBinding()]
@@ -41,6 +44,8 @@ Function Get-DatabricksPermissions {
     [Parameter(ParameterSetName = "InstancePool", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("instance_pool_id")] [string] $InstancePoolID,
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
+
+    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
 
     [Parameter(Mandatory = $false)] [switch] $Raw
   )
@@ -84,6 +89,9 @@ Function Get-DatabricksPermissions {
         Write-Warning "ObjectType '$WorkspaceObjectType' does not support permissions"
         return
       }
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
+      $apiEndpoint += "/sql/endpoints/$SQLEndpointID"
     }
 
     #Set parameters
@@ -118,6 +126,8 @@ Function Get-DatabricksPermissionLevels {
       The unique ID of the instance pool for which you want to retrieve the permission levels. 
       .PARAMETER WorkspaceObjectType 
       The type of the workspace item for which you want to retrieve the permission levels. The workspace item itself is specified using -ObjectID.
+      .PARAMETER SQLEndpointID 
+      The unique ID of the SQL endponit for which you want to retrieve the permission levels. 
       .PARAMETER Raw
       Can be used to retrieve the raw output of the API call. Otherwise an object with all the permissions is returned.
       .EXAMPLE
@@ -125,6 +135,7 @@ Function Get-DatabricksPermissionLevels {
       .EXAMPLE
       Get-DatabricksPermissionLevels -ObjectType "JOBS" -ObjectID "1" -Raw
       .EXAMPLE
+      #AUTOMATED_TEST:List Databricks Permission Levels
       (Get-DatabricksCluster)[0] | Get-DatabricksPermissionLevels
   #>
   [CmdletBinding()]
@@ -133,7 +144,7 @@ Function Get-DatabricksPermissionLevels {
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
     [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL-ENDPOINTS')] [string] $ObjectType,
     
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
@@ -142,6 +153,8 @@ Function Get-DatabricksPermissionLevels {
     [Parameter(ParameterSetName = "InstancePool", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("instance_pool_id")] [string] $InstancePoolID,
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
+
+    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
 
     [Parameter(Mandatory = $false)] [switch] $Raw
   )
@@ -185,6 +198,9 @@ Function Get-DatabricksPermissionLevels {
         Write-Warning "ObjectType '$WorkspaceObjectType' does not support permissions"
         return
       }
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
+      $apiEndpoint += "/sql/endpoints/$SQLEndpointID"
     }
 
     $apiEndpoint += "/permissionLevels"
@@ -221,6 +237,8 @@ Function Set-DatabricksPermissions {
       The unique ID of the instance pool for which you want to set the permission(s). 
       .PARAMETER WorkspaceObjectType 
       The type of the workspace item for which you want to set the permission(s). The workspace item itself is specified using -ObjectID.
+      .PARAMETER SQLEndpointID 
+      The unique ID of the SQL endponit for which you want to set the permission(s). 
       .PARAMETER Raw
       Can be used to retrieve the raw output of the API call. Otherwise an object with all the permissions is returned.
       .PARAMETER Overwrite
@@ -265,6 +283,8 @@ Function Set-DatabricksPermissions {
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
 
+    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
+
     [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [Alias("ACL")][object[]] $AccessControlList,
     [Parameter(Mandatory = $false)] [switch] $Overwrite,
     [Parameter(Mandatory = $false)] [switch] $Raw
@@ -303,6 +323,9 @@ Function Set-DatabricksPermissions {
         Write-Warning "ObjectType '$WorkspaceObjectType' does not support permissions"
         return
       }
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
+      $apiEndpoint += "/sql/endpoints/$SQLEndpointID"
     }
 
     if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {

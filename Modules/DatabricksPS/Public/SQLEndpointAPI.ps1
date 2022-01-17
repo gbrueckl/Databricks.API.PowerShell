@@ -77,15 +77,15 @@ Function Remove-DatabricksSQLEndpoint {
       .DESCRIPTION
       Delete a SQL endpoint.
       Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#delete
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
       ID of the SQL endpoint you want to delete.
       .EXAMPLE
-      Remove-DatabricksSQLEndpoint -SQLEndpointId "0123456789abcdef"
+      Remove-DatabricksSQLEndpoint -SQLEndpointID "0123456789abcdef"
   #>
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointId
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID
   )
   begin {
     $requestMethod = "DELETE"
@@ -95,7 +95,7 @@ Function Remove-DatabricksSQLEndpoint {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    $apiEndpoint += "/$SQLEndpointId"
+    $apiEndpoint += "/$SQLEndpointID"
 
     #Set parameters
     $parameters = @{}
@@ -114,7 +114,7 @@ Function Update-DatabricksSQLEndpoint {
 			.DESCRIPTION
 			Modify a SQL endpoint. All fields are optional. Missing fields default to the current values.
 			Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#edit
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
 			ID of the SQL endpoint.This field is required.
 			.PARAMETER Name 
 			Name of the SQL endpoint.
@@ -131,12 +131,12 @@ Function Update-DatabricksSQLEndpoint {
 			.PARAMETER EnablePhoton 
 			Whether to enable Photon. 
 			.EXAMPLE
-			Add-DatabricksSQLEndpoint -SQLEndpointId "0123456789abcdef" -Name "My updated SQL Endpoint" -ClusterSize "Large" -MinNumclusters 2 -MaxNumclusters 8 -EnablePhoton $true
+			Add-DatabricksSQLEndpoint -SQLEndpointID "0123456789abcdef" -Name "My updated SQL Endpoint" -ClusterSize "Large" -MinNumclusters 2 -MaxNumclusters 8 -EnablePhoton $true
 	#>
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointId,
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("endpoint_name")] [string] $Name,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_size")] [ValidateSet("2X-Small", "X-Small", "Small", "Medium", "Large", "X-Large", "2X-Large", "3X-Large", "4X-Large")] [string] $ClusterSize,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("min_num_clusters")] [int] $MinNumClusters,
@@ -153,7 +153,7 @@ Function Update-DatabricksSQLEndpoint {
 	
   process {
 
-    $apiEndpoint += "/$SQLEndpointId"
+    $apiEndpoint += "/$SQLEndpointID"
 
     Write-Verbose "Building Body/Parameters for final API call ..."
 
@@ -182,19 +182,18 @@ Function Get-DatabricksSQLEndpoint {
       .DESCRIPTION
       Delete a SQL endpoint.
       Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#get and https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#list
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
       ID of the SQL endpoint you want to delete
       .EXAMPLE
+      #AUTOMATED_TEST:List Databricks SQL Endpoint
       Get-DatabricksSQLEndpoint
       .EXAMPLE
-      Get-DatabricksSQLEndpoint -SQLEndpointId "0123456789abcdef"
-      .EXAMPLE
-      Get-DatabricksSQLEndpoint | Get-DatabricksSQLEndpoint
+      Get-DatabricksSQLEndpoint -SQLEndpointID "0123456789abcdef"
   #>
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointId
+    [Parameter(Mandatory = $false, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID
   )
   begin {
     $requestMethod = "GET"
@@ -204,9 +203,9 @@ Function Get-DatabricksSQLEndpoint {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    if($PSBoundParameters.ContainsKey('SQLEndpointId'))
+    if($PSBoundParameters.ContainsKey('SQLEndpointID'))
     {
-      $apiEndpoint += "/$SQLEndpointId"
+      $apiEndpoint += "/$SQLEndpointID"
     }
 
     #Set parameters
@@ -215,7 +214,7 @@ Function Get-DatabricksSQLEndpoint {
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
     
-    if($PSBoundParameters.ContainsKey('SQLEndpointId'))
+    if($PSBoundParameters.ContainsKey('SQLEndpointID'))
     {
       return $result
     }
@@ -233,15 +232,15 @@ Function Start-DatabricksSQLEndpoint {
       .DESCRIPTION
       Start a SQL endpoint.
       Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#start
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
       ID of the SQL endpoint you want to start.
       .EXAMPLE
-      Start-DatabricksSQLEndpoint -SQLEndpointId "0123456789abcdef"
+      Start-DatabricksSQLEndpoint -SQLEndpointID "0123456789abcdef"
   #>
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointId
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID
   )
   begin {
     $requestMethod = "POST"
@@ -251,7 +250,7 @@ Function Start-DatabricksSQLEndpoint {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    $apiEndpoint += "/$SQLEndpointId/start"
+    $apiEndpoint += "/$SQLEndpointID/start"
 
     #Set parameters
     $parameters = @{}
@@ -270,15 +269,15 @@ Function Stop-DatabricksSQLEndpoint {
       .DESCRIPTION
       Stop a SQL endpoint.
       Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#stop
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
       ID of the SQL endpoint you want to stop.
       .EXAMPLE
-      Stop-DatabricksSQLEndpoint -SQLEndpointId "0123456789abcdef"
+      Stop-DatabricksSQLEndpoint -SQLEndpointID "0123456789abcdef"
   #>
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointId
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID
   )
   begin {
     $requestMethod = "POST"
@@ -288,7 +287,7 @@ Function Stop-DatabricksSQLEndpoint {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    $apiEndpoint += "/$SQLEndpointId/stop"
+    $apiEndpoint += "/$SQLEndpointID/stop"
 
     #Set parameters
     $parameters = @{}
@@ -307,9 +306,10 @@ Function Get-DatabricksSQLEndpointConfig {
       .DESCRIPTION
       Get the configuration for all SQL endpoints.
       Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#get-1
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
       ID of the SQL endpoint you want to delete
       .EXAMPLE
+      #AUTOMATED_TEST:List Databricks SQL Config
       Get-DatabricksSQLConfig
   #>
   [CmdletBinding()]
@@ -339,10 +339,10 @@ Function Update-DatabricksSQLEndpointConfig {
 			.DESCRIPTION
 			Edit the configuration for all SQL endpoints. All fields are required. Invoking this method restarts all running SQL endpoints.
 			Official API Documentation: https://docs.microsoft.com/en-us/azure/databricks/sql/api/sql-endpoints#edit-1
-      .PARAMETER SQLEndpointId 
+      .PARAMETER SQLEndpointID 
 			ID of the SQL endpoint.This field is required.
 			.EXAMPLE
-			Add-DatabricksSQLEndpoint -SQLEndpointId "0123456789abcdef" -Name "My updated SQL Endpoint" -ClusterSize "Large" -MinNumclusters 2 -MaxNumclusters 8 -EnablePhoton $true
+			Add-DatabricksSQLEndpoint -SQLEndpointID "0123456789abcdef" -Name "My updated SQL Endpoint" -ClusterSize "Large" -MinNumclusters 2 -MaxNumclusters 8 -EnablePhoton $true
 	#>
   [CmdletBinding()]
   param

@@ -1,7 +1,7 @@
 ﻿Function Get-DatabricksSCIMUser {
   <#
       .SYNOPSIS
-      Admin users: Retrieve a list of all users in the Databricks workspace.
+      Admin users: Retrieve a list of all users in the Databricks workspace including all details.
       Non-admin users: Retrieve a list of all users in the Databricks workspace, returning user display name and object ID only.
       .DESCRIPTION
       Admin users: Retrieve a list of all users in the Databricks workspace.
@@ -14,9 +14,12 @@
       Allows you to specify filters for the returned users. Details can be found here https://docs.databricks.com/dev-tools/api/latest/scim.html#scim-filters
       .PARAMETER UserID
       Return a specific user based on the ID
+      .PARAMETER TimeoutSec
+      The timout of the request in seconds. Default is 60
       .PARAMETER Me
       Switch to return information about the currently authenticated user
       .EXAMPLE
+      #AUTOMATED_TEST:List SCIM Users
       Get-DatabricksSCIMUser
       .EXAMPLE
       Get-DatabricksSCIMUser -Me
@@ -28,6 +31,7 @@
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] [ValidateSet('List', 'Raw')] $Format = 'List',
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] $Filter,
     [Parameter(ParameterSetName = 'ByUserID', Mandatory = $True)] [string] $UserID,
+    [Parameter(Mandatory = $false)] [int] $TimeoutSec = 60,
     [Parameter(ParameterSetName = 'Me', Mandatory = $True)] [switch] $Me
   )
 	
@@ -53,7 +57,7 @@
       $parameters | Add-Property -Name "filter" -Value $Filter -Force
     }
     
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json'
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json' -TimeoutSec $TimeoutSec
 
     if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List") { 
       return $result.Resources 
@@ -234,7 +238,10 @@ Function Get-DatabricksSCIMGroup {
       Allows you to specify filters for the returned users. Details can be found here https://docs.databricks.com/dev-tools/api/latest/scim.html#scim-filters
       .PARAMETER GroupID
       Return a specific user Group on the ID
+      .PARAMETER TimeoutSec
+      The timout of the request in seconds. Default is 60
       .EXAMPLE
+      #AUTOMATED_TEST:List SCIM Groups
       Get-DatabricksSCIMGroup
       .EXAMPLE
       Get-DatabricksSCIMGroup -Filter 'displayName co admin'
@@ -243,7 +250,8 @@ Function Get-DatabricksSCIMGroup {
   param (
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] [ValidateSet('List', 'Raw')] $Format = 'List',
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] $Filter,
-    [Parameter(ParameterSetName = 'ByGroupID', Mandatory = $True)] [string] $GroupID
+    [Parameter(ParameterSetName = 'ByGroupID', Mandatory = $True)] [string] $GroupID,
+    [Parameter(Mandatory = $false)] [int] $TimeoutSec = 60
   )
 	
   begin {
@@ -264,7 +272,7 @@ Function Get-DatabricksSCIMGroup {
       $parameters | Add-Property -Name "filter" -Value $Filter -Force
     }
     
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json'
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json' -TimeoutSec $TimeoutSec
 
     if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List") { 
       return $result.Resources 
@@ -424,7 +432,10 @@ Function Get-DatabricksSCIMServicePrincipal {
       Allows you to specify filters for the returned service principals. Details can be found here https://docs.databricks.com/dev-tools/api/latest/scim.html#scim-filters
       .PARAMETER ServicePrincipalID
       Return a specific service principal based on the provided ID
+      .PARAMETER TimeoutSec
+      The timout of the request in seconds. Default is 60
       .EXAMPLE
+      #AUTOMATED_TEST:List SCIM Service Principals
       Get-DatabricksSCIMServicePrincipal
       .EXAMPLE
       Get-DatabricksSCIMServicePrincipal -Filter 'displayName co John'
@@ -433,7 +444,8 @@ Function Get-DatabricksSCIMServicePrincipal {
   param (
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] [ValidateSet('List', 'Raw')] $Format = 'List',
     [Parameter(ParameterSetName = 'List', Mandatory = $False)] [string] $Filter,
-    [Parameter(ParameterSetName = 'ByServicePrincipalID', Mandatory = $True)] [string] $ServicePrincipalID
+    [Parameter(ParameterSetName = 'ByServicePrincipalID', Mandatory = $True)] [string] $ServicePrincipalID,
+    [Parameter(Mandatory = $false)] [int] $TimeoutSec = 60
   )
 	
   begin {
@@ -454,7 +466,7 @@ Function Get-DatabricksSCIMServicePrincipal {
       $parameters | Add-Property -Name "filter" -Value $Filter -Force
     }
     
-    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json'
+    $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters -Accept 'application/scim+json' -TimeoutSec $TimeoutSec
 
     if ($PSCmdlet.ParameterSetName -eq "List" -and $Format -eq "List") { 
       return $result.Resources 

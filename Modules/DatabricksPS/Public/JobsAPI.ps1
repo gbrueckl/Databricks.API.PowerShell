@@ -10,7 +10,7 @@ Function Add-DatabricksJob {
 		.PARAMETER ClusterID 
 		The ID of an existing cluster that will be used for the job. When running jobs on an existing cluster, you may need to manually restart the cluster if it stops responding. We suggest running jobs on new clusters for greater reliability.
 		.PARAMETER NewClusterDefinition
-		
+		The definition of a cluster, e.g. obtained by running `Get-DatabricksCluster`
 		.PARAMETER Libraries 
 		An optional list of libraries to be installed on the cluster that will execute the job. The default value is an empty list.
 		Sample:

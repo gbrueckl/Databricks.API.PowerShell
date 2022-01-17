@@ -511,14 +511,16 @@ Function Import-DatabricksEnvironment {
 			foreach ($clusterDefinition in $clusterDefinitions) {
 				Write-Information "Reading Cluster from $($clusterDefinition.Name) ..."
 				$clusterObject = Get-Content $clusterDefinition.FullName | ConvertFrom-Json
-			
-				if ($clusterObject.cluster_name -cnotin $existingClusters.cluster_name) {
+				$existingCluster = $existingClusters | Where-Object { $_.cluster_name -eq $clusterObject.cluster_name}
+				
+				if (-not $existingCluster) {
 					Write-Information "    Adding new Cluster '$($clusterObject.cluster_name)' ..."
 					$x = Add-DatabricksCluster -ClusterObject $clusterObject
 				}
 				else {
 					if ($UpdateExistingClusters) {
-						$x = Update-DatabricksCluster -ClusterObject $clusterObject
+						$x = Update-DatabricksCluster -ClusterObject $clusterObject -ClusterID $existingCluster.cluster_id
+						Write-Information "    Existing Cluster '$($clusterObject.cluster_name)' ($($existingCluster.cluster_id)) was updated!"
 					}
 					else {
 						Write-Information "    Cluster '$($clusterObject.cluster_name)' already exists. Use parameter -UpdateExistingClusters to udpate existing clusters!"

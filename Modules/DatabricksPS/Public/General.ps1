@@ -11,7 +11,15 @@
 		.PARAMETER EndPoint
 		The API endpoint that you want to invoke. Please check the API reference for valid values. Example: "/2.0/jobs/list"
 		.PARAMETER Body
-		Some endpoints also support a body to supply additional information. This can be specified here. For POST requests, this is usually a JSON-string whereas for GET it is usually a hashtable which is then converted to URL parameters
+		Some endpoints also support a body to supply additional information. 
+		This can be specified here. For POST requests, this is usually a JSON-string 
+		whereas for GET it is usually a hashtable which is then converted to URL parameters
+		.PARAMETER ContentType
+		The Content-Type header to set for the request.
+		.PARAMETER Accept
+		The Accept header to set for the request.
+		.PARAMETER TimeoutSec
+		The timout of the request in seconds. Default is 60
 		.EXAMPLE
 		Invoke-DatabricksApiRequest -Method GET -EndPoint "/2.0/jobs/list"
 	#>
@@ -21,8 +29,9 @@
 		[Parameter(Mandatory = $true, Position = 1)] [string] [ValidateSet("DEFAULT", "DELETE", "GET", "HEAD", "MERGE", "OPTIONS", "PATCH", "POST", "PUT", "TRACE")] $Method,
 		[Parameter(Mandatory = $true, Position = 2)] [string] $EndPoint,
 		[Parameter(Mandatory = $false, Position = 3)] $Body,
-		[Parameter(Mandatory = $false, Position = 4)] $ContentType,
-		[Parameter(Mandatory = $false, Position = 5)] $Accept
+		[Parameter(Mandatory = $false, Position = 4)] [string] $ContentType,
+		[Parameter(Mandatory = $false, Position = 5)] [string] $Accept,
+		[Parameter(Mandatory = $false, Position = 6)] [int] $TimeoutSec = 60
 	)
 	Test-Initialized	 
 
@@ -64,7 +73,7 @@
 		$retry = 0
 		do {
 			try {
-				$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
+				$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body -TimeoutSec $TimeoutSec
 				# exit loop after successful execution
 				break
 			} 
@@ -84,7 +93,7 @@
 		while ($retry -le $script:dbApiCallRetryCount)
 	}
 	else {
-		$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body
+		$result = Invoke-RestMethod -Uri $apiUrl -Method $Method -Headers $headers -Body $Body -TimeoutSec $TimeoutSec
 	}	
 	
 	Write-Verbose "Response: $($result | ConvertTo-Json -Depth 10)"

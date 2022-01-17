@@ -9,6 +9,12 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.1:
+- Add `-Timeout` parameter to SCIM API `Get-*` cmdlets 
+### v1.9.9.0: 
+- Added support for SQL endpoints to the `*-DatabricksPermissions` cmdlets as described here [SQL Endpoint Permissions](https://docs.databricks.com/sql/user/security/access-control/sql-endpoint-acl.html#manage-sql-endpoint-permissions-using-the-api).
+### v1.9.8.1: 
+- Fix issue with `Import-DatabricksEnvironment` where clusters were not imported correctly
 ### v1.9.8.0: 
 - Added support for [Token Management API](https://docs.databricks.com/dev-tools/api/latest/token-management.html) 
 	- using new `-Admin` switch
