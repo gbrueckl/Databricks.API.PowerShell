@@ -36,7 +36,14 @@ try {
 	$currentToken = Add-DatabricksApiToken -Comment $testTokenNameAdmin -LifetimeSeconds 300
 	
 	Write-Information "Getting token again by UserName (Admin-mode) ..."
-	$adminToken1 = Get-DatabricksApiToken -Admin -CreatedByUsername $testUser.name | Where-Object { $_.comment -eq $testTokenNameAdmin }
+	if ($testUser.name) {
+		# when authenticated as AAD-User or via PAT
+		$adminToken1 = Get-DatabricksApiToken -Admin -CreatedByUsername $testUser.name | Where-Object { $_.comment -eq $testTokenNameAdmin }
+	}
+	else {
+		# when authenticated as AAD-ServicePrincipal
+		$adminToken1 = Get-DatabricksApiToken -Admin -CreatedByUsername $testUser.userName | Where-Object { $_.comment -eq $testTokenNameAdmin }
+	}
 
 	Write-Information "Getting token again by UserID (Admin-mode) ..."
 	$adminToken2 = Get-DatabricksApiToken -Admin -CreatedByUserID $testUser.id | Where-Object { $_.comment -eq $testTokenNameAdmin }

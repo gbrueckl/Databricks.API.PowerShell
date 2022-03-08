@@ -310,7 +310,7 @@ Function Get-DatabricksSQLEndpointConfig {
       ID of the SQL endpoint you want to delete
       .EXAMPLE
       #AUTOMATED_TEST:List Databricks SQL Config
-      Get-DatabricksSQLConfig
+      Get-DatabricksSQLEndpointConfig
   #>
   [CmdletBinding()]
   param ()

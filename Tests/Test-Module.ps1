@@ -12,6 +12,8 @@ $rootPath = Switch ($Host.name) {
 $rootPath = $rootPath | Split-Path -Parent
 Push-Location $rootPath
 
+. "$rootPath\Modules\DatabricksPS\Private\General.ps1"
+
 function Process-TestScript([string]$TestScript) {
 	$TestScript = $TestScript.Replace("/myDBFSTestFolder/", $script:testDBFSFolder)
 	$TestScript = $TestScript.Replace("/myWorkspaceTestFolder/", $script:testWorkspaceFolder)
@@ -48,7 +50,62 @@ function Compare-FoldersRecursive (
 	return $diffsOut
 }
 
-$config = Get-Content "$rootPath\Tests\TestEnvironments.config.json" | ConvertFrom-Json
+function Convert-SecureObject (
+	[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [object]$InputObject,
+	[string]$SecureInputObjectSuffix = "_Secure"
+)
+{
+	Write-Verbose $InputObject.GetType().Name
+	if ($InputObject -eq $null) {
+		Write-Verbose "Found a null-Value ..."
+		return $null
+	}
+	elseif ($InputObject.GetType().Name -eq 'PSCustomObject') {
+		Write-Verbose "Found an PSCustomObject ..."
+		return $InputObject | ConvertTo-Hashtable | Convert-SecureObject
+	}
+	elseif ($InputObject.GetType().Name -eq 'Object[]') {
+		# array
+		Write-Verbose "Found an Array ..."
+		$ret = @()
+		foreach($item in $InputObject)
+		{
+			$ret.Add((Convert-SecureObject -InputObject $item -SecureInputObjectSuffix $SecureInputObjectSuffix))
+		}
+		return $ret
+	}
+	elseif ($InputObject.GetType().Name -eq 'Hashtable') {
+		# hashtable
+		Write-Verbose "Found a Hashtable ..."
+		$allKeys = @() + $InputObject.Keys
+		foreach($key in $allKeys)
+		{
+			Write-Verbose "$key : $($InputObject[$key].GetType().Name)"
+			$newValue = Convert-SecureObject -InputObject $InputObject[$key] -SecureInputObjectSuffix $SecureInputObjectSuffix
+			if($key.EndsWith($SecureInputObjectSuffix))
+			{
+				Write-Verbose "Found a Secured Key: '$key'"
+				$InputObject.Add($key.Replace($SecureInputObjectSuffix, ""), $newValue)
+				$InputObject.Remove($key)
+			}
+			else {
+				$InputObject[$key] = $newValue
+			}
+		}
+		return $InputObject
+	}
+	elseif ($InputObject.GetType().Name -eq 'String') {
+		# convert the secure string back to a plaintext InputObject
+		try {
+			return [System.Net.NetworkCredential]::new("x", ($InputObject | ConvertTo-SecureString)).Password
+		}
+		catch {
+			return $InputObject
+		}
+	}
+
+	return $InputObject
+}
 
 Remove-Module -Name "DatabricksPS" -ErrorAction SilentlyContinue -Force
 Import-Module "$rootPath\Modules\DatabricksPS" -Verbose
@@ -56,18 +113,29 @@ Import-Module "$rootPath\Modules\DatabricksPS" -Verbose
 # find examples for automated tests: '.EXAMPLE\n#AUTOMATED_TEST:TestName\n' ... '.EXAMPLE' or '#>'
 $regEx = "\s*\.EXAMPLE\s+#AUTOMATED_TEST:(.*)\n((?:.|\r|\n)+?)\s+(?=\.EXAMPLE|#>)"
 
+$config = Get-Content "$rootPath\Tests\TestEnvironments.config.json" | ConvertFrom-Json
+
 #$activeEnvironments = $config.environments | Out-GridView -PassThru
 $activeEnvironments = $config.environments | Where-Object { $_.isActive }
 foreach ($environment in $activeEnvironments) { 
 	try {
-		Write-Information "Testing Environment $($environment.name) ..."
-		$authentication = $environment.authentication | ConvertTo-Hashtable
+		Write-Information "Testing Environment '$($environment.name)' ..."
 
+		$plainEnvironment = Convert-SecureObject $environment -SecureInputObjectSuffix "_Secure"
+
+		foreach($envVar in $plainEnvironment.environmentVariables.GetEnumerator())
+		{
+			Write-Information "Setting EnvironmentVariable '$($envVar.Name)'"
+			Set-Item -Path "env:$($envVar.Name)" -Value $envVar.Value
+		}
+
+		$authentication = $plainEnvironment.authentication
+		# Special case to manage PSCredentials
 		if ($authentication.Keys -contains "Credential") {
 			$username = $authentication.Credential.Username
-			# Convert Value to SecureString-String to be stored in config file:
+			# Convert InputObject to SecureString-String to be stored in config file:
 			# "P@ssword1" | ConvertTo-SecureString -AsPlainText -Force | ConvertFrom-SecureString
-			$password = $authentication.Credential.PasswordSecure | ConvertTo-SecureString
+			$password = $authentication.Credential.Password | ConvertTo-SecureString -AsPlainText -Force
 			$credential = New-Object System.Management.Automation.PSCredential -ArgumentList ($username, $password)
 			$authentication["Credential"] = $credential
 		}
