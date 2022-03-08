@@ -153,6 +153,10 @@ Function Set-DatabricksEnvironment {
 		The value can usually be derived from (Get-AzContext).Environment.ActiveDirectoryServiceEndpointResourceId
 		.PARAMETER JobsAPIVersion
 		Can be used to switch the version of the Jobs API (v2.0 or v2.1)
+		.PARAMETER UsingAzureDevOpsServiceConnection
+		A switch that can be used when running in Azure DevOps. The module will then use the environment variables populated by the AzureCLI task with the setting `addSpnToEnvironment=true` to authenticate using AAD Service Principal Authenticaiton.
+		.PARAMETER UsingDatabricksCLIAuthentication
+		A swithc that can be used to derive API Root URL and Access Token from the environmetn variables used by Databricks CLI
 		.EXAMPLE
 		Set-DatabricksEnvironment -AccessToken "dapi1234abcd32101691ded20b53a1326285" -ApiRootUrl "https://abc-12345-xaz.cloud.databricks.com"
 		.EXAMPLE
@@ -165,13 +169,21 @@ Function Set-DatabricksEnvironment {
 	[CmdletBinding()]
 	param
 	(
-		[Parameter(Mandatory = $true, Position = 1)] [string] [Alias("CustomApiRootUrl")] $ApiRootUrl,
+		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 1)]
+		[Parameter(ParameterSetName = "AADAuthenticationAzureDevOpsServiceConnection", Mandatory = $true)] [string] [Alias("CustomApiRootUrl")] $ApiRootUrl,
 		
 		[Parameter(ParameterSetName = "DatabricksApi", Mandatory = $true, Position = 1)] [string] $AccessToken,
+		
+		[Parameter(ParameterSetName = "DatabricksCLI", Mandatory = $true, Position = 1)] [switch] $UsingDatabricksCLIAuthentication,
 		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 1)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 1)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 1)][PSCredential] $Credential,
+
+		[Parameter(ParameterSetName = "AADAuthenticationAzureDevOpsServiceConnection", Mandatory = $true)] [switch] $UsingAzureDevOpsServiceConnection,
 		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 2)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 2)]
@@ -181,10 +193,10 @@ Function Set-DatabricksEnvironment {
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 4)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 4)] [string] $TenantID,
 		
+		[Parameter(ParameterSetName = "AADAuthenticationAzureDevOpsServiceConnection", Mandatory = $true, Position = 3)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $true, Position = 3)] [string] $AzureResourceID,
 		
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $true, Position = 3)] [string] $OrgID,
-		
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 3)] [string] $SubscriptionID,
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 5)] [string] $ResourceGroupName,
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $true, Position = 6)] [string] $WorkspaceName,
@@ -198,10 +210,12 @@ Function Set-DatabricksEnvironment {
 		[Parameter(Mandatory = $false, Position = 4)] [int] $ApiCallRetryWait = 10,
 		[Parameter(Mandatory = $false, Position = 5)] [string] [ValidateSet("2.0", "2.1")]$JobsAPIVersion = "2.0",
 
+		[Parameter(ParameterSetName = "AADAuthenticationAzureDevOpsServiceConnection", Mandatory = $false, Position = 8)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 8)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 8)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 8)] [string] $AzureActiveDirectoryAuthorityUrl = "https://login.microsoftonline.com/",
 
+		[Parameter(ParameterSetName = "AADAuthenticationAzureDevOpsServiceConnection", Mandatory = $false, Position = 9)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceID", Mandatory = $false, Position = 9)]
 		[Parameter(ParameterSetName = "AADAuthenticationOrgID", Mandatory = $false, Position = 9)]
 		[Parameter(ParameterSetName = "AADAuthenticationResourceDetails", Mandatory = $false, Position = 9)] [string] $AzureActiveDirectoryServiceEndpointResourceId = "https://management.core.windows.net/"
@@ -215,6 +229,8 @@ Function Set-DatabricksEnvironment {
 
 	process {
 		$x = Clear-ScriptVariables
+
+		Write-Verbose "Using ParameterSet '$($PSCmdlet.ParameterSetName)' ..."
 		
 		#region Dynamic Parameter Caching
 		Write-Verbose "Setting Dynamic Parameter Cache Timeout to $DynamicParameterCacheTimeout seconds ..."
@@ -236,17 +252,32 @@ Function Set-DatabricksEnvironment {
 		$script:dbJobsAPIVersion = $JobsAPIVersion
 		#endregion
 
+		$script:dbAuthenticationHeader = @{}
+
 		#region check ApiRootUrl
-		$paramToCheck = 'ApiRootUrl'
-		Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
-		if ($ApiRootUrl -ne $null) {
-			Write-Verbose "$paramToCheck provided! Setting global $paramToCheck ..."
+		if ($PSCmdlet.ParameterSetName -eq "DatabricksCLI") {
+			Write-Verbose "Using Databricks CLI authentication - reading API Root URL from environment variable 'DATABRICKS_HOST' ..."
+
+			$ApiRootUrl = Get-EnvironmentVariable "DATABRICKS_HOST"
+
 			$script:dbApiRootUrl = $ApiRootUrl.Trim('/') + "/api"
-			Write-Verbose "Done!"
+			
+			$script:dbAuthenticationHeader["Authorization"] = "Bearer $AccessToken"
 		}
 		else {
-			Write-Warning "Parameter -$paramToCheck was not provided!"
+			$paramToCheck = 'ApiRootUrl'
+			Write-Verbose "Checking if Parameter -$paramToCheck was provided ..."
+			if ($ApiRootUrl -ne $null) {
+				Write-Verbose "$paramToCheck provided! Setting global $paramToCheck ..."
+				
+				Write-Verbose "Done!"
+			}
+			else {
+				Write-Error "Parameter -$paramToCheck was not provided!"
+			}
 		}
+		Write-Verbose "Setting API Root URL to '$ApiRootUrl' ..."
+		$script:dbApiRootUrl = $ApiRootUrl.Trim('/') + "/api"
 
 		Write-Verbose "Trying to derive CloudProvider from ApiRootUrl ..."
 		Write-Verbose "Checking if ApiRootUrl contains '.azuredatabricks.' ..."
@@ -266,13 +297,25 @@ Function Set-DatabricksEnvironment {
 			Write-Verbose "Using Databricks API authentication via API Token ..."
 			$script:dbAuthenticationProvider = "DatabricksApi" 
 				
-			$script:dbAuthenticationHeader = @{
-				"Authorization" = "Bearer $AccessToken"
-			}
+			$script:dbAuthenticationHeader["Authorization"] = "Bearer $AccessToken"
+		}
+		#endregion
+		#region Databricks CLI
+		elseif ($PSCmdlet.ParameterSetName -eq "DatabricksCLI") {
+			Write-Verbose "Using Databricks CLI authentication via API Token ..."
+			$script:dbAuthenticationProvider = "DatabricksApi" 
+
+			$AccessToken = Get-EnvironmentVariable "DATABRICKS_TOKEN"
+			$ApiRootUrl = Get-EnvironmentVariable "DATABRICKS_HOST"
+
+			Write-Verbose "Overwriting -ApiRootUrl with value from environment variable 'DATABRICKS_HOST' due to DatabricksCLI switch!"
+			$script:dbApiRootUrl = $ApiRootUrl.Trim('/') + "/api"
+			
+			$script:dbAuthenticationHeader["Authorization"] = "Bearer $AccessToken"
 		}
 		#endregion
 		#region AAD Authentication using Resource
-		elseif ($PSCmdlet.ParameterSetName -ilike "AADAuthenticationResource*") {
+		elseif ($PSCmdlet.ParameterSetName -ilike "AADAuthenticationResource*" -or $PSCmdlet.ParameterSetName -eq "AADAuthenticationAzureDevOpsServiceConnection") {
 			$script:dbAuthenticationProvider = "AADAuthentication" 
 			
 			if ($PSCmdlet.ParameterSetName -eq "AADAuthenticationResourceDetails") {
@@ -293,9 +336,7 @@ Function Set-DatabricksEnvironment {
 				Write-Verbose "Parameter -$paramToCheck has a valid format!"
 			}
 				
-			$script:dbAuthenticationHeader = @{
-				"X-Databricks-Azure-Workspace-Resource-Id" = $AzureResourceID
-			}
+			$script:dbAuthenticationHeader["X-Databricks-Azure-Workspace-Resource-Id"] = $AzureResourceID
 		}
 		#endregion
 		#region AAD Authentication using Org ID
@@ -303,14 +344,24 @@ Function Set-DatabricksEnvironment {
 			Write-Verbose "Using AAD authentication with Databricks Org ID ..." 
 			$script:dbAuthenticationProvider = "AADAuthentication" 
 				
-			$script:dbAuthenticationHeader = @{
-				"X-Databricks-Org-Id" = $OrgID
-			}
+			$script:dbAuthenticationHeader["X-Databricks-Org-Id"] = $OrgID
 		}
 		#endregion
 		#region AAD Authentication General
-		if ($PSCmdlet.ParameterSetName.StartsWith("AADAuthentication")) {
+		if ($PSCmdlet.ParameterSetName -ilike "AADAuthentication*") {
+			Write-Verbose "Using AAD authentication ..."
 			$script:dbCloudProvider = "Azure"
+
+			if ($PSCmdlet.ParameterSetName -eq "AADAuthenticationAzureDevOpsServiceConnection") {
+				$sp_clientId = Get-EnvironmentVariable "servicePrincipalId"
+				$sp_password = Get-EnvironmentVariable "servicePrincipalKey"
+				[securestring]$sp_password_secure = ConvertTo-SecureString $sp_password -AsPlainText -Force
+				[pscredential]$Credential = New-Object System.Management.Automation.PSCredential($sp_clientId, $sp_password_secure)
+
+				$ServicePrincipal = $true
+				$ClientID = $sp_clientId
+				$TenantID = Get-EnvironmentVariable "tenantId"
+			}
 
 			$AzureActiveDirectoryAuthorityUrl = "$AzureActiveDirectoryAuthorityUrl$TenantID/oauth2/token/"
 			

@@ -922,3 +922,17 @@ Function Remove-LocalPath {
 		Remove-Item -Path $LocalPath -Recurse -Force -ErrorAction SilentlyContinue
 	}
 }
+
+Function Get-EnvironmentVariable {
+	param
+	(
+		[Parameter(Mandatory = $true, Position = 1)] [string] $EnvironmentVariable
+	)
+	#region CleanLocalPath
+	Write-Verbose "Getting environment variable '$EnvironmentVariable' ..."
+	if(-not (Test-Path "env:$EnvironmentVariable"))
+	{
+		Write-Error "The environment variable '$EnvironmentVariable' could not be found!"
+	}
+	return (Get-Item -Path "env:$EnvironmentVariable").Value
+}

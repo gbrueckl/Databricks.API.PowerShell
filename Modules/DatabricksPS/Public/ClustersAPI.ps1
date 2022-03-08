@@ -422,8 +422,6 @@ Function Start-DatabricksCluster {
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-    return $result
   }
 }
 
@@ -469,8 +467,6 @@ Function Restart-DatabricksCluster {
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-    return $result
   }
 }
 
@@ -516,8 +512,6 @@ Function Stop-DatabricksCluster {
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
-
-    return $result
   }
 }
 

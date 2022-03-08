@@ -9,6 +9,10 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.2:
+- Add better suppot for integration with CI/CD pipelines
+	- Azure DevOps: `Set-DatabricksEnvironment` now supports the new switch `-UsingAzureDevOpsServiceConnection` to be used with Azure DevOps CLI Task - see [Azure DevOps Integration](#azure-devops-integration)
+	- Databricks CLI: `Set-DatabricksEnvironment` now supports the new switch `-UsingDatabricksCLIAuthentication` to be used with any CI/CD tool and the Databricks CLI is already configured - see [Databricks CLI Integration](#databricks-cli-integration)
 ### v1.9.9.1:
 - Add `-Timeout` parameter to SCIM API `Get-*` cmdlets 
 ### v1.9.9.0: 
@@ -165,6 +169,10 @@ There are 3 ways to authenticate against the Databricks REST API of which 2 are 
 - Azure Active Directory (AAD) Username/Password (Azure only!)
 - Azure Active Directory (AAD) Service Principal (Azure only!)
 
+In additiont to those, the DatabricksPS module also integrates with other tools to derive the configuration and authentication. Currently these tools include:
+- Azure DevOps Service Connections
+- Databricks CLI
+
 ## Personal Access Token
 This is the most straight forward authentication and works for both, Azure and AWS.
 The official documentation can be found [here (Azure)](https://docs.microsoft.com/en-us/azure/databricks/dev-tools/api/latest/authentication) or [here (AWS)](https://docs.databricks.com/dev-tools/api/latest/authentication.html) and is also persisted in this repository [here](https://github.com/gbrueckl/Databricks.API.PowerShell/blob/master/Docs/Authentication%20using%20Azure%20Databricks%20personal%20access%20tokens.pdf).
@@ -209,22 +217,31 @@ $apiUrl = "https://westeurope.azuredatabricks.net"
 Set-DatabricksEnvironment -ClientID $clientId -Credential $credSP -AzureResourceID $azureResourceId -TenantID $tenantId -ApiRootUrl $apiUrl -ServicePrincipal
 ```
 
+# Azure DevOps Integration
+If you want to use DatabricksPS module in your Azure DevOps pipelines and do not want to manage your Personal Access Tokens but leverage the Azure DevOps Service Connections instead, you can use the following YAML task defintion:
+```
+- task: AzureCLI@2
+  displayName: "DatabricksPS - Stop All Clusters"  
+  inputs:
+    azureSubscription: "MyServiceConnection"    
+    addSpnToEnvironment: true
+    scriptType: ps
+    scriptLocation: inlineScript
+	arguments: '$(DATABRICKS_URL) $(AzURE_RESOURCE_ID)'
+    inlineScript: |
+	  Set-DatabricksEnvironment -ApiRootUrl $1 -AzureResourceID $2 -UsingAzureDevOpsServiceConnection 
+	  Get-DatabricksCluster | Stop-DatabricksCluster
+    azurePowerShellVersion: latestVersion
+
+```
+The important part is to use AzureCLI which allows you to choose a Azure DevOps Service Connection and persist the authentication information as temporary environment variables by using `addSpnToEnvironment: true`. Unfortunatelly this is currently not possible using AzurePowerShell.
+
+# Databricks CLI Integration
+The Databricks CLI Integration relies on the Databricks CLI being installed and configured on your agent/machine already. It basically requires the two environment variables `DATABRICKS_HOST` and `DATABRICKS_TOKEN` to be set and only works with Personal Access Tokens. If those two environment variables are set, you can use the following code in your PowerShell task to e.g. stop all available clusters:
+```
+Set-DatabricksEnvironment -UsingDatabricksCLIAuthentication
+Get-DatabricksCluster | Stop-DatabricksCluster
+```
+
 # Supported APIs and endpoints
-- Clusters API ([Azure](https://docs.azuredatabricks.net/api/latest/clusters.html), [AWS](https://docs.databricks.com/api/latest/clusters.html))
-- Groups API ([Azure](https://docs.azuredatabricks.net/api/latest/groups.html), [AWS](https://docs.databricks.com/api/latest/groups.html))
-- Jobs API ([Azure](https://docs.azuredatabricks.net/api/latest/jobs.html), [AWS](https://docs.databricks.com/api/latest/jobs.html))
-- Secrets API ([Azure](https://docs.azuredatabricks.net/api/latest/secrets.html), [AWS](https://docs.databricks.com/api/latest/secrets.html))
-- Token API ([Azure](https://docs.azuredatabricks.net/api/latest/tokens.html), [AWS](https://docs.databricks.com/api/latest/tokens.html))
-- Workspace API ([Azure](https://docs.azuredatabricks.net/api/latest/workspace.html), [AWS](https://docs.databricks.com/api/latest/workspace.html))
-- Libraries API ([Azure](https://docs.azuredatabricks.net/api/latest/libraries.html), [AWS](https://docs.databricks.com/api/latest/libraries.html))
-- DBFS API ([Azure](https://docs.azuredatabricks.net/api/latest/dbfs.html), [AWS](https://docs.databricks.com/api/latest/dbfs.html))
-- Instance Profiles API ([AWS](https://docs.databricks.com/api/latest/instance-profiles.html))
-- SCIM API ([Azure](https://docs.azuredatabricks.net/api/latest/scim.html), [AWS](https://docs.databricks.com/api/latest/scim.html))
-- Instance Pools API ([Azure](https://docs.azuredatabricks.net/api/latest/instance-pools.html), [AWS](https://docs.databricks.com/dev-tools/api/latest/instance-pools.html))
-- Cluster Policies API ([Azure](https://docs.azuredatabricks.net/api/latest/policies.html), [AWS](https://docs.databricks.com/dev-tools/api/latest/policies.html))
-- Instance Profiles API ([AWS](https://docs.databricks.com/dev-tools/api/latest/instance-profiles.html))
-- Global Init Scripts API ([AWS](https://docs.databricks.com/dev-tools/api/latest/global-init-scripts.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/dev-tools/api/latest/global-init-scripts))
-- Tokens API ([AWS](https://docs.databricks.com/dev-tools/api/latest/tokens.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/dev-tools/api/latest/tokens))
-- Workspace Config API ([AWS](https://docs.databricks.com/sql/api/sql-endpoints.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/sql/api/sql-endpoints))
-- SQL Analytics API ([AWS](https://docs.databricks.com/sql/api/sql-endpoints.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/sql/api/sql-endpoints))
-- SQL Analytics Query History API ([AWS](https://docs.databricks.com/sql/api/query-history.html), [Azure](https://docs.microsoft.com/en-gb/azure/databricks/sql/api/query-history))
+The goal of the Databricks PS modules is to supports all available Databricks REST API endpoints. However, as the APIs are constantly evolving, some newer ones might not be implemented yet. If you are missing a recently added endpoint, please open a ticket in this repo and I will add it as soon as possible!
