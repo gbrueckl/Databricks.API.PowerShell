@@ -53,8 +53,7 @@ function Compare-FoldersRecursive (
 function Convert-SecureObject (
 	[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [object]$InputObject,
 	[string]$SecureInputObjectSuffix = "_Secure"
-)
-{
+) {
 	Write-Verbose $InputObject.GetType().Name
 	if ($InputObject -eq $null) {
 		Write-Verbose "Found a null-Value ..."
@@ -68,8 +67,7 @@ function Convert-SecureObject (
 		# array
 		Write-Verbose "Found an Array ..."
 		$ret = @()
-		foreach($item in $InputObject)
-		{
+		foreach ($item in $InputObject) {
 			$ret.Add((Convert-SecureObject -InputObject $item -SecureInputObjectSuffix $SecureInputObjectSuffix))
 		}
 		return $ret
@@ -78,12 +76,10 @@ function Convert-SecureObject (
 		# hashtable
 		Write-Verbose "Found a Hashtable ..."
 		$allKeys = @() + $InputObject.Keys
-		foreach($key in $allKeys)
-		{
+		foreach ($key in $allKeys) {
 			Write-Verbose "$key : $($InputObject[$key].GetType().Name)"
 			$newValue = Convert-SecureObject -InputObject $InputObject[$key] -SecureInputObjectSuffix $SecureInputObjectSuffix
-			if($key.EndsWith($SecureInputObjectSuffix))
-			{
+			if ($key.EndsWith($SecureInputObjectSuffix)) {
 				Write-Verbose "Found a Secured Key: '$key'"
 				$InputObject.Add($key.Replace($SecureInputObjectSuffix, ""), $newValue)
 				$InputObject.Remove($key)
@@ -123,10 +119,11 @@ foreach ($environment in $activeEnvironments) {
 
 		$plainEnvironment = Convert-SecureObject $environment -SecureInputObjectSuffix "_Secure"
 
-		foreach($envVar in $plainEnvironment.environmentVariables.GetEnumerator())
-		{
-			Write-Information "Setting EnvironmentVariable '$($envVar.Name)'"
-			Set-Item -Path "env:$($envVar.Name)" -Value $envVar.Value
+		if ($plainEnvironment.environmentVariables) {
+			foreach ($envVar in $plainEnvironment.environmentVariables.GetEnumerator()) {
+				Write-Information "Setting EnvironmentVariable '$($envVar.Name)'"
+				Set-Item -Path "env:$($envVar.Name)" -Value $envVar.Value
+			}
 		}
 
 		$authentication = $plainEnvironment.authentication
@@ -141,13 +138,19 @@ foreach ($environment in $activeEnvironments) {
 		}
 
 		Set-DatabricksEnvironment @authentication -Verbose
+
+		if ($plainEnvironment.basicConnectionTestOnly) {
+			Write-Information "Only running basic connection test to check if authentication did work properly ..."
+			Test-DatabricksEnvironment
+			continue
+		}
 	
 		# prepare DBFS for single-command tests
-		$script:testDBFSFolder = '/' + $environment.testConfig.dbfsFolder.Trim('/') + '/'
+		$script:testDBFSFolder = '/' + $plainEnvironment.testConfig.dbfsFolder.Trim('/') + '/'
 		Add-DatabricksFSDirectory -Path $script:testDBFSFolder
 
-		$script:testWorkspaceFolder = '/' + $environment.testConfig.workspaceFolder.Trim('/') + '/'
-		$script:testSecretScope = $environment.testConfig.secretScope.Trim()
+		$script:testWorkspaceFolder = '/' + $plainEnvironment.testConfig.workspaceFolder.Trim('/') + '/'
+		$script:testSecretScope = $plainEnvironment.testConfig.secretScope.Trim()
 	
 		$moduleCommands = Get-Command -Module "DatabricksPS"
 	
