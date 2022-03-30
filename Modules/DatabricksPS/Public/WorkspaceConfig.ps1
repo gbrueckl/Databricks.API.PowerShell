@@ -1,5 +1,34 @@
 
-$script:WorkspaceCconfigKeys = @("enableTokensConfig", "maxTokenLifetimeDays", "enableIpAccessLists", "enableProjectTypeInWorkspace")
+$script:WorkspaceCconfigKeys = @(
+  "enableTokensConfig", 
+  "maxTokenLifetimeDays", 
+  "enableIpAccessLists", 
+  "enableJobViewAcls",
+  "enforceClusterViewAcls",
+  "enforceWorkspaceViewAcls",
+  "enableHlsRuntime",
+  "enableDcs",
+  "enableProjectTypeInWorkspace",
+  "enableWorkspaceFilesystem",
+  "enableProjectsAllowList",
+  "projectsAllowList",
+  "enable-X-Frame-Options",
+  "enable-X-Content-Type-Options",
+  "enable-X-XSS-Protection",
+  "enableResultsDownloading",
+  "enableUploadDataUis",
+  "enableExportNotebook",
+  "enableNotebookGitVersioning",
+  "enableNotebookTableClipboard",
+  "enableWebTerminal",
+  "enableDbfsFileBrowser",
+  "enableDatabricksAutologgingAdminConf",
+  "mlflowRunArtifactDownloadEnabled",
+  "mlflowModelServingEndpointCreationEnabled",
+  "mlflowModelRegistryEmailNotificationsEnabled",
+  "rStudioUserDefaultHomeBase",
+  "storeInteractiveNotebookResultsInCustomerAccount"
+)
 Function Get-DatabricksWorkspaceConfig {
   <#
       .SYNOPSIS
@@ -8,22 +37,24 @@ Function Get-DatabricksWorkspaceConfig {
       This request gets different information based on what you pass to keys parameter.
       Official API Documentation: https://docs.databricks.com/dev-tools/api/latest/token-management.html#operation/get-configuration
       .PARAMETER Keys 
-      List of keys to retrieve from the workspace config.
+      List of predefined keys to retrieve from the workspace config.
+      .PARAMETER CustomKeys
+      List of keys to retrieve from the workspace config. If one of the keys does not exist, it will throw an error.
       .EXAMPLE
       Get-DatabricksWorkspaceConfig -Keys "enableTokensConfig"
       .EXAMPLE
       Get-DatabricksWorkspaceConfig -Keys "enableIpAccessLists"
   #>
-  [CmdletBinding()]
+  [CmdletBinding(DefaultParameterSetName = "Predefined")]
   param
   (
-    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet({$script:configKeys})] [Alias("Config", "Key")] [string[]] $Keys
+    [Parameter(ParameterSetName = "CustomKeys", Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [Alias("CustomConfig")] [string[]] $CustomKeys
   )
   DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-    New-DynamicParam -Name Keys -Type string[] -ValidateSet $script:WorkspaceCconfigKeys -Alias "Key" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+    New-DynamicParam -Name Keys -Type string[] -ParameterSetName "Predefined" -ValidateSet $script:WorkspaceCconfigKeys -Alias "Key" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -34,13 +65,20 @@ Function Get-DatabricksWorkspaceConfig {
   }
 	
   process {
-    if(-not $PSBoundParameters.ContainsKey('Keys'))
-    {
-      $Keys = $script:WorkspaceCconfigKeys
+    if ($PSCmdlet.ParameterSetName -eq "CustomKeys") {
+      $Keys = $CustomKeys
     }
     else
     {
-      $Keys = $PSBoundParameters.Keys
+      if(-not $PSBoundParameters.ContainsKey('Keys'))
+      {
+        # use all pre-defined keys
+        $Keys = $script:WorkspaceCconfigKeys
+      }
+      else
+      {
+        $Keys = $PSBoundParameters.Keys
+      }
     }
     Write-Verbose "Building Body/Parameters for final API call ..."
 
@@ -69,6 +107,8 @@ Function Set-DatabricksWorkspaceConfig {
 			Maximum token lifetime of new tokens in days, as an integer. If zero, new tokens are permitted to have no lifetime limit. Negative numbers are unsupported. WARNING: This limit only applies to new tokens, so there may be tokens with lifetimes longer than this value, including unlimited lifetime. Such tokens may have been created before the current maximum token lifetime was set. To review existing tokens, see the get tokens API.
       .PARAMETER EnableIpAccessLists
 			The IP access list feature is enabled for the workspace if true and it is disabled if false. Note that these are String values, not booleans.
+      .PARAMETER CustomConfig
+      A dictionary containing the new settings you want to use.
 			.EXAMPLE
 			Set-DatabricksWorkspaceConfig -EnableTokensConfig $true
       .EXAMPLE
@@ -79,11 +119,26 @@ Function Set-DatabricksWorkspaceConfig {
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [bool] $EnableTokensConfig,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $MaxTokenLifetimeDays,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [bool] $EnableIpAccessLists,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [bool] $EnableProjectTypeInWorkspace
+    [Parameter(ParameterSetName = "CustomConfig", Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [hashtable] $CustomConfig
   )
+  DynamicParam {
+    #Create the RuntimeDefinedParameterDictionary
+    $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+    
+    foreach($item in $script:WorkspaceCconfigKeys)
+    {
+      if($item -contains "enable" -or $item -contains "enforce")
+      {
+        New-DynamicParam -Name $item -Type bool -ParameterSetName "Predefined" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+      }
+      else {
+        New-DynamicParam -Name $item -Type string -ParameterSetName "Predefined" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+      }
+      
+    } 
+    #return RuntimeDefinedParameterDictionary
+    return $Dictionary
+  }
 	
   begin {
     $requestMethod = "PATCH"
@@ -94,23 +149,22 @@ Function Set-DatabricksWorkspaceConfig {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
     #Set parameters
-    $parameters = @{ }
+    if ($PSCmdlet.ParameterSetName -eq "CustomConfig") {
+      $parameters = $CustomConfig
+    }
+    else {
+      $parameters = @{ }
 
-    if($PSBoundParameters.ContainsKey('EnableTokensConfig'))
-    { 
-      $parameters | Add-Property -Name "enableTokensConfig" -Value $EnableTokensConfig -Force
-    }
-    if($PSBoundParameters.ContainsKey('MaxTokenLifetimeDays'))
-    { 
-      $parameters | Add-Property -Name "maxTokenLifetimeDays" -Value $MaxTokenLifetimeDays -Force
-    }
-    if($PSBoundParameters.ContainsKey('EnableIpAccessLists'))
-    { 
-      $parameters | Add-Property -Name "enableIpAccessLists" -Value $EnableIpAccessLists.toString().toLower() -Force # has to be a string
-    }
-    if($PSBoundParameters.ContainsKey('EnableProjectTypeInWorkspace'))
-    { 
-      $parameters | Add-Property -Name "enableProjectTypeInWorkspace" -Value $EnableProjectTypeInWorkspace
+      foreach($param in $PSBoundParameters.GetEnumerator())
+      {
+        # only use predefined keys
+        if(-not ($param.Key -in $script:WorkspaceCconfigKeys))
+        {
+          Continue
+        }
+
+        $parameters | Add-Property -Name $param.Key -Value $param.Value -Force
+      }
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

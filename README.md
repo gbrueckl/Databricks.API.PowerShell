@@ -9,6 +9,11 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.4:
+- Added support for `-CustomKeys` when using `Get-DatabricksWorkspaceConfig`
+- Added dedicated parameters for all known workspace configs to `Set-DatabricksWorkspaceConfig`
+### v1.9.9.3:
+- Added support for `-CustomConfig` when using `Set-DatabricksWorkspaceConfig`
 ### v1.9.9.2:
 - Add better suppot for integration with CI/CD pipelines
 	- Azure DevOps: `Set-DatabricksEnvironment` now supports the new switch `-UsingAzureDevOpsServiceConnection` to be used with Azure DevOps CLI Task - see [Azure DevOps Integration](#azure-devops-integration)
