@@ -117,11 +117,14 @@ Function Add-DatabricksCluster {
       $parameters = @{}
     }
 	
-    if ($PythonVersion) { # check if a PythonVersion was explicitly specified
-      if (-not $SparkEnvVars) { # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
+    if ($PythonVersion) {
+      # check if a PythonVersion was explicitly specified
+      if (-not $SparkEnvVars) {
+        # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
         $SparkEnvVars = @{}
       }
-      switch ($PythonVersion) { # set PYSPARK_PYTHON environment variable accordingly 
+      switch ($PythonVersion) {
+        # set PYSPARK_PYTHON environment variable accordingly 
         '2' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
         '2 (2.7)' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
         '3' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
@@ -130,12 +133,15 @@ Function Add-DatabricksCluster {
       Write-Verbose "PythonVersion set to $PythonVersion"
     }
 
-    if (-not $SparkConf) { # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
+    if (-not $SparkConf) {
+      # ensure that the SparkConf variable exists - otherwise create it as empty hashtable
       $SparkConf = @{}
     }
 	
-    if ($ClusterMode) { # check if a ClusterMode was explicitly specified
-      if (-not $CustomTags) { # ensure that the CustomTags variable exists - otherwise create it as empty hashtable
+    if ($ClusterMode) {
+      # check if a ClusterMode was explicitly specified
+      if (-not $CustomTags) {
+        # ensure that the CustomTags variable exists - otherwise create it as empty hashtable
         $CustomTags = @{}
       }
       switch ($ClusterMode) { 
@@ -171,10 +177,12 @@ Function Add-DatabricksCluster {
     } 
 
     $nonEmptyParameters = @{}
-    foreach ($prop in $parameters.GetEnumerator())
-    {
-      #Write-Host $($prop.Value | ConvertTo-Json -Compress)
-      if($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -ne "{}") { 
+    foreach ($prop in $parameters.GetEnumerator()) {
+      if (
+          ($prop.Name -in @("num_workers")) -or #some properties need to allow empty/0 value
+          ($prop.Value.GetType().Name -eq "Boolean") -or # for boolean values we also want to keep "False" as value
+          ($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -notin @("{}", "[]")) # value is not empty 
+      ) {
         $nonEmptyParameters.Add($prop.Name, $prop.Value)
       }
     }
@@ -316,11 +324,14 @@ Function Update-DatabricksCluster {
       $parameters = @{}
     }
 
-    if ($PythonVersion) { # check if a PythonVersion was explicitly specified
-      if (-not $SparkEnvVars) { # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
+    if ($PythonVersion) {
+      # check if a PythonVersion was explicitly specified
+      if (-not $SparkEnvVars) {
+        # ensure that the SparkEnvVars variable exists - otherwise create it as empty hashtable
         $SparkEnvVars = @{}
       }
-      switch ($PythonVersion) { # set PYSPARK_PYTHON environment variable accordingly 
+      switch ($PythonVersion) {
+        # set PYSPARK_PYTHON environment variable accordingly 
         '2' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
         '2 (2.7)' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python/bin/python' -Force } 
         '3' { $SparkEnvVars | Add-Property -Name 'PYSPARK_PYTHON' -Value '/databricks/python3/bin/python3' -Force }
@@ -365,10 +376,12 @@ Function Update-DatabricksCluster {
     }
 
     $nonEmptyParameters = @{}
-    foreach ($prop in $parameters.GetEnumerator())
-    {
-      #Write-Host $($prop.Value | ConvertTo-Json -Compress)
-      if($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -ne "{}") { 
+    foreach ($prop in $parameters.GetEnumerator()) {
+      if (
+          ($prop.Name -in @("num_workers")) -or #some properties need to allow empty/0 value
+          ($prop.Value.GetType().Name -eq "Boolean") -or # for boolean values we also want to keep "False" as value
+          ($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -notin @("{}", "[]")) # value is not empty 
+      ) {
         $nonEmptyParameters.Add($prop.Name, $prop.Value)
       }
     }

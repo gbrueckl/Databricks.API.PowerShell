@@ -156,7 +156,7 @@ Function Update-DatabricksRepo {
 		if ($PSCmdlet.ParameterSetName -eq "Branch") {
 			$parameters | Add-Property  -Name "branch" -Value $Branch
 		}
-		elseif ($PSCmdlet.ParameterSetName -eq "Branch") {
+		elseif ($PSCmdlet.ParameterSetName -eq "Tag") {
 			$parameters | Add-Property  -Name "tag" -Value $Tag
 		}
 

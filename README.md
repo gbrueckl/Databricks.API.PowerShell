@@ -9,6 +9,10 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.6:
+- Fix issue with removal of empty parameters in `Add-DatabricksCluster`
+### v1.9.9.5:
+- Fix issue with Repos API and pulling Tags
 ### v1.9.9.4:
 - Added support for `-CustomKeys` when using `Get-DatabricksWorkspaceConfig`
 - Added dedicated parameters for all known workspace configs to `Set-DatabricksWorkspaceConfig`
