@@ -416,8 +416,7 @@ Function Upload-DatabricksFSFile {
 	$localFile = [System.IO.File]::ReadAllBytes($LocalPath)
 	$totalSize = $localFile.Length
 	
-	if($totalSize -gt 0)
-	{
+	if ($totalSize -gt 0) {
 		Write-Verbose "Starting upload of file in batches of size $BatchSize ..."
 		$offset = 0
 		do {
@@ -484,16 +483,25 @@ Function Download-DatabricksFSFile {
 	}
 	
 	$totalSize = $dbfsFile.file_size # number of bytes of the original file!
+
+	
 	
 	Write-Verbose "Starting download of file in batches of size $BatchSize ..."
-	Set-Content -Path $LocalPath -Value @() -Encoding Byte 
+	if ($PSVersionTable.PSEdition -eq "Core") {
+		$encoding = @{ AsByteStream = $true }
+	}
+	else {
+		$encoding = @{ Encoding = "Byte" }
+	}
+	Set-Content -Path $LocalPath -Value @() @encoding
+	
 	$offset = 0
 	do {
 		Write-Verbose "Downloading new content from offset $offset ..."
 		$dbfsFileContent = Get-DatabricksFSContent -Path $dbfsFile.path -Offset $offset -Length $BatchSize
 		$dbfsByteContent = [System.Convert]::FromBase64String($dbfsFilecontent.data)
 		
-		Add-Content -Path $LocalPath -Value $dbfsByteContent -Encoding Byte -ErrorAction Stop
+		Add-Content -Path $LocalPath -Value $dbfsByteContent -ErrorAction Stop @encoding
 		
 		$offset = $offset + $BatchSize
 	} while ($offset -lt $totalSize)	

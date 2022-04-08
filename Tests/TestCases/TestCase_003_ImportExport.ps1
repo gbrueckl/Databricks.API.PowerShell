@@ -3,8 +3,19 @@
 $testCaseName = $myInvocation.MyCommand.Name
 Write-Information "Starting Testcase $testCaseName ..."
 
-# when executed as script (not via UI/ISE), the location was already set
-$rootPath = Get-Location
+# if executed from PowerShell ISE
+if (-not $PSCommandPath) { 
+	$rootPath = Switch ($Host.name) {
+		'Visual Studio Code Host' { Split-Path $psEditor.GetEditorContext().CurrentFile.Path }
+		'Windows PowerShell ISE Host' { Split-Path -Path $psISE.CurrentFile.FullPath }
+		'ConsoleHost' { $PSScriptRoot }
+	}
+	$rootPath = $rootPath | Split-Path -Parent | Split-Path -Parent
+}
+else {
+	# when executed as script (not via UI/ISE), the location was already set
+	$rootPath = Get-Location
+}
 
 Write-Information "Testing Import/Export ..."
 $workspacePathOnline = $script:testWorkspaceFolder # must also match whats in /Content/Workspace/XXX !!!

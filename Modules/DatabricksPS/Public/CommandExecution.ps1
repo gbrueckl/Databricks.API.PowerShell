@@ -7,10 +7,12 @@ Function Start-DatabricksCommand {
       Official API Documentation: https://docs.databricks.com/dev-tools/api/1.2/index.html#command-execution-1
       .PARAMETER ClusterID 
       The id of an existing cluster you want to use.
-      .PARAMETER Language 
-      The language for which you want to create an execution context.
       .PARAMETER ContextID 
       The id of the context on which you want to run the command/file.
+      .PARAMETER Language 
+      The language for which you want to create an execution context.
+      .PARAMETER Command 
+      The actual command you want to run.
       .EXAMPLE
       Start-DatabricksCommand -ClusterID "1202-211320-brick1" -Language Scala -ContextID 6317282514101885389 -Command "sc.parallelize(1 to 10).collect"
   #>
@@ -53,7 +55,7 @@ Function Start-DatabricksCommand {
 }
 
 
-Function Get-DatabricksCommandStatus {
+Function Get-DatabricksCommand {
   <#
       .SYNOPSIS
       Show the status of an existing command.
@@ -62,12 +64,12 @@ Function Get-DatabricksCommandStatus {
       Official API Documentation: https://docs.databricks.com/dev-tools/api/1.2/index.html#command-execution-1
       .PARAMETER ClusterID 
       The id of an existing cluster you want to use.
-      .PARAMETER CommandID 
-      The id of the command for which to retrieve the status.
       .PARAMETER ContextID 
       The id of the context for which to retrieve the status.
+      .PARAMETER CommandID 
+      The id of the command for which to retrieve the status.
       .EXAMPLE
-      Get-DatabricksExecutionContextStatus -ClusterID "1202-211320-brick1" -CommandID 5220029674192230006
+      Get-DatabricksCommand -ClusterID "1202-211320-brick1" -ContextId 221312313123 -CommandID 5220029674192230006
   #>
   [CmdletBinding()]
   param
@@ -95,15 +97,17 @@ Function Get-DatabricksCommandStatus {
     return $result
   }
 }
+# function was renamed on 2022-04-08 - for backwards compatiblity an alias is added with the old name
+New-Alias -Name Get-DatabricksCommandStatus -Value Get-DatabricksCommand
 
 
-Function Remove-DatabricksExecutionContext {
+Function Stop-DatabricksCommand {
   <#
       .SYNOPSIS
-      Destroy an execution context.
+      Stops/Cancels a Databricks Command
       .DESCRIPTION
-      Destroy an execution context.
-      Official API Documentation: https://docs.databricks.com/dev-tools/api/1.2/index.html#execution-context
+      Stops/Cancels a Databricks Command
+      Official API Documentation: https://docs.databricks.com/dev-tools/api/1.2/index.html#cancel-a-command
       .PARAMETER ClusterID 
       The id of of the cluster on which you want to cancel the command.
       .PARAMETER ContextID 
@@ -111,8 +115,7 @@ Function Remove-DatabricksExecutionContext {
       .PARAMETER CommandID
       The id of the command you wan tto cancel
       .EXAMPLE
-      Remove-DatabricksExecutionContext -ClusterID "1202-211320-brick1" -ContextID 6317282514101885389
-
+      Stop-DatabricksCommand -ClusterID "1202-211320-brick1" -ContextId 221312313123 -CommandID 5220029674192230006
   #>
   [CmdletBinding()]
   param
