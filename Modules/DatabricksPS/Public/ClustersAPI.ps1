@@ -58,32 +58,32 @@ Function Add-DatabricksCluster {
   [CmdletBinding()]
   param
   (
-    [Parameter(ParameterSetName = "FixedSize", Mandatory = $true)] [int32] $NumWorkers,
-    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true)] [int32] $MinWorkers, 
-    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true)] [int32] $MaxWorkers, 
+    [Parameter(ParameterSetName = "FixedSize", Mandatory = $true)] [Alias("num_workers")] [int32] $NumWorkers,
+    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true)] [Alias("min_workers")] [int32] $MinWorkers, 
+    [Parameter(ParameterSetName = "Autoscale", Mandatory = $true)] [Alias("max_workers")] [int32] $MaxWorkers, 
 		
     [Parameter(ParameterSetName = "ClusterObject", Mandatory = $true, ValueFromPipeline = $true)] [object] $ClusterObject,
 		
-    [Parameter(Mandatory = $false)] [string] $ClusterName, 
-    [Parameter(Mandatory = $false)] [hashtable] $SparkConf, 
-    [Parameter(Mandatory = $false)] [hashtable] $AwsAttributes, 
-    [Parameter(Mandatory = $false)] [string[]] $SshPublicKeys, 
-    [Parameter(Mandatory = $false)] [hashtable] $CustomTags, 
-    [Parameter(Mandatory = $false)] [object] $ClusterLogConf, 
-    [Parameter(Mandatory = $false)] [object[]] $InitScripts, 
-    [Parameter(Mandatory = $false)] [hashtable] $SparkEnvVars, 
-    [Parameter(Mandatory = $false)] [int32] $AutoterminationMinutes, 
-    [Parameter(Mandatory = $false)] [Nullable[bool]] $EnableElasticDisk,
-    [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3",
-    [Parameter(Mandatory = $false)] [string] [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
+    [Parameter(Mandatory = $false)] [Alias("cluster_name")] [string] $ClusterName, 
+    [Parameter(Mandatory = $false)] [Alias("spark_conf")] [hashtable] $SparkConf, 
+    [Parameter(Mandatory = $false)] [Alias("aws_attributes")][hashtable] $AwsAttributes, 
+    [Parameter(Mandatory = $false)] [Alias("ssh_public_keys")] [string[]] $SshPublicKeys, 
+    [Parameter(Mandatory = $false)] [Alias("custom_tags")] [hashtable] $CustomTags, 
+    [Parameter(Mandatory = $false)] [Alias("cluster_log_conf")] [object] $ClusterLogConf, 
+    [Parameter(Mandatory = $false)] [Alias("init_scripts")] [object[]] $InitScripts, 
+    [Parameter(Mandatory = $false)] [Alias("spark_env_vars")] [hashtable] $SparkEnvVars, 
+    [Parameter(Mandatory = $false)] [Alias("autotermination_minutes")] [int32] $AutoterminationMinutes, 
+    [Parameter(Mandatory = $false)] [Alias("enable_elastic_disk")] [Nullable[bool]] $EnableElasticDisk,
+    [Parameter(Mandatory = $false)] [Alias("python_version")] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3",
+    [Parameter(Mandatory = $false)] [Alias("cluster_mode")]  [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
   )
   DynamicParam {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
-    New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -DPDictionary $Dictionary
+    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -DPDictionary $Dictionary
+    New-DynamicParam -Name DriverNodeTypeId -ValidateSet $nodeTypeIdValues -Alias "driver_node_type_id" -DPDictionary $Dictionary
 
     $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
     New-DynamicParam -Name InstancePoolId -ValidateSet $instancePoolValues -Alias "instance_pool_id" -DPDictionary $Dictionary
@@ -257,22 +257,23 @@ Function Update-DatabricksCluster {
   [CmdletBinding(DefaultParametersetName = "ClusterID")]
   param
   (
-    [Parameter(Mandatory = $false)] [int32] $NumWorkers,
-    [Parameter(Mandatory = $false)] [int32] $MinWorkers, 
-    [Parameter(Mandatory = $false)] [int32] $MaxWorkers, 
+    [Parameter(Mandatory = $false)] [Alias("num_workers")] [int32] $NumWorkers,
+    [Parameter(Mandatory = $false)] [Alias("min_workers")] [int32] $MinWorkers, 
+    [Parameter(Mandatory = $false)] [Alias("max_workers")] [int32] $MaxWorkers, 
 		
     [Parameter(ParameterSetName = "ClusterObject", Mandatory = $true, ValueFromPipeline = $true)] [object] $ClusterObject,
-    [Parameter(Mandatory = $false)] [string] $ClusterName, 
-    [Parameter(Mandatory = $false)] [hashtable] $SparkConf, 
-    [Parameter(Mandatory = $false)] [hashtable] $AwsAttributes, 
-    [Parameter(Mandatory = $false)] [string[]] $SshPublicKeys, 
-    [Parameter(Mandatory = $false)] [hashtable] $CustomTags, 
-    [Parameter(Mandatory = $false)] [object] $ClusterLogConf, 
-    [Parameter(Mandatory = $false)] [object[]] $InitScripts, 
-    [Parameter(Mandatory = $false)] [hashtable] $SparkEnvVars, 
-    [Parameter(Mandatory = $false)] [int32] $AutoterminationMinutes, 
-    [Parameter(Mandatory = $false)] [Nullable[bool]] $EnableElasticDisk,
-    [Parameter(Mandatory = $false)] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion
+
+    [Parameter(Mandatory = $false)] [Alias("cluster_name")] [string] $ClusterName, 
+    [Parameter(Mandatory = $false)] [Alias("spark_conf")] [hashtable] $SparkConf, 
+    [Parameter(Mandatory = $false)] [Alias("aws_attributes")][hashtable] $AwsAttributes, 
+    [Parameter(Mandatory = $false)] [Alias("ssh_public_keys")] [string[]] $SshPublicKeys, 
+    [Parameter(Mandatory = $false)] [Alias("custom_tags")] [hashtable] $CustomTags, 
+    [Parameter(Mandatory = $false)] [Alias("cluster_log_conf")] [object] $ClusterLogConf, 
+    [Parameter(Mandatory = $false)] [Alias("init_scripts")] [object[]] $InitScripts, 
+    [Parameter(Mandatory = $false)] [Alias("spark_env_vars")] [hashtable] $SparkEnvVars, 
+    [Parameter(Mandatory = $false)] [Alias("autotermination_minutes")] [int32] $AutoterminationMinutes, 
+    [Parameter(Mandatory = $false)] [Alias("enable_elastic_disk")] [Nullable[bool]] $EnableElasticDisk,
+    [Parameter(Mandatory = $false)] [Alias("python_version")] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3"
   )
 	
   DynamicParam {

@@ -9,6 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.8:
+- Add parameter aliases to `Add-DatabricksCluster` and `Update-DatabricksCluster` to match the names used in the cluster definition (e.g. `cluster_name` for `-CusterName`)
 ### v1.9.9.7:
 - Add aliases for all cmdlets - e.g. `gdbrc` for `Get-DatabricksCluster`
 - Fix minor issue with dictionaries/hashtables being passed as parameters

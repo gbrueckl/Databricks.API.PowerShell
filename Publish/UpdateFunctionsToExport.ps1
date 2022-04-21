@@ -67,7 +67,7 @@ foreach($import in $PublicFunctions)
 		{
 			$exportedAliases += @($alias)
 
-			Write-Information "Adding Alias $alias for function $function ..."
+			Write-Information "`tAdding Alias $alias for function $function ..."
 		}
 	}
 }
