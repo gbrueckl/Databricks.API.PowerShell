@@ -738,8 +738,8 @@ Function Pin-DatabricksCluster {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    # this API call returns no result
-    #return $result
+    # return a new PSCustomObject to support piping 
+    return [PSCustomObject]@{"cluster_id" = $ClusterID}
   }
 }
 
@@ -786,8 +786,8 @@ Function Unpin-DatabricksCluster {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    # this API call returns no result
-    #return $result
+    # return a new PSCustomObject to support piping 
+    return [PSCustomObject]@{"cluster_id" = $ClusterID}
   }
 }
 

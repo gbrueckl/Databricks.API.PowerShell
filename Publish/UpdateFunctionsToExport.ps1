@@ -97,7 +97,7 @@ $regEx = '(AliasesToExport\s*=\s*@\()([^\)]*)(\))' # use 3 groups of which the s
 $matches = [regex]::Matches($psdContent, $regEx)
 
 $aliasesToExport = "`n'" + ($exportedAliases -join "', `n'") + "'`n"
-$psdContent = [regex]::Replace($psdContent, $regEx, '$1' + $aliasesToExport + '$3')
+$psdContent = [regex]::Replace($psdContent, $regEx, '$1' + $aliasesToExport + '$3').Trim()
 
 Write-Information "Writing updated Content to $psdFilePath ..."
 $psdContent | Out-File "$psdFilePath" -Encoding "UTF8"

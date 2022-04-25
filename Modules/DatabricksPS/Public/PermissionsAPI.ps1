@@ -367,7 +367,7 @@ Function ConvertTo-DatabricksACL {
       .PARAMETER AccessControlList 
       The ACL object returned from Get-DatabricksPermissions or Set-DatabricksPermissions.
       .EXAMPLE
-      Get-DatabricksPermissions -ObjectType "CLUSTERS" -ObjectID "1202-211320-brick1" | Get-DatabricksPermissionsFromACL
+      Get-DatabricksPermissions -ObjectType "CLUSTERS" -ObjectID "1202-211320-brick1" | ConvertTo-DatabricksACL
   #>
   [CmdletBinding()]
   param
