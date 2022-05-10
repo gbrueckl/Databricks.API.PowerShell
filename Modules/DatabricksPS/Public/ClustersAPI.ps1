@@ -75,7 +75,7 @@ Function Add-DatabricksCluster {
     [Parameter(Mandatory = $false)] [Alias("autotermination_minutes")] [int32] $AutoterminationMinutes, 
     [Parameter(Mandatory = $false)] [Alias("enable_elastic_disk")] [Nullable[bool]] $EnableElasticDisk,
     [Parameter(Mandatory = $false)] [Alias("python_version")] [string] [ValidateSet("2", "2 (2.7)", "3", "3 (3.5)")] $PythonVersion = "3",
-    [Parameter(Mandatory = $false)] [Alias("cluster_mode")]  [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
+    [Parameter(Mandatory = $false)] [Alias("cluster_mode")] [string] [ValidateSet("HighConcurrency", "Standard", "SingleNode")] $ClusterMode
   )
   DynamicParam {
     #Create the RuntimeDefinedParameterDictionary

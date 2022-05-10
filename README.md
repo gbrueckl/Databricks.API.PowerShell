@@ -9,6 +9,10 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.11:
+- Add new flag `-UsingAzContext` for `Set-DatabricksEnvironment` to derive authentication and URL from the [Azure Az module](https://docs.microsoft.com/en-us/powershell/azure/new-azureps-module-az)
+### v1.9.9.10:
+- Add support for [Git Credentials API](https://docs.databricks.com/dev-tools/api/latest/gitcredentials.html)
 ### v1.9.9.9:
 - Make `Pin-DatabricksCluster` and `Unpin-DatabricksCluster` return an object containing the `cluster_id` for further piping into other cmdlets.
 ### v1.9.9.8:
@@ -194,14 +198,15 @@ Invoke-DatabricksApiRequest -Method "POST" -EndPoint "/2.0/clusters/resize" -Bod
 ```
 
 # Authentication
-There are 3 ways to authenticate against the Databricks REST API of which 2 are unique to Azure:
+There are various ways to authenticate against the Databricks REST API of which some are unique to Azure:
 - Personal Access token 
 - Azure Active Directory (AAD) Username/Password (Azure only!)
 - Azure Active Directory (AAD) Service Principal (Azure only!)
 
 In additiont to those, the DatabricksPS module also integrates with other tools to derive the configuration and authentication. Currently these tools include:
-- Azure DevOps Service Connections
+- Azure DevOps Service Connections (Azure only!)
 - Databricks CLI
+- [Azure Az PowerShell module](https://docs.microsoft.com/en-us/powershell/azure/new-azureps-module-az) (Azure only!)
 
 ## Personal Access Token
 This is the most straight forward authentication and works for both, Azure and AWS.
@@ -247,7 +252,8 @@ $apiUrl = "https://westeurope.azuredatabricks.net"
 Set-DatabricksEnvironment -ClientID $clientId -Credential $credSP -AzureResourceID $azureResourceId -TenantID $tenantId -ApiRootUrl $apiUrl -ServicePrincipal
 ```
 
-# Azure DevOps Integration
+
+## Azure DevOps Integration
 If you want to use DatabricksPS module in your Azure DevOps pipelines and do not want to manage your Personal Access Tokens but leverage the Azure DevOps Service Connections instead, you can use the following YAML task defintion:
 ```
 - task: AzureCLI@2
@@ -266,11 +272,25 @@ If you want to use DatabricksPS module in your Azure DevOps pipelines and do not
 ```
 The important part is to use AzureCLI which allows you to choose a Azure DevOps Service Connection and persist the authentication information as temporary environment variables by using `addSpnToEnvironment: true`. Unfortunatelly this is currently not possible using AzurePowerShell.
 
-# Databricks CLI Integration
+## Databricks CLI Integration
 The Databricks CLI Integration relies on the Databricks CLI being installed and configured on your agent/machine already. It basically requires the two environment variables `DATABRICKS_HOST` and `DATABRICKS_TOKEN` to be set and only works with Personal Access Tokens. If those two environment variables are set, you can use the following code in your PowerShell task to e.g. stop all available clusters:
 ```
 Set-DatabricksEnvironment -UsingDatabricksCLIAuthentication
 Get-DatabricksCluster | Stop-DatabricksCluster
+```
+
+## Azure Az module Integration
+In the context of Azure, the Azure Az PowerShell module is the core of most solutions. To use the authentication provided by the Az module, you can simply use the switch `-UsingAzContext` and the `-AzureResourceID` and the DatabricksPS module will take care of the rest:
+```powershell
+# Connect to Azure using the Az module
+Connect-AzAccount 
+
+$subscriptionId = '30373b46-5678-5678-5678-d5560532fc32'
+$resourceGroupName = 'myResourceGroup'
+$workspaceName = 'myDatabricksWorkspace'
+$azureResourceId = "/subscriptions/$subscriptionId/resourceGroups/$resourceGroupName/providers/Microsoft.Databricks/workspaces/$workspaceName"
+
+Set-DatabricksEnvironment -UsingAzContext -AzureResourceID $azureResourceId
 ```
 
 # Supported APIs and endpoints

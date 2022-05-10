@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.9.9.9'
+	ModuleVersion     = '1.9.9.11'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -102,6 +102,10 @@
 'Set-DatabricksDynamicParameterCacheTimeout', 
 'Get-DatabricksPSStatus', 
 'Get-DatabricksApiRootUrl', 
+'Get-DatabricksGitCredential', 
+'Add-DatabricksGitCredential', 
+'Update-DatabricksGitCredential', 
+'Remove-DatabricksGitCredential', 
 'Add-DatabricksGlobalInitScript', 
 'Get-DatabricksGlobalInitScript', 
 'Remove-DatabricksGlobalInitScript', 
@@ -239,6 +243,10 @@
 'sdbrdpct', 
 'gdbrpss', 
 'gdbraru', 
+'gdbrgc', 
+'adbrgc', 
+'uddbrgc', 
+'rdbrgc', 
 'adbrgis', 
 'gdbrgis', 
 'rdbrgis', 
