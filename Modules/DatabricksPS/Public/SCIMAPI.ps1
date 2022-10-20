@@ -85,13 +85,13 @@ Function Add-DatabricksSCIMUser {
       .EXAMPLE
       Add-DatabricksSCIMUser -UserName John.doe@test.com -GroupNames admins -Entitlements allow-cluster-create -Verbose
   #>
-  [CmdletBinding()]
+  [CmdletBinding(DefaultParametersetname = "Entitlements")]
   param (
     [Parameter(Mandatory = $True)] [Alias("user_name")] [string] $UserName,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
-    [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(ParameterSetName = "Entitlements", Mandatory = $false)]
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')] [AllowEmptyCollection()] [string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
   ) 
@@ -143,14 +143,15 @@ Function Remove-DatabricksSCIMUser {
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $true)] [Alias("user_id")] [string] $UserID
+    [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $true)] [Alias("user_id", "id")] [string] $UserID
   ) 
   begin {
     $requestMethod = "DELETE"
-    $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
   }
 	
   process {
+    $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
+
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -ContentType 'application/scim+json'
     
     return $result
@@ -179,7 +180,7 @@ Function Update-DatabricksSCIMUser {
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True)] [Alias("user_id")] [long] $UserID,
+    [Parameter(Mandatory = $True)] [Alias("user_id", "id")] [long] $UserID,
     [Parameter(Mandatory = $True)] [Alias("user_name")] [string] $UserName,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
@@ -190,10 +191,11 @@ Function Update-DatabricksSCIMUser {
   )  
   begin {
     $requestMethod = "PUT"
-    $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
   }
 	
   process {
+    $apiEndpoint = "/2.0/preview/scim/v2/Users/$UserID"
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
@@ -257,13 +259,13 @@ Function Get-DatabricksSCIMGroup {
   begin {
     $requestMethod = "GET"
     $apiEndpoint = "/2.0/preview/scim/v2/Groups"
-    
-    if ($PSCmdlet.ParameterSetName -eq "ByGroupID") { 
-      $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
-    }
   }
 	
   process {
+    if ($PSCmdlet.ParameterSetName -eq "ByGroupID") { 
+      $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
+    }
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
@@ -349,14 +351,15 @@ Function Remove-DatabricksSCIMGroup {
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True)] [Alias("group_id")] [string] $GroupID
+    [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $true)] [Alias("group_id", "id")] [string] $GroupID
   ) 
   begin {
     $requestMethod = "DELETE"
-    $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
   }
 	
   process {
+    $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
+
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -ContentType 'application/scim+json'
     
     return $result
@@ -381,16 +384,17 @@ Function Update-DatabricksSCIMGroup {
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True)] [Alias("group_id")] [long] $GroupID,
+    [Parameter(Mandatory = $True)] [Alias("group_id", "id")] [long] $GroupID,
     [Parameter(Mandatory = $false)] [long[]] $AddIDs,
     [Parameter(Mandatory = $false)][long[]] $RemoveIDs
   )  
   begin {
     $requestMethod = "PATCH"
-    $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
   }
 	
   process {
+    $apiEndpoint = "/2.0/preview/scim/v2/Groups/$GroupID"
+
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
@@ -557,16 +561,16 @@ Function Remove-DatabricksSCIMServicePrincipal {
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True)] [Alias('service_principal_id', 'id')] [string] $ServicePrincipalID
+    [Parameter(Mandatory = $True, ValueFromPipelineByPropertyName = $true)] [Alias('service_principal_id', 'id')] [string] $ServicePrincipalID
   )
   
   begin {
     $requestMethod = "DELETE"
-
-    $apiEndpoint = "/2.0/preview/scim/v2/ServicePrincipals/$ServicePrincipalID"
   }
 	
   process {
+    $apiEndpoint = "/2.0/preview/scim/v2/ServicePrincipals/$ServicePrincipalID"
+
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -ContentType 'application/scim+json'
     
     return $result
@@ -597,7 +601,7 @@ Function Update-DatabricksSCIMServicePrincipal {
   #>
   [CmdletBinding()]
   param (
-    [Parameter(Mandatory = $True)] [Alias("service_principal_id")] [long] $ServicePrincipalID,
+    [Parameter(Mandatory = $True)] [Alias("service_principal_id", "id")] [long] $ServicePrincipalID,
     [Parameter(Mandatory = $True)] [Alias("application_id", "client_id")] [string] $ApplicationID,
     [Parameter(Mandatory = $True)] [Alias("display_name")] [string] $DisplayName,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
@@ -609,10 +613,11 @@ Function Update-DatabricksSCIMServicePrincipal {
   )  
   begin {
     $requestMethod = "PUT"
-    $apiEndpoint = "/2.0/preview/scim/v2/ServicePrincipals/$ServicePrincipalID"
   }
 	
   process {
+    $apiEndpoint = "/2.0/preview/scim/v2/ServicePrincipals/$ServicePrincipalID"
+    
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }

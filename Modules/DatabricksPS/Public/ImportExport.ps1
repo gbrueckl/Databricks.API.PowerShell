@@ -151,7 +151,7 @@ Function Export-DatabricksEnvironment {
 			$itemPath = $rootItem.path
 		
 			if ($objectType -eq "NOTEBOOK") {
-				Write-Information "NOTEBOOK  found at $itemPath - Exporting item ..."
+				Write-Information "$objectType`t found at $itemPath - Exporting item ..."
 				$item = Get-DatabricksWorkspaceItem -Path $itemPath
 			
 				$exportFormat = $WorkspaceExportFormat
@@ -168,16 +168,13 @@ Function Export-DatabricksEnvironment {
 
 				Export-DatabricksWorkspaceItem -LocalPath $($LocalWorkspacePath + $itemPath.Replace("/", "\") + $extension) -Path $itemPath -Format $exportFormat -CreateFolder
 			}
-			elseif ($objectType -eq "DIRECTORY") {
-				Write-Information "DIRECTORY found at $itemPath - Starting new iteration for WorkspaceItems only ..."
+			elseif ($objectType -in @("DIRECTORY", "REPO")) {
+				Write-Information "$objectType`t found at $itemPath - Starting new iteration for WorkspaceItems only ..."
 				$x = New-Item -ItemType Directory -Force -Path (Join-Path $LocalWorkspacePath -ChildPath $itemPath)
 				Export-DatabricksEnvironment -LocalPath $LocalPath -WorkspaceRootPath $itemPath -WorkspaceExportFormat $WorkspaceExportFormat -Artifacts Workspace
 			}
-			elseif ($objectType -eq "LIBRARY") {
-				Write-Warning "LIBRARY   found at $itemPath - Exporting Libraries is currently not supported!"
-			}
 			else {
-				throw "Workspace item Object Type $objectType under path $itemPath is not supported!"
+				Write-Warning "$objectType`t found at $itemPath - Exporting Libraries is currently not supported!"
 			}
 		}
 	}
@@ -438,7 +435,8 @@ Function Import-DatabricksEnvironment {
 
 				if ($workspaceItem -is [System.IO.DirectoryInfo]) {
 					if ($workspaceItem.BaseName -eq 'users') {
-						Write-Warning "The folder '/users' is protected and cannot be created during imported!"
+						# TODO can only create folders under /users using SCIM API !
+						Write-Warning "The folder '/users' is protected and cannot be created during imported! `nMake sure all users have been created before using Add-DatabricksSCIMUser!"
 						$x = Import-DatabricksEnvironment -LocalPath $workspaceItem.FullName -Artifacts Workspace -OverwriteExistingWorkspaceItems:$OverwriteExistingWorkspaceItems -UpdateExistingClusters:$UpdateExistingClusters -UpdateExistingJobs:$UpdateExistingJobs
 					}
 					else { 

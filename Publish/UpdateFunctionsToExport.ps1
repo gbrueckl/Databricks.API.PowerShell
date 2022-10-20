@@ -17,6 +17,7 @@ $psdFilePath = "$rootPath\Modules\$moduleName\$moduleName.psd1"
 $PublicFunctions = @( Get-ChildItem -Path "$rootPath\Modules\$moduleName\Public\*.ps1" -ErrorAction SilentlyContinue )
 $PublicFunctions = $PublicFunctions | Where-Object { $_.Name -inotlike "*-PREVIEW.ps1" }
 
+# WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!
 function Get-AliasForFunction {
 	[CmdletBinding()]
 	param ([Parameter()] [string] $FunctionName )
@@ -70,6 +71,23 @@ foreach($import in $PublicFunctions)
 			Write-Information "`tAdding Alias $alias for function $function ..."
 		}
 	}
+}
+
+# WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!
+$staticAliases = @{
+	"Get-DatabricksCommandStatus"         = "Get-DatabricksCommand"
+	"Get-DatabricksSQLEndpoint"           = "Get-DatabricksSQLWarehouse"
+	"Add-DatabricksSQLEndpoint"           = "Add-DatabricksSQLWarehouse"
+	"Update-DatabricksSQLEndpoint"        = "Update-DatabricksSQLWarehouse"
+	"Remove-DatabricksSQLEndpoint"        = "Remove-DatabricksSQLWarehouse"
+	"Stop-DatabricksSQLEndpoint"          = "Stop-DatabricksSQLWarehouse"
+	"Start-DatabricksSQLEndpoint"         = "Start-DatabricksSQLWarehouse"
+	"Update-DatabricksSQLEndpointConfig"  = "Update-DatabricksSQLWarehouseConfig"
+	"Get-DatabricksSQLEndpointConfig"     = "Get-DatabricksSQLWarehouseConfig"
+}
+
+foreach ($alias in $staticAliases.GetEnumerator()) {
+	$exportedAliases += @($alias.Name)
 }
 
 if($exportedAliases.Count -ne ($exportedAliases | Select-Object -Unique).Count)

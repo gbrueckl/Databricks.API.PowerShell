@@ -179,6 +179,7 @@ foreach ($environment in $activeEnvironments) {
 		# complex test-cases with dependencies
 		$testCases = Get-ChildItem -Path "$rootPath\Tests\TestCases" -Recurse -Filter "*.ps1"
 		foreach ($testCase in $testCases) {
+			#$testCase = $testcases[2]
 			Write-Information "------------------------------------------------------------"
 			Write-Information "Running TestCase file $($testCase.Name) ..."
 			. $testCase.FullName

@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.9.9.11'
+	ModuleVersion     = '1.9.9.14'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -175,15 +175,15 @@
 'Add-DatabricksSecretScopeACL', 
 'Remove-DatabricksSecretScopeACL', 
 'Get-DatabricksSecretScopeACL', 
-'Add-DatabricksSQLEndpoint', 
-'Remove-DatabricksSQLEndpoint', 
-'Update-DatabricksSQLEndpoint', 
-'Get-DatabricksSQLEndpoint', 
-'Start-DatabricksSQLEndpoint', 
-'Stop-DatabricksSQLEndpoint', 
-'Get-DatabricksSQLEndpointConfig', 
-'Update-DatabricksSQLEndpointConfig', 
 'Get-DatabricksSQLHistory', 
+'Add-DatabricksSQLWarehouse', 
+'Remove-DatabricksSQLWarehouse', 
+'Update-DatabricksSQLWarehouse', 
+'Get-DatabricksSQLWarehouse', 
+'Start-DatabricksSQLWarehouse', 
+'Stop-DatabricksSQLWarehouse', 
+'Get-DatabricksSQLWarehouseConfig', 
+'Update-DatabricksSQLWarehouseConfig', 
 'Add-DatabricksApiToken', 
 'Get-DatabricksApiToken', 
 'Remove-DatabricksApiToken', 
@@ -315,15 +315,15 @@
 'adbrssacl', 
 'rdbrssacl', 
 'gdbrssacl', 
-'adbrsqle', 
-'rdbrsqle', 
-'uddbrsqle', 
-'gdbrsqle', 
-'sadbrsqle', 
-'spdbrsqle', 
-'gdbrsqlec', 
-'uddbrsqlec', 
 'gdbrsqlh', 
+'adbrsqlw', 
+'rdbrsqlw', 
+'uddbrsqlw', 
+'gdbrsqlw', 
+'sadbrsqlw', 
+'spdbrsqlw', 
+'gdbrsqlwc', 
+'uddbrsqlwc', 
 'adbrat', 
 'gdbrat', 
 'rdbrat', 
@@ -333,7 +333,16 @@
 'gdbrwi', 
 'adbrwd', 
 'gdbrwc', 
-'sdbrwc'
+'sdbrwc', 
+'Update-DatabricksSQLEndpoint', 
+'Remove-DatabricksSQLEndpoint', 
+'Update-DatabricksSQLEndpointConfig', 
+'Get-DatabricksSQLEndpoint', 
+'Add-DatabricksSQLEndpoint', 
+'Get-DatabricksCommandStatus', 
+'Get-DatabricksSQLEndpointConfig', 
+'Start-DatabricksSQLEndpoint', 
+'Stop-DatabricksSQLEndpoint'
 )
 
 	# List of all modules packaged with this module

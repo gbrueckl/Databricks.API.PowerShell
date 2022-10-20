@@ -97,9 +97,6 @@ Function Get-DatabricksCommand {
     return $result
   }
 }
-# function was renamed on 2022-04-08 - for backwards compatiblity an alias is added with the old name
-New-Alias -Name Get-DatabricksCommandStatus -Value Get-DatabricksCommand
-
 
 Function Stop-DatabricksCommand {
   <#

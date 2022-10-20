@@ -323,6 +323,29 @@ function ConvertFrom-Base64 {
 }
 
 
+function ConvertTo-KeyValueArray {
+	<# 
+			.SYNOPSIS 
+			Converts a PowerShell hashtable to an array of recods with key and value properties
+			.DESCRIPTION 
+			Converts a PowerShell hashtable to an array of recods with key and value properties
+			.PARAMETER InputObject
+			The object to convert to a hashtable
+	#>
+	[CmdletBinding()]
+	param (
+		[Parameter(ValueFromPipeline = $true)] [hashtable] $InputObject
+	)
+	$ret = @()
+	foreach($kvp in $InputObject.GetEnumerator())
+	{
+		$item = @{key = $kvp.Key
+					value = $kvp.value}
+		$ret += $item
+	}
+
+	return $ret
+}
 
 function ConvertTo-Hashtable {
 	<# 

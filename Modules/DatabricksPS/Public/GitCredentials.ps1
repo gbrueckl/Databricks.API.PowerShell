@@ -22,7 +22,7 @@ Function Get-DatabricksGitCredential {
   }
 	
   process {    
-    if ($ClusterID) {
+    if ($CredentialID) {
       Write-Verbose "CredentialID specified ($CredentialID) - using get endpoint instead of list endpoint..."
       $apiEndpoint = "/2.0/git-credentials/$CredentialID"
     }

@@ -9,6 +9,17 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.14:
+- Fixed issue with piping and `Update-DatabricksSQLWarehouse`
+### v1.9.9.13:
+- Updates to the SQL Warehouse API (new parameters like `-EnableServerlessCompute`)
+- Added automated tests for SQL Warehouse API
+- Fixed issues with aliases
+- Fixed issues with SQL Warehouse API
+### v1.9.9.12:
+- Fixed issue when exporting a REPO folder via `Export-DatabricksEnvironment`
+- Fixes with pipelining in SCIM API cmdlets
+- Fixed issues with the SQL Warehouse API
 ### v1.9.9.11:
 - Add new flag `-UsingAzContext` for `Set-DatabricksEnvironment` to derive authentication and URL from the [Azure Az module](https://docs.microsoft.com/en-us/powershell/azure/new-azureps-module-az)
 ### v1.9.9.10:

@@ -51,18 +51,15 @@ $script:dbApiCallRetryWait = $null
 # $PrivateFunctions  = @( Get-ChildItem -Path "$(split-path $psEditor.GetEditorContext().CurrentFile.Path)\Private\*.ps1" -ErrorAction SilentlyContinue )
 
 #Get public and private function definition files.
-$PublicFunctions  = @( Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -ErrorAction SilentlyContinue )
+$PublicFunctions = @( Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -ErrorAction SilentlyContinue )
 $PrivateFunctions = @( Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -ErrorAction SilentlyContinue )
 
 #Dot source the files
-foreach($import in @($PublicFunctions + $PrivateFunctions))
-{
-  try
-  {
+foreach ($import in @($PublicFunctions + $PrivateFunctions)) {
+  try {
     . $import.fullname
   }
-  catch
-  {
+  catch {
     Write-Error -Message "Failed to import functions from file $($import.fullname): $_"
   }
 }
@@ -73,26 +70,26 @@ foreach($import in @($PublicFunctions + $PrivateFunctions))
 # This update is done right before the module is published to the gallery using the script
 # /Publish/UpdateFunctionsToExport.ps1
 
+# WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!
 function Get-AliasForFunction {
   [CmdletBinding()]
   param ([Parameter()] [string] $FunctionName )
   process {
     $standardVerbs = Get-Verb
 
-    $validVerb = $standardVerbs | Where-Object { $_.Verb -eq $FunctionName.Split("-")[0]}
-		if($validVerb)
-		{
-			$aliasFunction = $FunctionName.Split("-")[1]
-			# replace specific values that would cause duplicates - only upper-case chars are kept for the final alias!
-			$aliasFunction = $aliasFunction.Replace('Databricks', 'DBR') 
-			$aliasFunction = $aliasFunction.Replace('Context', 'CTX') 
+    $validVerb = $standardVerbs | Where-Object { $_.Verb -eq $FunctionName.Split("-")[0] }
+    if ($validVerb) {
+      $aliasFunction = $FunctionName.Split("-")[1]
+      # replace specific values that would cause duplicates - only upper-case chars are kept for the final alias!
+      $aliasFunction = $aliasFunction.Replace('Databricks', 'DBR') 
+      $aliasFunction = $aliasFunction.Replace('Context', 'CTX') 
       $aliasFunction = $aliasFunction.Replace('Command', 'CMD') 
-			$aliasFunction = $aliasFunction.Replace('Membership', 'MS') 
-			$aliasFunction = $aliasFunction.Replace('InstancePool', 'IPL') 
-			$aliasFunction = $aliasFunction.Replace('InstanceProfile', 'IPFL') 
-			$aliasFunction = $aliasFunction -creplace '([^A-Z]*)', ''
-			$aliasFunction = $aliasFunction.ToLower()
-			$alias = "$($validVerb.AliasPrefix)$aliasFunction"
+      $aliasFunction = $aliasFunction.Replace('Membership', 'MS') 
+      $aliasFunction = $aliasFunction.Replace('InstancePool', 'IPL') 
+      $aliasFunction = $aliasFunction.Replace('InstanceProfile', 'IPFL') 
+      $aliasFunction = $aliasFunction -creplace '([^A-Z]*)', ''
+      $aliasFunction = $aliasFunction.ToLower()
+      $alias = "$($validVerb.AliasPrefix)$aliasFunction"
 
       return $alias
     }
@@ -100,23 +97,37 @@ function Get-AliasForFunction {
   }
 }
 
-foreach($import in $PublicFunctions)
-{
+foreach ($import in $PublicFunctions) {
   Write-Verbose "Exporting functions from $($import.FullName) ..."
   $content = Get-Content $import.FullName
   # find all functions - search for "Function" or "function" followed by some whitespaces and the function name
   # function name has to contain a "-"
   $regEx = '[Ff]unction\s+(\S+\-\S+)\s'
-	$functions = [regex]::Matches($content, $regEx) | ForEach-Object { $_.Groups[1].Value}
+  $functions = [regex]::Matches($content, $regEx) | ForEach-Object { $_.Groups[1].Value }
 	
-	Write-Verbose "$($functions.Count) functions found! Adding aliases for them ..."
-	foreach($function in $functions)
-	{
-		$alias = Get-AliasForFunction -FunctionName $function
+  Write-Verbose "$($functions.Count) functions found! Adding aliases for them ..."
+  foreach ($function in $functions) {
+    $alias = Get-AliasForFunction -FunctionName $function
 
-    if($alias)
-    {
+    if ($alias) {
       Set-Alias -Name $alias -value $function -Description "Alias for $function"
     }
-	}
+  }
+}
+
+# WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!
+$staticAliases = @{
+  "Get-DatabricksCommandStatus"         = "Get-DatabricksCommand"
+  "Get-DatabricksSQLEndpoint"           = "Get-DatabricksSQLWarehouse"
+  "Add-DatabricksSQLEndpoint"           = "Add-DatabricksSQLWarehouse"
+  "Update-DatabricksSQLEndpoint"        = "Update-DatabricksSQLWarehouse"
+  "Remove-DatabricksSQLEndpoint"        = "Remove-DatabricksSQLWarehouse"
+  "Stop-DatabricksSQLEndpoint"          = "Stop-DatabricksSQLWarehouse"
+  "Start-DatabricksSQLEndpoint"         = "Start-DatabricksSQLWarehouse"
+  "Update-DatabricksSQLEndpointConfig"  = "Update-DatabricksSQLWarehouseConfig"
+  "Get-DatabricksSQLEndpointConfig"     = "Get-DatabricksSQLWarehouseConfig"
+}
+
+foreach ($alias in $staticAliases.GetEnumerator()) {
+	Set-Alias -Name $alias.Name -Value $alias.Value -Description "Alias for $($alias.Value)"
 }
