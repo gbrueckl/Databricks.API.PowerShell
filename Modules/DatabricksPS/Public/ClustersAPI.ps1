@@ -90,7 +90,7 @@ Function Add-DatabricksCluster {
     New-DynamicParam -Name DriverInstancePoolId -ValidateSet $instancePoolValues -Alias "driver_instance_pool_id" -DPDictionary $Dictionary
 
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -DPDictionary $Dictionary
+    New-DynamicParam -Name SparkVersion -ValidateSet $sparkVersionValues -Alias "spark_version" -DPDictionary $Dictionary
 
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -178,17 +178,21 @@ Function Add-DatabricksCluster {
 
     $nonEmptyParameters = @{}
     foreach ($prop in $parameters.GetEnumerator()) {
+      if($prop.Value -eq $null) # if th value is $null we never add it
+      {
+        continue
+      }
       if (
-          ($prop.Name -in @("num_workers")) -or #some properties need to allow empty/0 value
-          ($prop.Value.GetType().Name -eq "Boolean") -or # for boolean values we also want to keep "False" as value
-          ($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -notin @("{}", "[]")) # value is not empty 
+          ($prop.Name -in @("num_workers")) -or # some properties need to allow empty/0 value
+          ($prop.Value -and $($prop.Value | ConvertTo-Json -Compress) -notin @("{}", "[]")) -or # value is not empty 
+          ($prop.Value.GetType().Name -eq "Boolean") # for boolean values we also want to keep "False" as value
       ) {
         $nonEmptyParameters.Add($prop.Name, $prop.Value)
       }
     }
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $nonEmptyParameters
-	
+
     return $result
   }
 }

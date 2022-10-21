@@ -9,6 +9,10 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.16:
+- Fixed issues with `Add-DatabricksCluster`
+### v1.9.9.15:
+- Fixed issues with `Get-DatabricksInstancePool`
 ### v1.9.9.14:
 - Fixed issue with piping and `Update-DatabricksSQLWarehouse`
 ### v1.9.9.13:

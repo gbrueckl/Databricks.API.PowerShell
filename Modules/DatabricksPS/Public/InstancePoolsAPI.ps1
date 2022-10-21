@@ -56,7 +56,7 @@
     if ($script:dbCloudProvider -in @("AWS")) {
       $awsZoneValues = (Get-DynamicParamValues { Get-DatabricksZone }).key
       New-DynamicParam -Name AwsZone -ValidateSet $awsZoneValues -Type string[] -DPDictionary $Dictionary
-           
+
       New-DynamicParam -Name AwsAvailability -ValidateSet @('SPOT', 'ON_DEMAND', 'SPOT_WITH_FALLBACK') -Type string -DPDictionary $Dictionary
       New-DynamicParam -Name AwsAttributes -Type hashtable -DPDictionary $Dictionary
     }
@@ -207,7 +207,7 @@ Function Remove-DatabricksInstancePool {
     #Create the RuntimeDefinedParameterDictionary
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-    $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePools }).instance_pool_id
+    $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
     New-DynamicParam -Name InstancePoolID -ValidateSet $instancePoolValues -Alias 'instance_pool_id' -Mandatory -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
@@ -259,7 +259,7 @@ Function Get-DatabricksInstancePool {
       #Create the RuntimeDefinedParameterDictionary
       $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
-      $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePools -List }).instance_pool_id
+      $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool -List }).instance_pool_id
       New-DynamicParam -Name InstancePoolID -ValidateSet $instancePoolValues -Alias 'instance_pool_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
       #return RuntimeDefinedParameterDictionary
