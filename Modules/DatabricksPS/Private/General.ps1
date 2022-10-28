@@ -337,10 +337,10 @@ function ConvertTo-KeyValueArray {
 		[Parameter(ValueFromPipeline = $true)] [hashtable] $InputObject
 	)
 	$ret = @()
-	foreach($kvp in $InputObject.GetEnumerator())
-	{
+	foreach ($kvp in $InputObject.GetEnumerator()) {
 		$item = @{key = $kvp.Key
-					value = $kvp.value}
+			value        = $kvp.value
+  }
 		$ret += $item
 	}
 
@@ -362,20 +362,19 @@ function ConvertTo-Hashtable {
 	)
 
 	process {
-		if ($InputObject -is [Hashtable]) { return $InputObject }
-		
-		if ($null -eq $InputObject) { return $null }
-
-		if (($InputObject -is [System.Collections.IEnumerable]) -and $InputObject -isnot [string]) {
-			$collection = @()
-			
-			foreach ($object in $InputObject.GetEnumerator()) { 
-				$collection += ConvertTo-Hashtable $object 
-			}
-
-			return $collection
+		if ($null -eq $InputObject) { 
+			Write-Debug "NULL-Object found!"
+			return $null 
 		}
-		elseif ($InputObject -is [PSCustomObject]) {
+
+		# check for Hashtable/Dictionary - this also includes ordered hashtables!
+		if ($InputObject -is [System.Collections.IDictionary]) { 
+			Write-Debug "Hashtable found!"
+			return $InputObject 
+		}
+
+		if ($InputObject -is [PSCustomObject]) {
+			Write-Debug "PSCustomObject found!"
 			$hash = @{}
 
 			foreach ($property in $InputObject.PSObject.Properties) {
@@ -384,9 +383,19 @@ function ConvertTo-Hashtable {
 
 			return $hash
 		}
-		else {
-			return $InputObject
+		
+		# for all other IEnumerables, we check for Key/Value pairs 
+		if (($InputObject -is [System.Collections.IEnumerable]) -and $InputObject -isnot [string]) {
+			Write-Debug "System.Collections.IEnumerable found!"
+			$hash = @{}
+			
+			foreach ($object in $InputObject.GetEnumerator()) { 
+				$hash[$object.Key] = ConvertTo-Hashtable $object.Value
+			}
+
+			return $hash
 		}
+		return $InputObject
 	}
 }
 
@@ -953,8 +962,7 @@ Function Get-EnvironmentVariable {
 	)
 	#region CleanLocalPath
 	Write-Verbose "Getting environment variable '$EnvironmentVariable' ..."
-	if(-not (Test-Path "env:$EnvironmentVariable"))
-	{
+	if (-not (Test-Path "env:$EnvironmentVariable")) {
 		Write-Error "The environment variable '$EnvironmentVariable' could not be found!"
 	}
 	return (Get-Item -Path "env:$EnvironmentVariable").Value

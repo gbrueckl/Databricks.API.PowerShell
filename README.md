@@ -9,6 +9,8 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+### v1.9.9.17:
+- Fixed issues with pipelining of hashtables and ordered hashtables
 ### v1.9.9.16:
 - Fixed issues with `Add-DatabricksCluster`
 ### v1.9.9.15:

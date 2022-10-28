@@ -4,7 +4,7 @@
 	RootModule        = 'DatabricksPS.psm1'
 
 	# Version number of this module.
-	ModuleVersion     = '1.9.9.16'
+	ModuleVersion     = '1.9.9.17'
 
 	# ID used to uniquely identify this module
 	GUID              = '163A1640-1908-4B1F-A3AF-2796AD56200B'
@@ -334,15 +334,15 @@
 'adbrwd', 
 'gdbrwc', 
 'sdbrwc', 
-'Get-DatabricksSQLEndpointConfig', 
-'Update-DatabricksSQLEndpoint', 
 'Get-DatabricksCommandStatus', 
-'Update-DatabricksSQLEndpointConfig', 
-'Remove-DatabricksSQLEndpoint', 
-'Start-DatabricksSQLEndpoint', 
+'Get-DatabricksSQLEndpoint', 
 'Add-DatabricksSQLEndpoint', 
+'Update-DatabricksSQLEndpoint', 
+'Remove-DatabricksSQLEndpoint', 
 'Stop-DatabricksSQLEndpoint', 
-'Get-DatabricksSQLEndpoint'
+'Start-DatabricksSQLEndpoint', 
+'Update-DatabricksSQLEndpointConfig', 
+'Get-DatabricksSQLEndpointConfig'
 )
 
 	# List of all modules packaged with this module

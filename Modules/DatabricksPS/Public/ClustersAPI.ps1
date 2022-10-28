@@ -97,6 +97,7 @@ Function Add-DatabricksCluster {
   }
     
   begin {
+    Write-Verbose "ParameterSet used: $($PSCmdlet.ParameterSetName)"
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/clusters/create"
   }
@@ -110,7 +111,7 @@ Function Add-DatabricksCluster {
     Write-Verbose "Building Body/Parameters for final API call ..."
     if ($ClusterObject) {
       $parameters = $ClusterObject | ConvertTo-Hashtable
-      Write-Verbose "ClusterObject: "
+      Write-Verbose "ClusterObject ($($ClusterObject.GetType())):"
       Write-Verbose $($ClusterObject | ConvertTo-Json)
     }
     else {

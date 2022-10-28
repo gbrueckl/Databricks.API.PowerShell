@@ -74,7 +74,7 @@ foreach($import in $PublicFunctions)
 }
 
 # WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!
-$staticAliases = @{
+$staticAliases = [ordered]@{
 	"Get-DatabricksCommandStatus"         = "Get-DatabricksCommand"
 	"Get-DatabricksSQLEndpoint"           = "Get-DatabricksSQLWarehouse"
 	"Add-DatabricksSQLEndpoint"           = "Add-DatabricksSQLWarehouse"
