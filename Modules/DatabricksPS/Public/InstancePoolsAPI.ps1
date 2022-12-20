@@ -173,6 +173,7 @@ Function Update-DatabricksInstancePool {
       $parameters = @{ }
     }
 
+    $parameters | Add-Property -Name "instance_pool_id" -Value $InstancePoolId -Force
     $parameters | Add-Property -Name "instance_pool_name" -Value $InstancePoolName -Force
     $parameters | Add-Property -Name "min_idle_instances" -Value $MinIdleInstances -Force
     $parameters | Add-Property -Name "max_capacity" -Value $MaxCapacity -Force
