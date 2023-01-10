@@ -72,29 +72,36 @@ foreach ($import in @($PublicFunctions + $PrivateFunctions)) {
 
 # WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!
 function Get-AliasForFunction {
-  [CmdletBinding()]
-  param ([Parameter()] [string] $FunctionName )
-  process {
+	[CmdletBinding()]
+	param ([Parameter()] [string] $FunctionName )
+	process {
+
+	if($PSVersiontable.PSEdition -eq "Desktop")
+	{
+		# in PS Desktop we dont have $validVerb.AliasPrefix
+		return $null
+	}
+
     $standardVerbs = Get-Verb
 
-    $validVerb = $standardVerbs | Where-Object { $_.Verb -eq $FunctionName.Split("-")[0] }
-    if ($validVerb) {
-      $aliasFunction = $FunctionName.Split("-")[1]
-      # replace specific values that would cause duplicates - only upper-case chars are kept for the final alias!
-      $aliasFunction = $aliasFunction.Replace('Databricks', 'DBR') 
-      $aliasFunction = $aliasFunction.Replace('Context', 'CTX') 
-      $aliasFunction = $aliasFunction.Replace('Command', 'CMD') 
-      $aliasFunction = $aliasFunction.Replace('Membership', 'MS') 
-      $aliasFunction = $aliasFunction.Replace('InstancePool', 'IPL') 
-      $aliasFunction = $aliasFunction.Replace('InstanceProfile', 'IPFL') 
-      $aliasFunction = $aliasFunction -creplace '([^A-Z]*)', ''
-      $aliasFunction = $aliasFunction.ToLower()
-      $alias = "$($validVerb.AliasPrefix)$aliasFunction"
+    $validVerb = $standardVerbs | Where-Object { $_.Verb -eq $FunctionName.Split("-")[0]}
+		if($validVerb)
+		{
+			$aliasFunction = $FunctionName.Split("-")[1]
+			# replace specific values that would cause duplicates - only upper-case chars are kept for the final alias!
+			$aliasFunction = $aliasFunction.Replace('Databricks', 'DBR') 
+			$aliasFunction = $aliasFunction.Replace('Context', 'CTX') 
+			$aliasFunction = $aliasFunction.Replace('Command', 'CMD') 
+			$aliasFunction = $aliasFunction.Replace('Membership', 'MS') 
+			$aliasFunction = $aliasFunction.Replace('InstancePool', 'IPL') 
+			$aliasFunction = $aliasFunction.Replace('InstanceProfile', 'IPFL') 
+			$aliasFunction = $aliasFunction -creplace '([^A-Z]*)', ''
+			$alias = "$($validVerb.AliasPrefix)$aliasFunction"
 
-      return $alias
-    }
+			return $alias.ToLower()
+		}
     return $null
-  }
+	}
 }
 
 foreach ($import in $PublicFunctions) {

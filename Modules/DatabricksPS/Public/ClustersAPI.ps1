@@ -105,6 +105,8 @@ Function Add-DatabricksCluster {
   process {
     $NodeTypeId = $PSBoundParameters.NodeTypeId
     $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
+    $InstancePoolId = $PSBoundParameters.InstancePoolId
+    $DriverInstancePoolId = $PSBoundParameters.DriverInstancePoolId
     $SparkVersion = $PSBoundParameters.SparkVersion
 
     #Set parameters
@@ -161,9 +163,11 @@ Function Add-DatabricksCluster {
     $parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
     $parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
     $parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
+    $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
+    $parameters | Add-Property -Name "instance_pool_id" -Value $InstancePoolId -Force
+    $parameters | Add-Property -Name "driver_instance_pool_id" -Value $DriverInstancePoolId -Force
     $parameters | Add-Property -Name "spark_conf" -Value $SparkConf -NullValue @{} -Force  
     $parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
-    $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
     #$parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -NullValue @() -Force 
     $parameters | Add-Property -Name "custom_tags" -Value $CustomTags -NullValue @{} -Force 
     $parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
@@ -313,6 +317,8 @@ Function Update-DatabricksCluster {
     $ClusterID = $PSBoundParameters.ClusterID
     $NodeTypeId = $PSBoundParameters.NodeTypeId
     $DriverNodeTypeId = $PSBoundParameters.DriverNodeTypeId
+    $InstancePoolId = $PSBoundParameters.InstancePoolId
+    $DriverInstancePoolId = $PSBoundParameters.DriverInstancePoolId
     $SparkVersion = $PSBoundParameters.SparkVersion
 
     #Set parameters
@@ -350,9 +356,11 @@ Function Update-DatabricksCluster {
     $parameters | Add-Property -Name "cluster_name" -Value $ClusterName -Force
     $parameters | Add-Property -Name "spark_version" -Value $SparkVersion -Force
     $parameters | Add-Property -Name "node_type_id" -Value $NodeTypeId -Force
+    $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
+    $parameters | Add-Property -Name "instance_pool_id" -Value $InstancePoolId -Force
+    $parameters | Add-Property -Name "driver_instance_pool_id" -Value $DriverInstancePoolId -Force
     $parameters | Add-Property -Name "spark_conf" -Value $SparkConf -Force
     $parameters | Add-Property -Name "aws_attributes" -Value $AwsAttributes -Force
-    $parameters | Add-Property -Name "driver_node_type_id" -Value $DriverNodeTypeId -Force
     $parameters | Add-Property -Name "ssh_public_keys" -Value $SshPublicKeys -Force
     $parameters | Add-Property -Name "custom_tags" -Value $CustomTags -Force
     $parameters | Add-Property -Name "cluster_log_conf" -Value $ClusterLogConf -Force
@@ -367,22 +375,24 @@ Function Update-DatabricksCluster {
     elseif ($MinWorkers -and $MaxWorkers) {
       $parameters | Add-Property -Name "autoscale" -Value @{ min_workers = $MinWorkers; max_workers = $MaxWorkers } -Force 
     }
-    
-    if (-not $parameters["cluster_id"]) {
+
+    if ($parameters["cluster_id"] -eq $null) {
       throw "Either -ClusterID or -ClusterObject (with a cluster_id) need to be provided to identify which cluster to update!"
     }
-    if (-not $parameters["num_workers"] -and -not $parameters["autoscale"]) {
+    if ($parameters["num_workers"] -eq $null -and $parameters["autoscale"] -eq $null) {
       throw "Either -NumWorkers or -MinWorkers and -MaxWorkers is mandatory for the API and needs to be provided!"
     }
-    if (-not $parameters["spark_version"]) {
+    if ($parameters["spark_version"] -eq $null) {
       throw "Parameter -SparkVersion is mandatory for the API and needs to be provided!"
     }
-    if (-not $parameters["node_type_id"]) {
-      throw "Parameter -NodeTypeId is mandatory for the API and needs to be provided!"
+    if ($parameters["node_type_id"] -eq $null -and $parameters["instance_pool_id"] -eq $null) {
+      throw "Either -NodeTypeID or -InstancePoolID needs to be provided!"
     }
+
 
     $nonEmptyParameters = @{}
     foreach ($prop in $parameters.GetEnumerator()) {
+      Write-Verbose $prop.Name
       if (
           ($prop.Name -in @("num_workers")) -or #some properties need to allow empty/0 value
           ($prop.Value.GetType().Name -eq "Boolean") -or # for boolean values we also want to keep "False" as value

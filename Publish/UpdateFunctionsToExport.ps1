@@ -22,6 +22,13 @@ function Get-AliasForFunction {
 	[CmdletBinding()]
 	param ([Parameter()] [string] $FunctionName )
 	process {
+
+	if($PSVersiontable.PSEdition -eq "Desktop")
+	{
+		# in PS Desktop we dont have $validVerb.AliasPrefix
+		return $null
+	}
+
     $standardVerbs = Get-Verb
 
     $validVerb = $standardVerbs | Where-Object { $_.Verb -eq $FunctionName.Split("-")[0]}
@@ -36,10 +43,9 @@ function Get-AliasForFunction {
 			$aliasFunction = $aliasFunction.Replace('InstancePool', 'IPL') 
 			$aliasFunction = $aliasFunction.Replace('InstanceProfile', 'IPFL') 
 			$aliasFunction = $aliasFunction -creplace '([^A-Z]*)', ''
-			$aliasFunction = $aliasFunction.ToLower()
 			$alias = "$($validVerb.AliasPrefix)$aliasFunction"
 
-			return $alias
+			return $alias.ToLower()
 		}
     return $null
 	}

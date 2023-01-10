@@ -8,7 +8,7 @@ Write-Information "Testing SQL Warehouse API ..."
 $testWarehouseName = "DatabricksPS_AutomatedTest"
 
 
-Write-Information "Checking if SQL Warehouse  '$testWarehouseName' already exists ..."
+Write-Information "Checking if SQL Warehouse '$testWarehouseName' already exists ..."
 $current = Get-DatabricksSQLWarehouse | Where-Object { $_.name -in @($testWarehouseName) }
 
 if ($current) {

@@ -31,16 +31,16 @@
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1)] [string] $InstancePoolName, 
-    [Parameter(Mandatory = $true, Position = 2)] [int32] $MinIdleInstances, 
-    [Parameter(Mandatory = $true, Position = 3)] [int32] $MaxCapacity, 
-    #[Parameter(Mandatory = $false, Position = 4)] [hashtable] $AwsAttributes, 
-    #[Parameter(Mandatory = $false, Position = 5)] [string] $NodeTypeId, 
-    [Parameter(Mandatory = $false, Position = 6)] [hashtable] $CustomTags,
-    [Parameter(Mandatory = $false, Position = 7)] [int32] $IdleInstanceAutoterminationMinutes, 
-    [Parameter(Mandatory = $false, Position = 8)] [Nullable[bool]] $EnableElasticDisk, 
-    [Parameter(Mandatory = $false, Position = 9)] [hashtable] $DiskSpec
-    #[Parameter(Mandatory = $false, Position = 10)] [array] $PreloadedSparkVersions
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("instance_pool_name")][string] $InstancePoolName, 
+    [Parameter(Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("min_idle_instances")][int32] $MinIdleInstances, 
+    [Parameter(Mandatory = $true, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("max_capacity")][int32] $MaxCapacity, 
+    #[Parameter(Mandatory = $false, Position = 4, ValueFromPipelineByPropertyName = $true)] [Alias("aws_attributes")][hashtable] $AwsAttributes, 
+    #[Parameter(Mandatory = $false, Position = 5, ValueFromPipelineByPropertyName = $true)] [Alias("node_type_id")][string] $NodeTypeId, 
+    [Parameter(Mandatory = $false, Position = 6, ValueFromPipelineByPropertyName = $true)] [Alias("custom_tags")][hashtable] $CustomTags,
+    [Parameter(Mandatory = $false, Position = 7, ValueFromPipelineByPropertyName = $true)] [Alias("idle_instance_autotermination_minutes")][int32] $IdleInstanceAutoterminationMinutes, 
+    [Parameter(Mandatory = $false, Position = 8, ValueFromPipelineByPropertyName = $true)] [Alias("enable_elastic_disk")][Nullable[bool]] $EnableElasticDisk, 
+    [Parameter(Mandatory = $false, Position = 9, ValueFromPipelineByPropertyName = $true)] [Alias("disk_spec")][hashtable] $DiskSpec
+    #[Parameter(Mandatory = $false, Position = 10, ValueFromPipelineByPropertyName = $true)] [Alias("preloaded_spark_versions")][array] $PreloadedSparkVersions
   )
   
   DynamicParam {
@@ -48,19 +48,19 @@
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Mandatory -DPDictionary $Dictionary
+    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
-    New-DynamicParam -Name PreloadedSparkVersions -ValidateSet $sparkVersionValues -Type string[] -DPDictionary $Dictionary
+    New-DynamicParam -Name PreloadedSparkVersions -ValidateSet $sparkVersionValues -Alias "preloaded_spark_versions" -ValueFromPipelineByPropertyName -Type string[] -DPDictionary $Dictionary
 
     if ($script:dbCloudProvider -in @("AWS")) {
       $awsZoneValues = (Get-DynamicParamValues { Get-DatabricksZone }).key
-      New-DynamicParam -Name AwsZone -ValidateSet $awsZoneValues -Type string[] -DPDictionary $Dictionary
+      New-DynamicParam -Name AwsZone -ValidateSet $awsZoneValues -Alias "zone_id" -ValueFromPipelineByPropertyName -Type string[] -DPDictionary $Dictionary
 
-      New-DynamicParam -Name AwsAvailability -ValidateSet @('SPOT', 'ON_DEMAND', 'SPOT_WITH_FALLBACK') -Type string -DPDictionary $Dictionary
-      New-DynamicParam -Name AwsAttributes -Type hashtable -DPDictionary $Dictionary
+      New-DynamicParam -Name AwsAvailability -ValidateSet @('SPOT', 'ON_DEMAND', 'SPOT_WITH_FALLBACK') -Alias "availability" -ValueFromPipelineByPropertyName -Type string -DPDictionary $Dictionary
+      New-DynamicParam -Name AwsAttributes -Alias "aws_attributes" -ValueFromPipelineByPropertyName hashtable -DPDictionary $Dictionary
     }
-        
+
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
   }
@@ -78,12 +78,7 @@
 
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    if ($InstancePoolName) {
-      $parameters = $InstancePoolName | ConvertTo-Hashtable
-    }
-    else {
-      $parameters = @{ }
-    }
+    $parameters = @{ }
     
     if (-not $AwsAttributes) {
       # check if a ClusterMode was explicitly specified
@@ -138,12 +133,12 @@ Function Update-DatabricksInstancePool {
   [CmdletBinding()]
   param
   (
-    [Parameter(Mandatory = $true, Position = 1)] [Alias("instance_pool_id")] [string] $InstancePoolId, 
-    [Parameter(Mandatory = $true, Position = 2)] [string] $InstancePoolName, 
-    [Parameter(Mandatory = $false, Position = 3)] [int32] $MinIdleInstances, 
-    [Parameter(Mandatory = $false, Position = 4)] [int32] $MaxCapacity, 
-    #[Parameter(Mandatory = $false, Position = 5)] [string] $NodeTypeId, 
-    [Parameter(Mandatory = $false, Position = 6)] [int32] $IdleInstanceAutoterminationMinutes
+    [Parameter(Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("instance_pool_id")] [string] $InstancePoolId, 
+    [Parameter(Mandatory = $false, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("instance_pool_name")][string] $InstancePoolName, 
+    [Parameter(Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("min_idle_instances")][int32] $MinIdleInstances, 
+    [Parameter(Mandatory = $false, Position = 4, ValueFromPipelineByPropertyName = $true)] [Alias("max_capacity")][int32] $MaxCapacity, 
+    #[Parameter(Mandatory = $false, Position = 5, ValueFromPipelineByPropertyName = $true)] [string] $NodeTypeId, 
+    [Parameter(Mandatory = $false, Position = 6, ValueFromPipelineByPropertyName = $true)] [Alias("idle_instance_autotermination_minutes")][int32] $IdleInstanceAutoterminationMinutes
   )
       
   DynamicParam {
@@ -151,7 +146,7 @@ Function Update-DatabricksInstancePool {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $nodeTypeIdValues = (Get-DynamicParamValues { Get-DatabricksNodeType }).node_type_id
-    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Mandatory -DPDictionary $Dictionary
+    New-DynamicParam -Name NodeTypeId -ValidateSet $nodeTypeIdValues -Alias "node_type_id" -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
@@ -166,12 +161,7 @@ Function Update-DatabricksInstancePool {
 
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
-    if ($InstancePoolName) {
-      $parameters = $InstancePoolName | ConvertTo-Hashtable
-    }
-    else {
-      $parameters = @{ }
-    }
+    $parameters = @{ }
 
     $parameters | Add-Property -Name "instance_pool_id" -Value $InstancePoolId -Force
     $parameters | Add-Property -Name "instance_pool_name" -Value $InstancePoolName -Force
@@ -209,7 +199,7 @@ Function Remove-DatabricksInstancePool {
     $Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
       
     $instancePoolValues = (Get-DynamicParamValues { Get-DatabricksInstancePool }).instance_pool_id
-    New-DynamicParam -Name InstancePoolID -ValidateSet $instancePoolValues -Alias 'instance_pool_id' -Mandatory -DPDictionary $Dictionary
+    New-DynamicParam -Name InstancePoolID -ValidateSet $instancePoolValues -Alias 'instance_pool_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
         
     #return RuntimeDefinedParameterDictionary
     return $Dictionary
