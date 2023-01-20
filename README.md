@@ -11,6 +11,8 @@ Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 # Release History
 ### v1.11.0.0:
 - Rework Jobs API implementation to work better with API version 2.1
+- Fixed issue with SCIM API for groups
+- Fixed issue with Permissions API
 ### v1.10.0.0:
 - Added new entitlements `workspace-access` and `databricks-sql-access` to SCIM APIs
 ### v1.9.9.18:

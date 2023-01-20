@@ -45,7 +45,7 @@ Function Get-DatabricksPermissions {
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
 
-    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
+    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id", "SQLWarehouseID", "sql_warehouse_id")] [string] $SQLEndpointID,
 
     [Parameter(Mandatory = $false)] [switch] $Raw
   )
@@ -154,7 +154,7 @@ Function Get-DatabricksPermissionLevels {
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
 
-    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
+    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id", "SQLWarehouseID", "sql_warehouse_id")] [string] $SQLEndpointID,
 
     [Parameter(Mandatory = $false)] [switch] $Raw
   )
@@ -237,7 +237,7 @@ Function Set-DatabricksPermissions {
       The unique ID of the instance pool for which you want to set the permission(s). 
       .PARAMETER WorkspaceObjectType 
       The type of the workspace item for which you want to set the permission(s). The workspace item itself is specified using -ObjectID.
-      .PARAMETER SQLEndpointID 
+      .PARAMETER SQLWarehouseID 
       The unique ID of the SQL endponit for which you want to set the permission(s). 
       .PARAMETER Raw
       Can be used to retrieve the raw output of the API call. Otherwise an object with all the permissions is returned.
@@ -283,7 +283,7 @@ Function Set-DatabricksPermissions {
 
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('NOTEBOOK', 'DIRECTORY', 'LIBRARY')] [Alias("object_type")] [string] $WorkspaceObjectType,
 
-    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id")] [string] $SQLEndpointID,
+    [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id", "SQLWarehouseID", "sql_warehouse_id")] [string] $SQLEndpointID,
 
     [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [Alias("ACL")][object[]] $AccessControlList,
     [Parameter(Mandatory = $false)] [switch] $Overwrite,
@@ -325,10 +325,9 @@ Function Set-DatabricksPermissions {
       }
     }
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
-      $apiEndpoint += "/sql/endpoints/$SQLEndpointID"
+      $apiEndpoint += "/sql/warehouses/$SQLEndpointID"
     }
-
-    if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
+    elseif ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
       $apiEndpoint += "/authorization/$($ObjectType.ToLower())"
     }
     else {
