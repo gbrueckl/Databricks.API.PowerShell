@@ -76,6 +76,8 @@ Function Add-DatabricksJob {
 		$jarParameters = @("john doe","35")
 		.PARAMETER SparkParameters 
 		Command line parameters passed to spark submit.
+		.PARAMETER Parameters
+		Generic Parameters that be passed to the execution engine (Python, Jar, Spark, ...). Mainly used for pipelining.
 		.OUTPUT
 		PSObject with the following properties
 		- job_id
@@ -86,47 +88,59 @@ Function Add-DatabricksJob {
 	param
 	(
 		# generic parameters
-		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 1)]
-		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 1)]
-		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 1)] 
-		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1)] [string] $Name,
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)]
+		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)]
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] 
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_name")] [string] $Name,
 
 		#[Parameter(Mandatory = $false)] [string] $ClusterID,
-		[Parameter(Mandatory = $false)] [object] $NewClusterDefinition, 
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [object] $NewClusterDefinition, 
 
-		[Parameter(Mandatory = $false)] [hashtable[]] $Libraries, 
-		[Parameter(Mandatory = $false)] [int32] $TimeoutSeconds = -1,
-		[Parameter(Mandatory = $false)] [int32] $MaxRetries = -1,
-		[Parameter(Mandatory = $false)] [int32] $MinRetryIntervalMilliseconds = -1,
-		[Parameter(Mandatory = $false)] [nullable[bool]] $RetryOnTimeout,
-		[Parameter(Mandatory = $false)] [int32] $MaxConcurrentRuns = -1,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [hashtable[]] $Libraries, 
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("timeout_seconds")] [int32] $TimeoutSeconds = -1,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("max_retries")] [int32] $MaxRetries = -1,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("min_retry_interval_millis")] [int32] $MinRetryIntervalMilliseconds = -1,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("retry_on_timeout")] [nullable[bool]] $RetryOnTimeout,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("max_concurrent_runs")] [int32] $MaxConcurrentRuns = -1,
 				
-		[Parameter(Mandatory = $false)] [object] $Schedule,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [object] $Schedule,
 				
-		[Parameter(Mandatory = $false)] [object] $EMailNotifications, 
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("email_notifications")] [object] $EMailNotifications, 
 		
-		[Parameter(ParameterSetName = "JobDefinition", Mandatory = $true)] [object] $JobSettings,
+		[Parameter(ParameterSetName = "JobDefinition", Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)] [Alias("settings", "job_settings")] [object] $JobSettings,
 					
-		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2)] [string] $NotebookPath, 
-		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3)] [hashtable] $NotebookParameters, 
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("notebook_path")] [string] $NotebookPath, 
+		[Parameter(ParameterSetName = "Notebook", Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("notebook_parameters")] [hashtable] $NotebookParameters,
+		
+		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("python_file")] [string] $PythonURI, 
+		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("python_parameters")] [string[]] $PythonParameters,
+		
+		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("jar_uri")] [string] $JarURI, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("main_class_name")] [string] $JarMainClassName, 
+		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3, ValueFromPipelineByPropertyName = $true)] [Alias("jar_parameters")] [string[]] $JarParameters, 
 
-		
-		[Parameter(ParameterSetName = "Python", Mandatory = $true, Position = 2)] [string] $PythonURI, 
-		[Parameter(ParameterSetName = "Python", Mandatory = $false, Position = 3)] [string[]] $PythonParameters,
-		
-		
-		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarURI, 
-		[Parameter(ParameterSetName = "Jar", Mandatory = $true, Position = 2)] [string] $JarMainClassName, 
-		[Parameter(ParameterSetName = "Jar", Mandatory = $false, Position = 3)] [string[]] $JarParameters, 
+		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("spark_parameters")] [string] $SparkParameters,
 
-		[Parameter(ParameterSetName = "Spark", Mandatory = $true, Position = 2)] [string] $SparkParameters
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("parameters")] [string] $GenericParameters,
+
+		[Parameter(ParameterSetName = "Tasks", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [object[]] $Tasks, 
+		[Parameter(ParameterSetName = "NotebookTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("notebook_task")] [object] $NotebookTask, 
+		[Parameter(ParameterSetName = "PythonTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("spark_python_task", "python_task")] [object] $PythonTask, 
+		[Parameter(ParameterSetName = "JarTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("spark_jar_task", "jar_task")] [object] $JarTask, 
+		[Parameter(ParameterSetName = "SparkTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("spark_submit_task", "spark_task")] [object] $SparkTask, 
+		[Parameter(ParameterSetName = "PipelineTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("pipeline_task")] [object] $PipelineTask,
+		[Parameter(ParameterSetName = "PythonWheelTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("python_wheel_task")] [object] $PythonWheelTask, 
+		[Parameter(ParameterSetName = "SqlTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("sql_task")] [object] $SqlTask, 
+		[Parameter(ParameterSetName = "DbtTask", Mandatory = $true, Position = 2, ValueFromPipelineByPropertyName = $true)] [Alias("dbt_task")] [object] $DbtTask 
+		
+		
 	)
 	DynamicParam {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
 		$clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
-		New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id'-DPDictionary $Dictionary
+		New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
@@ -166,12 +180,8 @@ Function Add-DatabricksJob {
 			}
 		
 			"Notebook" {
-				$notebookTask = @{ notebook_path = $NotebookPath }
-				$notebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
-
-				#Set parameters
-			
-				$parameters | Add-Property -Name "notebook_task" -Value $notebookTask
+				$NotebookTask = @{ notebook_path = $NotebookPath }
+				$NotebookTask | Add-Property  -Name "base_parameters" -Value $NotebookParameters
 			}
 		
 			"Jar" {
@@ -183,7 +193,6 @@ Function Add-DatabricksJob {
 
 				#Set parameters
 				$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
-				$parameters | Add-Property -Name "spark_jar_task" -Value $jarTask
 			}
 		
 			"Python" {
@@ -194,28 +203,33 @@ Function Add-DatabricksJob {
 
 				#Set parameters
 				$parameters | Add-Property -Name "existing_cluster_id" -Value $ClusterID
-				$parameters | Add-Property -Name "spark_python_task" -Value $pythonTask
 			}
 		
 			"Spark" {
-				$sparkTask = @{ 
+				$SparkTask = @{ 
 					parameters = $SparkParameters 
 				}
-
-				#Set parameters
-			
-				$parameters | Add-Property -Name "spark_submit_task" -Value $sparkTask
 			}
 		}
-	
+
+		$parameters | Add-Property -Name "tasks" -Value $Tasks -Force
+		$parameters | Add-Property -Name "notebook_task" -Value $NotebookTask -Force
+		$parameters | Add-Property -Name "spark_jar_task" -Value $JarTask -Force
+		$parameters | Add-Property -Name "spark_python_task" -Value $PythonTask -Force
+		$parameters | Add-Property -Name "spark_submit_task" -Value $SparkTask -Force
+		$parameters | Add-Property -Name "pipeline_task" -Value $PipelineTask -Force
+		$parameters | Add-Property -Name "python_wheel_task" -Value $PythonWheelTask -Force
+		$parameters | Add-Property -Name "sql_task" -Value $SqlTask -Force
+		$parameters | Add-Property -Name "dbt_task" -Value $DbtTask -Force
+
 		$parameters | Add-Property -Name "libraries" -Value $Libraries
-		$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1
-		$parameters | Add-Property -Name "max_retries" -Value $MaxRetries -NullValue -1
-		$parameters | Add-Property -Name "min_retry_interval_millis" -Value $MinRetryIntervalMilliseconds -NullValue -1
-		$parameters | Add-Property -Name "retry_on_timeout" -Value $RetryOnTimeout
-		$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns -NullValue -1
-		$parameters | Add-Property -Name "schedule" -Value $Schedule
-		$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications
+		$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1  -Force
+		$parameters | Add-Property -Name "max_retries" -Value $MaxRetries -NullValue -1  -Force
+		$parameters | Add-Property -Name "min_retry_interval_millis" -Value $MinRetryIntervalMilliseconds -NullValue -1  -Force
+		$parameters | Add-Property -Name "retry_on_timeout" -Value $RetryOnTimeout  -Force
+		$parameters | Add-Property -Name "max_concurrent_runs" -Value $MaxConcurrentRuns -NullValue -1  -Force
+		$parameters | Add-Property -Name "schedule" -Value $Schedule  -Force
+		$parameters | Add-Property -Name "email_notifications" -Value $EMailNotifications  -Force
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
@@ -232,6 +246,16 @@ Function Get-DatabricksJob {
 		Official API Documentation: https://docs.databricks.com/api/latest/jobs.html#get
 		.PARAMETER JobID 
 		The canonical identifier of the job to retrieve. This field is optional and can be used as a filter on one particular job id.
+		.PARAMETER JobName
+		A filter on the list based on the exact (case insensitive) job name.
+		.PARAMETER Offset 
+		The offset of the first job to return, relative to the most recently created job.
+		.PARAMETER Limit 
+		The number of jobs to return. This value must be greater than 0 and less or equal to 25. The default value is 20.
+		.PARAMETER ExpandTasks
+		Whether to include task and cluster details in the response.
+		.PARAMETER Raw
+		Can be used to retrieve the raw output of the API call. Otherwise an object with all the permissions is returned.
 		.OUTPUT
 		List of PSObjects with the following properties
 		- job_id
@@ -245,7 +269,12 @@ Function Get-DatabricksJob {
 	[CmdletBinding()]
 	param 
 	(	
-		[Parameter(Mandatory = $false, Position = 1, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID = -1,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("job_name", "name")] [string] $JobName,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int] $Offset = -1, 
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [int] $Limit = -1,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("expand_tasks")] [switch] $ExpandTasks,
+		[Parameter(Mandatory = $false)] [switch] $Raw
 	)
 	begin {
 		$requestMethod = "GET"
@@ -261,14 +290,21 @@ Function Get-DatabricksJob {
 		#Set parameters
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		$parameters = @{ }
+		$parameters | Add-Property  -Name "expand_tasks" -Value $ExpandTasks
+		$parameters | Add-Property  -Name "offset" -Value $Offset -NullValue -1
+		$parameters | Add-Property  -Name "limit" -Value $Limit -NullValue -1
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		if ($JobID -gt 0) {
-			# if a JobID was specified, we return the result as it is
+		if ($raw -or $JobID -gt 0) {
+			# if a JobID or -Raw was specified, we return the result as it is
 			return $result
 		}
 		else {
+			if($results.has_more)
+			{
+				Write-Warning "More than 20 jobs found. Use -Raw, -Offset and -Limit to retrieve more jobs."
+			}
 			# if no JobID was specified, we return the jobs as an array
 			return $result.jobs
 		}

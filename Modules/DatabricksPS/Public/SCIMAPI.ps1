@@ -91,7 +91,7 @@ Function Add-DatabricksSCIMUser {
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
     [Parameter(ParameterSetName = "Entitlements", Mandatory = $false)]
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')] [AllowEmptyCollection()] [string[]] $Entitlements,
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create', 'workspace-access', 'databricks-sql-access')] [AllowEmptyCollection()] [string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
   ) 
@@ -114,12 +114,10 @@ Function Add-DatabricksSCIMUser {
     
     $parameters | Add-Property -Name "schemas" -Value @("urn:ietf:params:scim:schemas:core:2.0:User") -Force
     $parameters | Add-Property -Name "userName" -Value $UserName -Force
-    if($PSCmdlet.ParameterSetName -ne "Entitlements")
-    {
+    if ($PSCmdlet.ParameterSetName -ne "Entitlements") {
       $parameters | Add-Property -Name "groups" -Value $groups -Force
     }
-    if ($Entitlements.Count -gt 0) 
-    { 
+    if ($Entitlements.Count -gt 0) { 
       $parameters | Add-Property -Name "entitlements" -Value $entitlementValues -Force 
     }
         
@@ -185,7 +183,7 @@ Function Update-DatabricksSCIMUser {
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
     [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create', 'workspace-access', 'databricks-sql-access')][string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
   )  
@@ -204,12 +202,10 @@ Function Update-DatabricksSCIMUser {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
     }
     
-    if($GroupIDs)
-    {
+    if ($GroupIDs) {
       $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
     }
-    if($Entitlements)
-    {
+    if ($Entitlements) {
       $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     }
 
@@ -304,7 +300,7 @@ Function Add-DatabricksSCIMGroup {
   param (
     [Parameter(Mandatory = $True)] [Alias("group_name")] [string] $GroupName,
     [Parameter(Mandatory = $False)] [string[]] $MemberUserIDs,
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')] [string[]] $Entitlements
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create', 'workspace-access', 'databricks-sql-access')] [string[]] $Entitlements
   )
   
   begin {
@@ -317,12 +313,11 @@ Function Add-DatabricksSCIMGroup {
     Write-Verbose "Building Body/Parameters for final API call ..."
     $parameters = @{ }
     
-    if($MemberUserIDs)
-    {
+    if ($MemberUserIDs) {
       $groupMembers = @($MemberUserIDs | ForEach-Object { @{value = $_ } })
     }
 
-    if($Entitlements) {
+    if ($Entitlements) {
       $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     }
 
@@ -386,7 +381,9 @@ Function Update-DatabricksSCIMGroup {
   param (
     [Parameter(Mandatory = $True)] [Alias("group_id", "id")] [long] $GroupID,
     [Parameter(Mandatory = $false)] [long[]] $AddIDs,
-    [Parameter(Mandatory = $false)][long[]] $RemoveIDs
+    [Parameter(Mandatory = $false)] [long[]] $RemoveIDs,
+    [Parameter(Mandatory = $false)] [ValidateSet('allow-cluster-create', 'workspace-access', 'databricks-sql-access')] [string[]] $AddEntitlements,
+    [Parameter(Mandatory = $false)] [ValidateSet('allow-cluster-create', 'workspace-access', 'databricks-sql-access')] [string[]] $RemoveEntitlements    
   )  
   begin {
     $requestMethod = "PATCH"
@@ -403,13 +400,17 @@ Function Update-DatabricksSCIMGroup {
 
     $operations = @()
 
-    if($AddIDs)
-    {
-      $AddIDs | ForEach-Object { $operations += @{"op" = "add"; "value" = @{"members" = @(@{"value" = $_.ToString() })}} }
+    if ($AddIDs) {
+      $AddIDs | ForEach-Object { $operations += @{"op" = "add"; "value" = @{"members" = @(@{"value" = $_.ToString() }) } } }
     }
-    if($RemoveIDs)
-    {
-      $RemoveIDs | ForEach-Object { $operations += @{"op" = "remove"; "path" = 'members[value eq "' + $_.ToString() + '"]'} }
+    if ($RemoveIDs) {
+      $RemoveIDs | ForEach-Object { $operations += @{"op" = "remove"; "path" = 'members[value eq "' + $_.ToString() + '"]' } }
+    }
+    if ($AddEntitlements) {
+      $AddEntitlements | ForEach-Object { $operations += @{"op" = "add"; "value" = @{"entitlements" = @(@{"value" = $_.ToString() }) } } }
+    }
+    if ($RemoveEntitlements) {
+      $RemoveEntitlements | ForEach-Object { $operations += @{"op" = "remove"; "path" = 'entitlements[value eq "' + $_.ToString() + '"]' } }
     }
 
     $parameters | Add-Property -Name "Operations" -Value $operations -Force
@@ -507,7 +508,7 @@ Function Add-DatabricksSCIMServicePrincipal {
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
     [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create', 'workspace-access', 'databricks-sql-access')][string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
   )
@@ -526,12 +527,10 @@ Function Add-DatabricksSCIMServicePrincipal {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
     }
     
-    if($GroupIDs)
-    {
+    if ($GroupIDs) {
       $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
     }
-    if($Entitlements)
-    {
+    if ($Entitlements) {
       $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     }
     
@@ -607,7 +606,7 @@ Function Update-DatabricksSCIMServicePrincipal {
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $false)]
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $false)]
     [Parameter(ParameterSetName = "Entitlements", Mandatory = $true)]
-    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create')][string[]] $Entitlements,
+    [Parameter(Mandatory = $False)] [ValidateSet('allow-instance-pool-create', 'allow-cluster-create', 'workspace-access', 'databricks-sql-access')][string[]] $Entitlements,
     [Parameter(ParameterSetName = "GroupNames", Mandatory = $true)] [Alias("group_name")] [string[]] $GroupNames,
     [Parameter(ParameterSetName = "GroupIDs", Mandatory = $true)] [Alias("group_id")] [string[]] $GroupIDs
   )  
@@ -626,12 +625,10 @@ Function Update-DatabricksSCIMServicePrincipal {
       $GroupIDs = @(Get-DatabricksSCIMGroup | Where-Object { $_.displayName -in $GroupNames }).id 
     }
     
-    if($GroupIDs)
-    {
+    if ($GroupIDs) {
       $groups = @($GroupIDs | ForEach-Object { @{value = $_ } })
     }
-    if($Entitlements)
-    {
+    if ($Entitlements) {
       $entitlementValues = @($Entitlements | ForEach-Object { @{value = $_ } })
     }
     
