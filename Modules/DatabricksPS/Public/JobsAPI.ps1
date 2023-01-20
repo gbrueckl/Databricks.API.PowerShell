@@ -290,6 +290,12 @@ Function Get-DatabricksJob {
 		#Set parameters
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		$parameters = @{ }
+
+		if($script:dbJobsAPIVersion -eq "2.0" -and ($null -ne $JobName -or $ExpandTasks -or $Offset -gt 0 -or $Limit -gt 0))
+		{
+			Write-Warning "The following parameters are not supported in Databricks Jobs API 2.0 and will be ignored: -JobName, -ExpandTasks, -Offset, -Limit"
+		}
+		$parameters | Add-Property  -Name "name" -Value $JobName
 		$parameters | Add-Property  -Name "expand_tasks" -Value $ExpandTasks
 		$parameters | Add-Property  -Name "offset" -Value $Offset -NullValue -1
 		$parameters | Add-Property  -Name "limit" -Value $Limit -NullValue -1
@@ -301,9 +307,9 @@ Function Get-DatabricksJob {
 			return $result
 		}
 		else {
-			if($results.has_more)
+			if($script:dbJobsAPIVersion -eq "2.1" -and $result.has_more)
 			{
-				Write-Warning "More than 20 jobs found. Use -Raw, -Offset and -Limit to retrieve more jobs."
+				Write-Warning "More jobs found. Please use -Raw, -Offset and -Limit to retrieve additonal jobs."
 			}
 			# if no JobID was specified, we return the jobs as an array
 			return $result.jobs

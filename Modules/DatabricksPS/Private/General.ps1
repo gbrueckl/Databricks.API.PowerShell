@@ -362,6 +362,7 @@ function ConvertTo-Hashtable {
 	)
 
 	process {
+		Write-Debug "Processing >$($InputObject | Out-String)<"
 		if ($null -eq $InputObject) { 
 			Write-Debug "NULL-Object found!"
 			return $null 
@@ -378,6 +379,7 @@ function ConvertTo-Hashtable {
 			$hash = @{}
 
 			foreach ($property in $InputObject.PSObject.Properties) {
+				Write-Debug "Looping >$($property.Name)<"
 				$hash[$property.Name] = ConvertTo-Hashtable $property.Value
 			}
 
@@ -390,6 +392,7 @@ function ConvertTo-Hashtable {
 			$hash = @{}
 			
 			foreach ($object in $InputObject.GetEnumerator()) { 
+				Write-Debug "Looping >$($object | Out-String)<"
 				$hash[$object.Key] = ConvertTo-Hashtable $object.Value
 			}
 

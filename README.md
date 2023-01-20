@@ -9,8 +9,9 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
-### v1.11.0.0:
+### v1.11.0.1:
 - Rework Jobs API implementation to work better with API version 2.1
+### v1.11.0.0:
 - Fixed issue with SCIM API for groups
 - Fixed issue with Permissions API
 ### v1.10.0.0:
