@@ -340,8 +340,15 @@ Function Remove-DatabricksJob {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
-		New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		if($script:dbJobsAPIVersion -eq "2.0") {
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+		else
+		{
+			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
         
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
@@ -389,7 +396,7 @@ Function Update-DatabricksJob {
 	param
 	(
 		#[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [int64] $JobID, 
-		[Parameter(ParameterSetName = "Reset", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("settings", "new_settings")] [object] $NewSettings,
+		[Parameter(ParameterSetName = "Reset", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("settings", "new_settings", "job_definition", "definition")] [object] $NewSettings,
 		[Parameter(ParameterSetName = "Update", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("update_settings")] [object] $UpdateSettings,
 		[Parameter(ParameterSetName = "Update", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("fields_to_remove")] [string[]] $FieldsToRemove
 	)
@@ -397,9 +404,16 @@ Function Update-DatabricksJob {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
-		New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-        
+		if($script:dbJobsAPIVersion -eq "2.0") {
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+		else
+		{
+			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
 	}
@@ -476,9 +490,16 @@ Function Start-DatabricksJob {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
-		New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-        
+		if($script:dbJobsAPIVersion -eq "2.0") {
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+		else
+		{
+			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
 	}
@@ -592,8 +613,15 @@ Function New-DatabricksJobRun {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob }).job_id
-		New-DynamicParam -Name JobID -ParameterSetName NotebookJob, PythonkJob, JarJob, SparkJob -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		if($script:dbJobsAPIVersion -eq "2.0") {
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+		else
+		{
+			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
 
 		$clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
 		New-DynamicParam -Name ClusterID -ValidateSet $clusterIDValues -Alias 'cluster_id'-DPDictionary $Dictionary
@@ -841,9 +869,15 @@ Function Export-DatabricksJobRun {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		$jobRunIDValues = (Get-DynamicParamValues { Get-DatabricksJobRun }).run_id
-		New-DynamicParam -Name JobRunId -ValidateSet $jobRunIDValues -Alias 'run_id' -Type Int64 -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-
+		if($script:dbJobsAPIVersion -eq "2.0") {
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+		else
+		{
+			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
 	}
@@ -892,9 +926,15 @@ Function Stop-DatabricksJobRun {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		$jobRunIDValues = (Get-DynamicParamValues { Get-DatabricksJobRun }).run_id
-		New-DynamicParam -Name JobRunId -ValidateSet $jobRunIDValues -Alias 'run_id' -Type Int64 -Mandatory -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
-
+		if($script:dbJobsAPIVersion -eq "2.0") {
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+		else
+		{
+			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
 		#return RuntimeDefinedParameterDictionary
 		return $Dictionary
 	}

@@ -9,6 +9,12 @@ Azure Databricks - https://docs.azuredatabricks.net/api/latest/index.html
 Databricks on AWS - https://docs.databricks.com/api/latest/index.html
 
 # Release History
+
+### v1.11.0.5:
+- Added new `-IncludeMetrics`swithc when running `Get-DatabricksSQLHistory`
+### v1.11.0.3:
+- Removed validation of `-JobID` parameter in API version 2.1 (only worked PowerShell ISE)
+- Fixed issue with permissions API
 ### v1.11.0.1:
 - Rework Jobs API implementation to work better with API version 2.1
 ### v1.11.0.0:

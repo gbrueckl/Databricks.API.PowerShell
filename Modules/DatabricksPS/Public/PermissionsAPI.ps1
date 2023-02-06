@@ -35,7 +35,7 @@ Function Get-DatabricksPermissions {
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
     [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSE')] [string] $ObjectType,
     
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
@@ -57,33 +57,26 @@ Function Get-DatabricksPermissions {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    if ($PSCmdlet.ParameterSetName -eq "Generic") {
-      if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
-        $apiEndpoint += "/authorization/$($ObjectType.ToLower())"
-      }
-      else {
-        if (-not $ObjectID) {
-          Write-Error "Parameter -ObjectID is mandatory for this API call!"
-        }
-        $apiEndpoint += "/$($ObjectType.ToLower())/$ObjectID"
-      }
-      
-    }
-    elseif ($PSCmdlet.ParameterSetName -eq "Cluster") {
-      $apiEndpoint += "/clusters/$ClusterID"
+    # need to use a separate variable as $ObjectType can only take values from the ValidateSet
+    $effObjectType = $ObjectType
+    if ($PSCmdlet.ParameterSetName -eq "Cluster") {
+      $effObjectType = "CLUSTERS"
+      $ObjectID = $ClusterID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "Job") {
-      $apiEndpoint += "/jobs/$JobID"
+      $effObjectType = "JOBS"
+      $ObjectID = $JobID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "InstancePool") {
-      $apiEndpoint += "/instance-pools/$InstancePoolID"
+      $effObjectType = "INSTANCE-POOLS"
+      $ObjectID = $InstancePoolID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "WorkspaceItem") {
       if ($WorkspaceObjectType -eq "DIRECTORY") {
-        $apiEndpoint += "/directories/$ObjectID"
+        $effObjectType = "DIRECTORIES"
       }
       elseif ($WorkspaceObjectType -eq "NOTEBOOK") {
-        $apiEndpoint += "/notebooks/$ObjectID"
+        $effObjectType = "NOTEBOOKS"
       }
       else {
         Write-Warning "ObjectType '$WorkspaceObjectType' does not support permissions"
@@ -91,8 +84,18 @@ Function Get-DatabricksPermissions {
       }
     }
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
-      $apiEndpoint += "/sql/endpoints/$SQLEndpointID"
+      $effObjectType = "SQL/WAREHOUSES"
+      $ObjectID = $SQLEndpointID
     }
+    
+    if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
+      $effObjectType = "authorization/$($ObjectType.ToLower())"
+      $ObjectID = $null
+    }
+    elseif (-not $ObjectID) {
+      Write-Error "Parameter -ObjectID is mandatory for this API call!"
+    }
+    $apiEndpoint += "/$($effObjectType.ToLower())/$ObjectID"
 
     #Set parameters
     $parameters = @{}
@@ -144,7 +147,7 @@ Function Get-DatabricksPermissionLevels {
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
     [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL-ENDPOINTS')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSES')] [string] $ObjectType,
     
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
@@ -166,33 +169,26 @@ Function Get-DatabricksPermissionLevels {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
-    if ($PSCmdlet.ParameterSetName -eq "Generic") {
-      if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
-        $apiEndpoint += "/authorization/$($ObjectType.ToLower())"
-      }
-      else {
-        if (-not $ObjectID) {
-          Write-Error "Parameter -ObjectID is mandatory for this API call!"
-        }
-        $apiEndpoint += "/$($ObjectType.ToLower())/$ObjectID"
-      }
-      
-    }
-    elseif ($PSCmdlet.ParameterSetName -eq "Cluster") {
-      $apiEndpoint += "/clusters/$ClusterID"
+    # need to use a separate variable as $ObjectType can only take values from the ValidateSet
+    $effObjectType = $ObjectType
+    if ($PSCmdlet.ParameterSetName -eq "Cluster") {
+      $effObjectType = "CLUSTERS"
+      $ObjectID = $ClusterID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "Job") {
-      $apiEndpoint += "/jobs/$JobID"
+      $effObjectType = "JOBS"
+      $ObjectID = $JobID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "InstancePool") {
-      $apiEndpoint += "/instance-pools/$InstancePoolID"
+      $effObjectType = "INSTANCE-POOLS"
+      $ObjectID = $InstancePoolID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "WorkspaceItem") {
       if ($WorkspaceObjectType -eq "DIRECTORY") {
-        $apiEndpoint += "/directories/$ObjectID"
+        $effObjectType = "DIRECTORIES"
       }
       elseif ($WorkspaceObjectType -eq "NOTEBOOK") {
-        $apiEndpoint += "/notebooks/$ObjectID"
+        $effObjectType = "NOTEBOOKS"
       }
       else {
         Write-Warning "ObjectType '$WorkspaceObjectType' does not support permissions"
@@ -200,8 +196,18 @@ Function Get-DatabricksPermissionLevels {
       }
     }
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
-      $apiEndpoint += "/sql/endpoints/$SQLEndpointID"
+      $effObjectType = "SQL/WAREHOUSES"
+      $ObjectID = $SQLEndpointID
     }
+    
+    if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
+      $effObjectType = "authorization/$($ObjectType.ToLower())"
+      $ObjectID = $null
+    }
+    elseif (-not $ObjectID) {
+      Write-Error "Parameter -ObjectID is mandatory for this API call!"
+    }
+    $apiEndpoint += "/$($effObjectType.ToLower())/$ObjectID"
 
     $apiEndpoint += "/permissionLevels"
 
@@ -273,7 +279,7 @@ Function Set-DatabricksPermissions {
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
     [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSES')] [string] $ObjectType,
     
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
@@ -300,24 +306,26 @@ Function Set-DatabricksPermissions {
   process {
     Write-Verbose "Building Body/Parameters for final API call ..."
 
+    # need to use a separate variable as $ObjectType can only take values from the ValidateSet
+    $effObjectType = $ObjectType
     if ($PSCmdlet.ParameterSetName -eq "Cluster") {
-      $ObjectType = "CLUSTERS"
+      $effObjectType = "CLUSTERS"
       $ObjectID = $ClusterID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "Job") {
-      $ObjectType = "JOBS"
+      $effObjectType = "JOBS"
       $ObjectID = $JobID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "InstancePool") {
-      $ObjectType = "INSTANCE-POOLS"
+      $effObjectType = "INSTANCE-POOLS"
       $ObjectID = $InstancePoolID
     }
     elseif ($PSCmdlet.ParameterSetName -eq "WorkspaceItem") {
       if ($WorkspaceObjectType -eq "DIRECTORY") {
-        $ObjectType = "DIRECTORIES"
+        $effObjectType = "DIRECTORIES"
       }
       elseif ($WorkspaceObjectType -eq "NOTEBOOK") {
-        $ObjectType = "NOTEBOOKS"
+        $effObjectType = "NOTEBOOKS"
       }
       else {
         Write-Warning "ObjectType '$WorkspaceObjectType' does not support permissions"
@@ -325,20 +333,21 @@ Function Set-DatabricksPermissions {
       }
     }
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
-      $apiEndpoint += "/sql/warehouses/$SQLEndpointID"
+      $effObjectType = "SQL/WAREHOUSES"
+      $ObjectID = $SQLEndpointID
     }
-    elseif ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
-      $apiEndpoint += "/authorization/$($ObjectType.ToLower())"
+    
+    if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
+      $effObjectType = "authorization/$($ObjectType.ToLower())"
+      $ObjectID = $null
     }
-    else {
-      if (-not $ObjectID) {
-        Write-Error "Parameter -ObjectID is mandatory for this API call!"
-      }
-      $apiEndpoint += "/$($ObjectType.ToLower())/$ObjectID"
+    elseif (-not $ObjectID) {
+      Write-Error "Parameter -ObjectID is mandatory for this API call!"
     }
+    $apiEndpoint += "/$($effObjectType.ToLower())/$ObjectID"
 
     if ($UpdateType -eq "OVERWRITE" -and -not $Overwrite) {
-      Write-Error "You are about to OVERWRITE all existing permissions on $($ObjectType.ToLower())/$($ObjectID). If you want to proceed please also specify -Overwrite."
+      Write-Error "You are about to OVERWRITE all existing permissions on $($effObjectType.ToLower())/$($ObjectID). If you want to proceed please also specify -Overwrite."
     }
 
     #Set parameters

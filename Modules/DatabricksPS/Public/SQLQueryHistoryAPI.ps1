@@ -26,7 +26,7 @@ Function Get-DatabricksSQLHistory {
   [CmdletBinding(DefaultParametersetname = "Start/End MS")]
   param
   (
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "sql_endpoint_ids", "endpoint_id", "endpoint_ids", "id")] [string[]] $SQLEndpointIds,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "sql_endpoint_ids", "endpoint_id", "endpoint_ids", "id", "warehouse_id", "warehouse_ids", "sql_warehouse_id", "sql_warehouse_ids", "SQLEndpointIds")] [string[]] $SQLWarehouseIds,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("user_id", "user_ids")] [string[]] $UserIds,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("status")] [string[]] [ValidateSet("QUEUED", "RUNNING", "CANCELED", "FAILED", "FINISHED")] $Statuses,
     
@@ -36,6 +36,7 @@ Function Get-DatabricksSQLHistory {
     [Parameter(ParameterSetName = "Start/End DateTime", Mandatory = $true)] [Alias("query_start_time_to")] [datetime] $StartTimeTo,
     
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("max_results")] [int] $MaxResults = -1,
+    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("include_metrics")] [switch] $IncludeMetrics,
     [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("page_token", "next_page_token")] [string] $NextPageToken
   )
   begin {
@@ -57,7 +58,7 @@ Function Get-DatabricksSQLHistory {
     $timeFilter | Add-Property -Name "end_time_ms" -Value $StartTimeToMS -NullValue -1
 
     $filters = @{}
-    $filters | Add-Property -Name "endpoint_ids" -Value $SQLEndpointIds -NullValue @()
+    $filters | Add-Property -Name "warehouse_ids" -Value $SQLWarehouseIds -NullValue @()
     $filters | Add-Property -Name "user_ids" -Value $UserIds -NullValue @()
     $filters | Add-Property -Name "statuses" -Value $Statuses -NullValue @()
     $filters | Add-Property -Name "query_start_time_range" -Value $timeFilter -NullValue @{}
@@ -68,11 +69,15 @@ Function Get-DatabricksSQLHistory {
     $parameters | Add-Property -Name "max_results" -Value $MaxResults -NullValue -1
     $parameters | Add-Property -Name "page_token" -Value $NextPageToken
 
+    if ($IncludeMetrics) {
+      $parameters | Add-Property -Name "include_metrics" -Value $true
+    }
+    
+
     # GET requests do not support a complex body/parameters so we need to convert it to JSON and append it to the URL/endpoint directly
     # https://stackoverflow.com/questions/3981564/cannot-send-a-content-body-with-this-verb-type
 
-    if($PSVersionTable.PSVersion.Major -gt 5)
-    {
+    if ($PSVersionTable.PSVersion.Major -gt 5) {
       $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body ($parameters | ConvertTo-Json -Depth 5)
     }
     else {
