@@ -112,8 +112,17 @@ Function Add-DatabricksCluster {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     if ($ClusterObject) {
-      $parameters = $ClusterObject | ConvertTo-Hashtable
-      Write-Verbose "ClusterObject ($($ClusterObject.GetType())):"
+      Write-Verbose "Got ClusterObject of type ($($ClusterObject.GetType())):"
+      if ($ClusterObject -is [string]) {
+        Write-Verbose "Converting string to hashtable ..."
+        $parameters = $ClusterObject | ConvertFrom-Json -AsHashtable -Depth 10
+      }
+      else {
+        Write-Verbose "Converting string to hashtable ..."
+        $parameters = $ClusterObject | ConvertTo-Hashtable
+      }
+      
+      Write-Verbose "ClusterObject: "
       Write-Verbose $($ClusterObject | ConvertTo-Json)
     }
     else {
@@ -183,8 +192,8 @@ Function Add-DatabricksCluster {
 
     $nonEmptyParameters = @{}
     foreach ($prop in $parameters.GetEnumerator()) {
-      if($prop.Value -eq $null) # if th value is $null we never add it
-      {
+      if ($prop.Value -eq $null) {
+        # if th value is $null we never add it
         continue
       }
       if (
@@ -324,7 +333,15 @@ Function Update-DatabricksCluster {
     #Set parameters
     Write-Verbose "Building Body/Parameters for final API call ..."
     if ($ClusterObject) {
-      $parameters = $ClusterObject | ConvertTo-Hashtable
+      Write-Verbose "Got ClusterObject of type ($($ClusterObject.GetType())):"
+      if ($ClusterObject -is [string]) {
+        Write-Verbose "Converting string to hashtable ..."
+        $parameters = $ClusterObject | ConvertFrom-Json -AsHashtable -Depth 10
+      }
+      else {
+        Write-Verbose "Converting string to hashtable ..."
+        $parameters = $ClusterObject | ConvertTo-Hashtable
+      }
       Write-Verbose "ClusterObject: "
       Write-Verbose $($ClusterObject | ConvertTo-Json)
       
@@ -754,7 +771,7 @@ Function Pin-DatabricksCluster {
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
     # return a new PSCustomObject to support piping 
-    return [PSCustomObject]@{"cluster_id" = $ClusterID}
+    return [PSCustomObject]@{"cluster_id" = $ClusterID }
   }
 }
 
@@ -802,7 +819,7 @@ Function Unpin-DatabricksCluster {
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
     # return a new PSCustomObject to support piping 
-    return [PSCustomObject]@{"cluster_id" = $ClusterID}
+    return [PSCustomObject]@{"cluster_id" = $ClusterID }
   }
 }
 
