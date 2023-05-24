@@ -51,8 +51,8 @@ $script:dbApiCallRetryWait = $null
 # $PrivateFunctions  = @( Get-ChildItem -Path "$(split-path $psEditor.GetEditorContext().CurrentFile.Path)\Private\*.ps1" -ErrorAction SilentlyContinue )
 
 #Get public and private function definition files.
-$PublicFunctions = @( Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -ErrorAction SilentlyContinue )
-$PrivateFunctions = @( Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -ErrorAction SilentlyContinue )
+$PublicFunctions = @( Get-ChildItem -Path "$PSScriptRoot\Public" -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue )
+$PrivateFunctions = @( Get-ChildItem -Path "$PSScriptRoot\Private" -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue )
 
 #Dot source the files
 foreach ($import in @($PublicFunctions + $PrivateFunctions)) {

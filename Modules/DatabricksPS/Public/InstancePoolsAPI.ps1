@@ -53,7 +53,7 @@
     $sparkVersionValues = (Get-DynamicParamValues { Get-DatabricksSparkVersion }).key
     New-DynamicParam -Name PreloadedSparkVersions -ValidateSet $sparkVersionValues -Alias "preloaded_spark_versions" -ValueFromPipelineByPropertyName -Type string[] -DPDictionary $Dictionary
 
-    if ($script:dbCloudProvider -in @("AWS")) {
+    if ((Get-DatabricksCloudProvider) -in @("AWS")) {
       $awsZoneValues = (Get-DynamicParamValues { Get-DatabricksZone }).key
       New-DynamicParam -Name AwsZone -ValidateSet $awsZoneValues -Alias "zone_id" -ValueFromPipelineByPropertyName -Type string[] -DPDictionary $Dictionary
 
@@ -82,7 +82,7 @@
     
     if (-not $AwsAttributes) {
       # check if a ClusterMode was explicitly specified
-      if ($script:dbCloudProvider -in @("AWS")) {
+      if ((Get-DatabricksCloudProvider) -in @("AWS")) {
         $AwsAttributes = @{ }
         
         $AwsAttributes | Add-Property -Name "availability" -Value $AwsAvailability -Force

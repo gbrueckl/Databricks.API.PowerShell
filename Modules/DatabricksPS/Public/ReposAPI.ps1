@@ -63,7 +63,7 @@ Function Get-DatabricksRepo {
 			return $result
 		}
 		else {
-			if ($Raw) {
+			if ($Raw.IsPresent) {
 				return $result
 			}
 			if ($result.next_page_token) {

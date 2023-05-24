@@ -34,7 +34,7 @@ Function Get-UnityCatalogExternalLocation {
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		if ($PSBoundParameters.ContainsKey("ExternalLocationName") -or $Raw) {
+		if ($PSBoundParameters.ContainsKey("ExternalLocationName") -or $Raw.IsPresent) {
 			# if a CatalogName was specified, we return the result as it is
 			return $result
 		}
@@ -85,7 +85,7 @@ Function Add-UnityCatalogExternalLocation {
 			credential_name = $CredentialName
 		}
 
-		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation -Force
+		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation.IsPresent -Force
 		$parameters | Add-Property -Name "read_only" -Value $ReadOnly -Force
 		$parameters | Add-Property -Name "comment" -Value $Comment -Force
 
@@ -121,8 +121,8 @@ Function Update-UnityCatalogExternalLocation {
 		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $Owner,
 		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [switch] [Alias("skip_validation")]$SkipValidation,
 		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [boolean] [Alias("read_only")]$ReadOnly,
-		[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("path")]$URL,
-		[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("credential_name")]$CredentialName,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] [Alias("path")]$URL,
+		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] [Alias("credential_name")]$CredentialName,
 		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $Comment,
 		[Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [switch] $Force
 	)
@@ -141,8 +141,9 @@ Function Update-UnityCatalogExternalLocation {
 		$parameters | Add-Property -Name "credential_name" -Value $CredentialName -Force
 		$parameters | Add-Property -Name "owner" -Value $Owner -Force
 		$parameters | Add-Property -Name "read_only" -Value $ReadOnly -Force
-		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation -Force
+		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation.IsPresent -Force
 		$parameters | Add-Property -Name "comment" -Value $Comment -Force
+		$parameters | Add-Property -Name "force" -Value $Force.IsPresent -Force
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
@@ -177,7 +178,7 @@ Function Remove-UnityCatalogExternalLocation {
 		#Set parameters
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		$parameters = @{ 
-			force = $Force
+			force = $Force.IsPresent
 		}
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

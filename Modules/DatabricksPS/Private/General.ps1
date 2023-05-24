@@ -950,7 +950,6 @@ Function Remove-LocalPath {
 		[Parameter(Mandatory = $true)] [string] $LocalPath,
 		[Parameter(Mandatory = $false)] [bool] $Condition = $true
 	)
-	#region CleanLocalPath
 	Write-Verbose "Checking if Folder '$LocalPath' exists ..."
 	if ((Test-Path $LocalPath) -and $Condition) {
 		Write-Verbose "Local folder '$LocalPath' exists and -CleanLocalPath is specified - deleting folder..."
@@ -963,10 +962,14 @@ Function Get-EnvironmentVariable {
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $EnvironmentVariable
 	)
-	#region CleanLocalPath
 	Write-Verbose "Getting environment variable '$EnvironmentVariable' ..."
 	if (-not (Test-Path "env:$EnvironmentVariable")) {
 		Write-Error "The environment variable '$EnvironmentVariable' could not be found!"
 	}
 	return (Get-Item -Path "env:$EnvironmentVariable").Value
+}
+
+Function Get-DatabricksCloudProvider {
+	param ()
+	return $script:dbCloudProvider
 }

@@ -34,7 +34,7 @@ Function Get-UnityCatalogStorageCredential {
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		if ($PSBoundParameters.ContainsKey("StorageCredentialName") -or $Raw) {
+		if ($PSBoundParameters.ContainsKey("StorageCredentialName") -or $Raw.IsPresent) {
 			# if a CatalogName was specified, we return the result as it is
 			return $result
 		}
@@ -73,19 +73,17 @@ Function Add-UnityCatalogStorageCredential {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		if($script.dbCloudProvider -eq "Azure")
+		if((Get-DatabricksCloudProvider) -eq "Azure" -or $true)
 		{
-			New-DynamicParam -ParameterSetName "Azure" -Name XXX -Alias 'role_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "Azure" -Name XX -Alias 'unity_catalog_iam_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "Azure" -Name X -Alias 'external_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "Azure" -Name AccessConnectorID -Alias 'access_connector_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 		}
-		elseif($script.dbCloudProvider -eq "AWS")
+		elseif((Get-DatabricksCloudProvider) -eq "AWS")
 		{
 			New-DynamicParam -ParameterSetName "AWS" -Name RoleARN -Alias 'role_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 			New-DynamicParam -ParameterSetName "AWS" -Name UnityCatalogIamARN -Alias 'unity_catalog_iam_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 			New-DynamicParam -ParameterSetName "AWS" -Name ExternalID -Alias 'external_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 		}
-		if($script.dbCloudProvider -eq "GCP")
+		elseif((Get-DatabricksCloudProvider) -eq "GCP")
 		{
 			New-DynamicParam -ParameterSetName "GCP" -Name EMail -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 			New-DynamicParam -ParameterSetName "GCP" -Name PrivateKeyID -Alias 'private_key_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
@@ -107,21 +105,19 @@ Function Add-UnityCatalogStorageCredential {
 			name    = $StorageCredentialName
 		}
 
-		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation -Force
+		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation.IsPresent -Force
 		$parameters | Add-Property -Name "read_only" -Value $ReadOnly -Force
 		$parameters | Add-Property -Name "comment" -Value $Comment -Force
 
-		if($script.dbCloudProvider -eq "Azure")
+		if((Get-DatabricksCloudProvider) -eq "Azure")
 		{
 			$credential = @{
-				role_arn = $RoleARN
-				unity_catalog_iam_arn = $UnityCatalogIamARN
-				external_id = $ExternalID
+				access_connector_id = $PSBoundParameters.AccessConnectorID
 			}
 
-			$parameters | Add-Property -Name "azure_service_principal" -Value $credential -Force
+			$parameters | Add-Property -Name "azure_managed_identity" -Value $credential -Force
 		}
-		elseif($script.dbCloudProvider -eq "AWS")
+		elseif((Get-DatabricksCloudProvider) -eq "AWS")
 		{
 			$credential = @{
 				role_arn = $PSBoundParameters.RoleARN
@@ -131,7 +127,7 @@ Function Add-UnityCatalogStorageCredential {
 
 			$parameters | Add-Property -Name "aws_iam_role" -Value $credential -Force
 		}
-		if($script.dbCloudProvider -eq "GCP")
+		elseif((Get-DatabricksCloudProvider) -eq "GCP")
 		{
 			$credential = @{
 				email = $PSBoundParameters.EMail
@@ -180,23 +176,21 @@ Function Update-UnityCatalogStorageCredential {
 		#Create the RuntimeDefinedParameterDictionary
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
-		if($script.dbCloudProvider -eq "Azure")
+		if((Get-DatabricksCloudProvider) -eq "Azure")
 		{
-			New-DynamicParam -ParameterSetName "Azure" -Name XXX -Alias 'role_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "Azure" -Name XX -Alias 'unity_catalog_iam_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "Azure" -Name X -Alias 'external_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "Azure" -Name AccessConnectorID -Alias 'access_connector_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 		}
-		elseif($script.dbCloudProvider -eq "AWS")
+		elseif((Get-DatabricksCloudProvider) -eq "AWS")
 		{
-			New-DynamicParam -ParameterSetName "AWS" -Name RoleARN -Alias 'role_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "AWS" -Name UnityCatalogIamARN -Alias 'unity_catalog_iam_arn' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "AWS" -Name ExternalID -Alias 'external_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AWS" -Name RoleARN -Alias 'role_arn' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AWS" -Name UnityCatalogIamARN -Alias 'unity_catalog_iam_arn' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AWS" -Name ExternalID -Alias 'external_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 		}
-		if($script.dbCloudProvider -eq "GCP")
+		elseif((Get-DatabricksCloudProvider) -eq "GCP")
 		{
-			New-DynamicParam -ParameterSetName "GCP" -Name EMail -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "GCP" -Name PrivateKeyID -Alias 'private_key_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
-			New-DynamicParam -ParameterSetName "GCP" -Name PrivateKey -Alias 'private_key' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "GCP" -Name EMail -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "GCP" -Name PrivateKeyID -Alias 'private_key_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "GCP" -Name PrivateKey -Alias 'private_key' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 		}
 
 		#return RuntimeDefinedParameterDictionary
@@ -215,20 +209,20 @@ Function Update-UnityCatalogStorageCredential {
 		$parameters | Add-Property -Name "name" -Value $NewStorageCredentialName -Force
 		$parameters | Add-Property -Name "owner" -Value $Owner -Force
 		$parameters | Add-Property -Name "read_only" -Value $ReadOnly -Force
-		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation -Force
+		$parameters | Add-Property -Name "skip_validation" -Value $SkipValidation.IsPresent -Force
 		$parameters | Add-Property -Name "comment" -Value $Comment -Force
+		$parameters | Add-Property -Name "force" -Value $Force.IsPresent -Force
 
-		if($script.dbCloudProvider -eq "Azure")
+		if((Get-DatabricksCloudProvider) -eq "Azure")
 		{
 			$credential = @{
-				role_arn = $RoleARN
-				unity_catalog_iam_arn = $UnityCatalogIamARN
-				external_id = $ExternalID
+				access_connector_id = $AccessConnectorID
+				credential_id = $CredentialID
 			}
 
-			$parameters | Add-Property -Name "azure_service_principal" -Value $credential -Force
+			$parameters | Add-Property -Name "azure_managed_identity" -Value $credential -Force
 		}
-		elseif($script.dbCloudProvider -eq "AWS")
+		elseif((Get-DatabricksCloudProvider) -eq "AWS")
 		{
 			$credential = @{
 				role_arn = $PSBoundParameters.RoleARN
@@ -238,7 +232,7 @@ Function Update-UnityCatalogStorageCredential {
 
 			$parameters | Add-Property -Name "aws_iam_role" -Value $credential -Force
 		}
-		if($script.dbCloudProvider -eq "GCP")
+		elseif((Get-DatabricksCloudProvider) -eq "GCP")
 		{
 			$credential = @{
 				email = $PSBoundParameters.EMail
@@ -282,7 +276,7 @@ Function Remove-UnityCatalogStorageCredential {
 		#Set parameters
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		$parameters = @{ 
-			force = $Force
+			force = $Force.IsPresent
 		}
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

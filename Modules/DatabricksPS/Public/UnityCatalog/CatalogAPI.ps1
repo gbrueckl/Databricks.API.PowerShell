@@ -34,7 +34,7 @@ Function Get-UnityCatalogCatalog {
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		if ($PSBoundParameters.ContainsKey("CatalogName") -or $Raw) {
+		if ($PSBoundParameters.ContainsKey("CatalogName") -or $Raw.IsPresent) {
 			# if a CatalogName was specified, we return the result as it is
 			return $result
 		}
@@ -171,7 +171,7 @@ Function Remove-UnityCatalogCatalog {
 		#Set parameters
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		$parameters = @{ 
-			force = $Force
+			force = $Force.IsPresent
 		}
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters

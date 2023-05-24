@@ -302,7 +302,7 @@ Function Get-DatabricksJob {
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-		if ($raw -or $JobID -gt 0) {
+		if ($Raw.IsPresent -or $JobID -gt 0) {
 			# if a JobID or -Raw was specified, we return the result as it is
 			return $result
 		}
@@ -405,7 +405,7 @@ Function Update-DatabricksJob {
 		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
 
 		if($script:dbJobsAPIVersion -eq "2.0") {
-			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
+			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob } ).job_id
 			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 		}
 		else

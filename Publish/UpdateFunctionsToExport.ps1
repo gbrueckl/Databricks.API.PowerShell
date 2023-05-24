@@ -14,7 +14,7 @@ $rootPath = $rootPath | Split-Path -Parent
 $moduleName = $ModuleName = (Get-ChildItem "$rootPath\Modules")[0].Name
 $psdFilePath = "$rootPath\Modules\$moduleName\$moduleName.psd1"
 
-$PublicFunctions = @( Get-ChildItem -Path "$rootPath\Modules\$moduleName\Public\*.ps1" -ErrorAction SilentlyContinue )
+$PublicFunctions = @( Get-ChildItem -Path "$rootPath\Modules\$moduleName\Public" -Filter "*.ps1" -Recurse -ErrorAction SilentlyContinue )
 $PublicFunctions = $PublicFunctions | Where-Object { $_.Name -inotlike "*-PREVIEW.ps1" }
 
 # WARNING: If the Alias definition changes, this also has to be changed in the DatabricksPS.pms1 file!

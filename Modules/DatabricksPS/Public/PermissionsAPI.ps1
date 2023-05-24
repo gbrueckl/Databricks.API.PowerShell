@@ -118,7 +118,7 @@ Function Get-DatabricksPermissions {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    if ($Raw) { return $result }
+    if ($Raw.IsPresent) { return $result }
     else {
       return $result.access_control_list
     }
@@ -248,7 +248,7 @@ Function Get-DatabricksPermissionLevels {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
-    if ($Raw) { return $result }
+    if ($Raw.IsPresent) { return $result }
     else {
       return $result.permission_levels
     }
@@ -404,7 +404,7 @@ Function Set-DatabricksPermissions {
 
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $body
 
-    if ($Raw) { return $result }
+    if ($Raw.IsPresent) { return $result }
     else {
       return $result.access_control_list
     }

@@ -3,6 +3,8 @@ $ErrorActionPreference = "Stop"
 # print Information stream
 $InformationPreference = "Continue"
 
+# Read-Host -AsSecureString -Prompt "Value to Secure" | ConvertFrom-SecureString
+
 $rootPath = Switch ($Host.name) {
 	'Visual Studio Code Host' { split-path $psEditor.GetEditorContext().CurrentFile.Path }
 	'Windows PowerShell ISE Host' { Split-Path -Path $psISE.CurrentFile.FullPath }
@@ -151,6 +153,12 @@ foreach ($environment in $activeEnvironments) {
 
 		$script:testWorkspaceFolder = '/' + $plainEnvironment.testConfig.workspaceFolder.Trim('/') + '/'
 		$script:testSecretScope = $plainEnvironment.testConfig.secretScope.Trim()
+
+		# Unity Catalog
+		$script:unityCatalogCatalogName = $plainEnvironment.testConfig.unityCatalogCatalogName
+		$script:unityCatalogStorageCredentialResourceID = $plainEnvironment.testConfig.unityCatalogStorageCredentialResourceID
+		$script:unityCatalogStorageCredentialName = $plainEnvironment.testConfig.unityCatalogStorageCredentialName
+		$script:unityCatalogExternalLocatinURL = $plainEnvironment.testConfig.unityCatalogExternalLocatinURL
 	
 		$moduleCommands = Get-Command -Module "DatabricksPS"
 	
