@@ -292,9 +292,13 @@ Function Set-DatabricksEnvironment {
 			Write-Verbose "'.azuredatabricks.' found in ApiRootUrl - Setting CloudProvider to 'Azure' ..."
 			$script:dbCloudProvider = "Azure"
 		}
-		else {
-			Write-Verbose "'.azuredatabricks.' not found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
+		elseif ($ApiRootUrl -ilike "*.cloud.databricks.*") {
+			Write-Verbose "'.cloud.databricks.' found in ApiRootUrl - Setting CloudProvider to 'AWS' ..."
 			$script:dbCloudProvider = "AWS"
+		}
+		else {
+			Write-Verbose "'.azuredatabricks.' and '.cloud.databricks.' not found in ApiRootUrl - Setting CloudProvider to 'GCP' ..."
+			$script:dbCloudProvider = "GCP"
 		}
 		Write-Verbose "Done!"
 		#endregion

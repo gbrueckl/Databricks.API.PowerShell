@@ -9,6 +9,10 @@ Function Get-DatabricksPermissions {
       The type of the object for which you want to retrieve the permission(s). e.g. Cluster, Job, Directory, ...
       .PARAMETER ObjectID 
       The unique ID of the object for which you want to retrieve the permission(s). e.g. a cluster_id if ObjectType = Cluster
+      .PARAMETER CustomObjectType
+      Can be used in combination with `-ObjectType 'CUSTOM'` to get permissions for arbitrary objects not explicitly listed.
+      .PARAMETER ClusterPolicyID
+      The unique ID of the cluster policy for which you want to get the permissions. 
       .PARAMETER ClusterID 
       The unique ID of the cluster for which you want to retrieve the permission(s). 
       .PARAMETER JobID 
@@ -35,8 +39,9 @@ Function Get-DatabricksPermissions {
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
     [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSE')] [string] $ObjectType,
-    
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CUSTOM', 'CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSE', 'CLUSTER-POLICIES')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $CustomObjectType,
+
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
     [Parameter(ParameterSetName = "Job", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [string] $JobID,
@@ -47,19 +52,26 @@ Function Get-DatabricksPermissions {
 
     [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id", "SQLWarehouseID", "sql_warehouse_id")] [string] $SQLEndpointID,
 
+    [Parameter(ParameterSetName = "ClusterPolicy", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_policy_id", "policy_id")] [string] $ClusterPolicyID,
+
     [Parameter(Mandatory = $false)] [switch] $Raw
   )
   begin {
     $requestMethod = "GET"
-    $apiEndpoint = "/2.0/permissions"
   }
 	
   process {
+    $apiEndpoint = "/2.0/permissions"
+
     Write-Verbose "Building Body/Parameters for final API call ..."
 
     # need to use a separate variable as $ObjectType can only take values from the ValidateSet
     $effObjectType = $ObjectType
-    if ($PSCmdlet.ParameterSetName -eq "Cluster") {
+    if ($PSCmdlet.ParameterSetName -eq "Generic" -and $ObjectType -eq "CUSTOM") {
+      $effObjectType = $CustomObjectType
+      $ObjectID = $ObjectID
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "Cluster") {
       $effObjectType = "CLUSTERS"
       $ObjectID = $ClusterID
     }
@@ -86,6 +98,10 @@ Function Get-DatabricksPermissions {
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
       $effObjectType = "SQL/WAREHOUSES"
       $ObjectID = $SQLEndpointID
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "ClusterPolicy") {
+      $effObjectType = "CLUSTER-POLICIES"
+      $ObjectID = $ClusterPolicyID
     }
     
     if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
@@ -121,6 +137,10 @@ Function Get-DatabricksPermissionLevels {
       The type of the object for which you want to retrieve the permission levels. e.g. Cluster, Job, Directory, ...
       .PARAMETER ObjectID 
       The unique ID of the object for which you want to retrieve the permission levels. e.g. a cluster_id if ObjectType = Cluster
+      .PARAMETER CustomObjectType
+      Can be used in combination with `-ObjectType 'CUSTOM'` to get permission levels for arbitrary objects not explicitly listed.
+      .PARAMETER ClusterPolicyID
+      The unique ID of the cluster policy for which you want to get the permission levels. 
       .PARAMETER ClusterID 
       The unique ID of the cluster for which you want to retrieve the permission levels. 
       .PARAMETER JobID 
@@ -147,8 +167,9 @@ Function Get-DatabricksPermissionLevels {
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
     [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSES')] [string] $ObjectType,
-    
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CUSTOM', 'CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSES')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $CustomObjectType,
+
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
     [Parameter(ParameterSetName = "Job", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [string] $JobID,
@@ -159,19 +180,26 @@ Function Get-DatabricksPermissionLevels {
 
     [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id", "SQLWarehouseID", "sql_warehouse_id")] [string] $SQLEndpointID,
 
+    [Parameter(ParameterSetName = "ClusterPolicy", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_policy_id", "policy_id")] [string] $ClusterPolicyID,
+
     [Parameter(Mandatory = $false)] [switch] $Raw
   )
   begin {
     $requestMethod = "GET"
-    $apiEndpoint = "/2.0/permissions"
   }
 	
   process {
+    $apiEndpoint = "/2.0/permissions"
+
     Write-Verbose "Building Body/Parameters for final API call ..."
 
     # need to use a separate variable as $ObjectType can only take values from the ValidateSet
     $effObjectType = $ObjectType
-    if ($PSCmdlet.ParameterSetName -eq "Cluster") {
+    if ($PSCmdlet.ParameterSetName -eq "Generic" -and $ObjectType -eq "CUSTOM") {
+      $effObjectType = $CustomObjectType
+      $ObjectID = $ObjectID
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "Cluster") {
       $effObjectType = "CLUSTERS"
       $ObjectID = $ClusterID
     }
@@ -198,6 +226,10 @@ Function Get-DatabricksPermissionLevels {
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
       $effObjectType = "SQL/WAREHOUSES"
       $ObjectID = $SQLEndpointID
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "ClusterPolicy") {
+      $effObjectType = "CLUSTER-POLICIES"
+      $ObjectID = $ClusterPolicyID
     }
     
     if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {
@@ -235,6 +267,10 @@ Function Set-DatabricksPermissions {
       The type of the object for which you want to set the permission(s). e.g. Cluster, Job, Directory, ...
       .PARAMETER ObjectID 
       The unique ID of the object for which you want to set the permission(s). e.g. a cluster_id if ObjectType = Cluster
+      .PARAMETER CustomObjectType
+      Can be used in combination with `-ObjectType 'CUSTOM'` to set permissions for arbitrary objects.
+      .PARAMETER ClusterPolicyID
+      The unique ID of the cluster policy for which you want to set the permission(s). 
       .PARAMETER ClusterID 
       The unique ID of the cluster for which you want to set the permission(s). 
       .PARAMETER JobID 
@@ -277,10 +313,11 @@ Function Set-DatabricksPermissions {
   param
   (
     [Parameter(ParameterSetName = "WorkspaceItem", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("object_id")] [string] $ObjectID,
 
-    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSES')] [string] $ObjectType,
-    
+    [Parameter(ParameterSetName = "Generic", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [ValidateSet('CUSTOM', 'CLUSTERS', 'JOBS', 'INSTANCE-POOLS', 'NOTEBOOKS', 'DIRECTORIES', 'REGISTERED-MODELS', 'TOKENS', 'PASSWORDS', 'SQL/WAREHOUSES', 'CLUSTER-POLICIES')] [string] $ObjectType,
+    [Parameter(ParameterSetName = "Generic", Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] $CustomObjectType,
+
     [Parameter(ParameterSetName = "Cluster", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_id")] [string] $ClusterID,
 
     [Parameter(ParameterSetName = "Job", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("job_id")] [string] $JobID,
@@ -291,6 +328,8 @@ Function Set-DatabricksPermissions {
 
     [Parameter(ParameterSetName = "SQLEndpoint", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("sql_endpoint_id", "id", "SQLWarehouseID", "sql_warehouse_id")] [string] $SQLEndpointID,
 
+    [Parameter(ParameterSetName = "ClusterPolicy", Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("cluster_policy_id", "policy_id")] [string] $ClusterPolicyID,
+
     [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)] [Alias("ACL")][object[]] $AccessControlList,
     [Parameter(Mandatory = $false)] [switch] $Overwrite,
     [Parameter(Mandatory = $false)] [switch] $Raw
@@ -299,16 +338,20 @@ Function Set-DatabricksPermissions {
     # PATCH to add/set permissions, PUT to replace/overwrite them
     if ($Overwrite) { $requestMethod = "PUT" }
     else { $requestMethod = "PATCH" }
-    
-    $apiEndpoint = "/2.0/permissions"
   }
 	
   process {
+    $apiEndpoint = "/2.0/permissions"
+
     Write-Verbose "Building Body/Parameters for final API call ..."
 
     # need to use a separate variable as $ObjectType can only take values from the ValidateSet
     $effObjectType = $ObjectType
-    if ($PSCmdlet.ParameterSetName -eq "Cluster") {
+    if ($PSCmdlet.ParameterSetName -eq "Generic" -and $ObjectType -eq "CUSTOM") {
+      $effObjectType = $CustomObjectType
+      $ObjectID = $ObjectID
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "Cluster") {
       $effObjectType = "CLUSTERS"
       $ObjectID = $ClusterID
     }
@@ -335,6 +378,10 @@ Function Set-DatabricksPermissions {
     elseif ($PSCmdlet.ParameterSetName -eq "SQLEndpoint") {
       $effObjectType = "SQL/WAREHOUSES"
       $ObjectID = $SQLEndpointID
+    }
+    elseif ($PSCmdlet.ParameterSetName -eq "ClusterPolicy") {
+      $effObjectType = "CLUSTER-POLICIES"
+      $ObjectID = $ClusterPolicyID
     }
     
     if ($ObjectType -in @('TOKENS', 'PASSWORDS')) {

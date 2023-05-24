@@ -1,5 +1,13 @@
 # Release History
 
+## v1.11.0.8
+
+- Added `-CustomObjectType` to all `Permission`-cmdlets. Can be used with `-ObjectType 'CUSTOM'` to set/get arbitrary permissions
+
+## v1.11.0.7
+
+- Added support for `Cluster Policies` in all `Permission`-cmdlets
+
 ## v1.11.0.6
 
 - Added support for string object as `-ClusterObject` in `Add-DatabricksCluster` and `Update-DatabricksCluster`
