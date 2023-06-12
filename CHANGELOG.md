@@ -1,5 +1,11 @@
 # Release History
 
+## v1.12.0.0
+
+- Added support for the first Unity Catalog APIs (`Catalog`, `StorageCredential`, `ExternalLocation`)
+- Fixed issue with mandatory parameter for `New-DatabricksJobRun`
+- Added `azureDevOpsServicesAad` as GitProvider
+
 ## v1.11.0.8
 
 - Added `-CustomObjectType` to all `Permission`-cmdlets. Can be used with `-ObjectType 'CUSTOM'` to set/get arbitrary permissions

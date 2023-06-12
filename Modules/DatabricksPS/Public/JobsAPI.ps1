@@ -615,12 +615,12 @@ Function New-DatabricksJobRun {
 
 		if($script:dbJobsAPIVersion -eq "2.0") {
 			$jobIDValues = (Get-DynamicParamValues { Get-DatabricksJob -Verbose } -Verbose).job_id
-			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -Name JobID -ValidateSet $jobIDValues -Alias 'job_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 		}
 		else
 		{
 			# for API version 2.1 and above we cananot simply retrieve all jobs so we dont specify a validate set
-			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -Name JobID -Alias 'job_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
 		}
 
 		$clusterIDValues = (Get-DynamicParamValues { Get-DatabricksCluster }).cluster_id
@@ -725,9 +725,6 @@ Function New-DatabricksJobRun {
 			$parameters | Add-Property -Name "libraries" -Value $Libraries
 			$parameters | Add-Property -Name "timeout_seconds" -Value $TimeoutSeconds -NullValue -1
 		}
-	
-    
-    
 
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 

@@ -62,23 +62,38 @@ Function Add-DatabricksGitCredential {
 	#>
   param
   (
-    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [ValidateSet("awsCodeCommit", "azureDevOpsServices", "bitbucketCloud", "bitbucketServer", "gitHub", "gitHubEnterprise", "gitLab", "gitLabEnterpriseEdition")] [Alias("git_provider", "provider")] $GitProvider, 
-    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("git_username", "username")] $GitUsername, 
-    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("personal_access_token", "pat")] $PersonalAccessToken
+    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [ValidateSet("awsCodeCommit", "azureDevOpsServices", "azureDevOpsServicesAad", "bitbucketCloud", "bitbucketServer", "gitHub", "gitHubEnterprise", "gitLab", "gitLabEnterpriseEdition")] [Alias("git_provider", "provider")] $GitProvider
+    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("git_username", "username")] $GitUsername, 
+    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("personal_access_token", "pat")] $PersonalAccessToken
   )
+  DynamicParam {
+		#Create the RuntimeDefinedParameterDictionary
+		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+
+		if($GitProvider -ne "azureDevOpsServicesAad") {
+			New-DynamicParam -Name "GitUsername" -Alias "git_username", "username" -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+      New-DynamicParam -Name "PersonalAccessToken" -Alias "personal_access_token", "pat" -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+
+		#return RuntimeDefinedParameterDictionary
+		return $Dictionary
+	}
   begin {
     $requestMethod = "POST"
     $apiEndpoint = "/2.0/git-credentials"
   }
 	
   process {
+    $GitUsername = $PSBoundParameters.GitUsername
+    $PersonalAccessToken = $PSBoundParameters.PersonalAccessToken
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
       git_provider = $GitProvider
-      git_username = $GitUsername
-      personal_access_token = $PersonalAccessToken 
     }
+    $parameters | Add-Property  -Name "git_username" -Value $GitUsername -Force
+    $parameters | Add-Property  -Name "personal_access_token" -Value $PersonalAccessToken -Force
     
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
@@ -107,23 +122,38 @@ Function Update-DatabricksGitCredential {
   param
   (
     [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("credential_id")] [string] $CredentialID,
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] [ValidateSet("awsCodeCommit", "azureDevOpsServices", "bitbucketCloud", "bitbucketServer", "gitHub", "gitHubEnterprise", "gitLab", "gitLabEnterpriseEdition")] [Alias("git_provider", "provider")] $GitProvider, 
-    [Parameter(Mandatory = $false, ValueFromPipelineByPropertyName = $true)] [string] [Alias("git_username", "username")] $GitUsername, 
-    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("personal_access_token", "pat")] $PersonalAccessToken
+    [Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [ValidateSet("awsCodeCommit", "azureDevOpsServices", "azureDevOpsServicesAad", "bitbucketCloud", "bitbucketServer", "gitHub", "gitHubEnterprise", "gitLab", "gitLabEnterpriseEdition")] [Alias("git_provider", "provider")] $GitProvider
+    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("git_username", "username")] $GitUsername, 
+    #[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [string] [Alias("personal_access_token", "pat")] $PersonalAccessToken
   )
+  DynamicParam {
+		#Create the RuntimeDefinedParameterDictionary
+		$Dictionary = New-Object System.Management.Automation.RuntimeDefinedParameterDictionary
+
+		if($GitProvider -ne "azureDevOpsServicesAad") {
+			New-DynamicParam -Name "GitUsername" -Alias "git_username", "username" -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+      New-DynamicParam -Name "PersonalAccessToken" -Alias "personal_access_token", "pat" -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+		}
+
+		#return RuntimeDefinedParameterDictionary
+		return $Dictionary
+	}
   begin {
     $requestMethod = "PATCH"
     $apiEndpoint = "/2.0/git-credentials/$CredentialID"
   }
 	
   process {
+    $GitUsername = $PSBoundParameters.GitUsername
+    $PersonalAccessToken = $PSBoundParameters.PersonalAccessToken
+
     Write-Verbose "Building Body/Parameters for final API call ..."
     #Set parameters
     $parameters = @{
       personal_access_token = $PersonalAccessToken 
     }
-    $parameters | Add-Property -Name "git_username" -Value $GitUsername
-    $parameters | Add-Property -Name "git_provider" -Value $GitProvider
+    $parameters | Add-Property -Name "git_username" -Value $GitUsername -Force
+    $parameters | Add-Property -Name "git_provider" -Value $GitProvider -Force
     
     $result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
