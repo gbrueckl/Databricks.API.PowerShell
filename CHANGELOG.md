@@ -2,7 +2,7 @@
 
 ## v1.12.0.0
 
-- Added support for the first Unity Catalog APIs (`Catalog`, `StorageCredential`, `ExternalLocation`)
+- Added support for the first Unity Catalog APIs (`Catalog`, `StorageCredential`, `ExternalLocation`, `Schema`)
 - Fixed issue with mandatory parameter for `New-DatabricksJobRun`
 - Added `azureDevOpsServicesAad` as GitProvider
 

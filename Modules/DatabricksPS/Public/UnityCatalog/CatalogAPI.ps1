@@ -51,7 +51,7 @@ Function Add-UnityCatalogCatalog {
 		Creates a repo in the workspace and links it to the remote Git repo specified. Note that repos created programmatically must be linked to a remote Git repo, unlike repos created in the browser.
 		.DESCRIPTION
 		Creates a repo in the workspace and links it to the remote Git repo specified. Note that repos created programmatically must be linked to a remote Git repo, unlike repos created in the browser.
-		https://docs.databricks.com/dev-tools/api/latest/repos.html#operation/create-repo
+		https://docs.databricks.com/api/azure/workspace/catalogs/create
 		.PARAMETER URL 
 		URL of the Git repository to be linked.
 		.PARAMETER Provider 
