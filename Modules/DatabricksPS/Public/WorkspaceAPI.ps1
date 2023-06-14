@@ -117,7 +117,7 @@ Function Import-DatabricksWorkspaceItem {
 	param
 	(
 		[Parameter(Mandatory = $true, Position = 1)] [string] $Path, 
-		[Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC")] $Format = "SOURCE", 
+		[Parameter(Mandatory = $false, Position = 2)] [string] [ValidateSet("SOURCE", "HTML", "JUPYTER", "DBC", "AUTO", "FILE")] $Format = "SOURCE", 
 		[Parameter(Mandatory = $false, Position = 3)] [string] [ValidateSet("SCALA", "PYTHON", "SQL", "R")] $Language, 
 		[Parameter(Mandatory = $true, Position = 4, ValueFromPipelineByPropertyName = $true)] [string] $LocalPath, 
 		[Parameter(Mandatory = $false, Position = 5)] [bool] $Overwrite = $false
@@ -132,16 +132,23 @@ Function Import-DatabricksWorkspaceItem {
 		$fileBytes = [IO.File]::ReadAllBytes($LocalPath)
 		Write-Verbose "Converting content to Base64 string ..."
 		$content = [Convert]::ToBase64String($fileBytes)
+
+		# FILE is just a more obvious shortcut for AUTO
+		if($Format -eq "FILE")
+		{
+			$Format = "AUTO"
+		}
 	
 		Write-Verbose "Building Body/Parameters for final API call ..."
 		#Set parameters
 		$parameters = @{
 			path      = $Path 
 			format    = $Format 
-			language  = $Language 
 			content   = $Content 
 			overwrite = $Overwrite 
 		}
+		$parameters | Add-Property -Name "language" -Value $Language -Force
+
 	
 		$result = Invoke-DatabricksApiRequest -Method $requestMethod -EndPoint $apiEndpoint -Body $parameters
 
