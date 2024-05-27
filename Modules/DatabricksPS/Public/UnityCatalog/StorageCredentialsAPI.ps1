@@ -76,6 +76,10 @@ Function Add-UnityCatalogStorageCredential {
 		if((Get-DatabricksCloudProvider) -eq "Azure" -or $true)
 		{
 			New-DynamicParam -ParameterSetName "Azure" -Name AccessConnectorID -Alias 'access_connector_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+
+			New-DynamicParam -ParameterSetName "AzureSP" -Name TenantID -Alias 'tenant_id','directory_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AzureSP" -Name ClientID -Alias 'client_id','application_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AzureSP" -Name ClientSecret -Alias 'client_secret' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 		}
 		elseif((Get-DatabricksCloudProvider) -eq "AWS")
 		{
@@ -109,7 +113,7 @@ Function Add-UnityCatalogStorageCredential {
 		$parameters | Add-Property -Name "read_only" -Value $ReadOnly -Force
 		$parameters | Add-Property -Name "comment" -Value $Comment -Force
 
-		if((Get-DatabricksCloudProvider) -eq "Azure")
+		if($PSCmdlet.ParameterSetName -eq "Azure")
 		{
 			$credential = @{
 				access_connector_id = $PSBoundParameters.AccessConnectorID
@@ -117,7 +121,17 @@ Function Add-UnityCatalogStorageCredential {
 
 			$parameters | Add-Property -Name "azure_managed_identity" -Value $credential -Force
 		}
-		elseif((Get-DatabricksCloudProvider) -eq "AWS")
+		elseif($PSCmdlet.ParameterSetName -eq "AzureSP")
+		{
+			$credential = @{
+				directory_id = $PSBoundParameters.TenantID
+				application_id = $PSBoundParameters.ClientID
+				client_secret = $PSBoundParameters.ClientSecret
+			}
+
+			$parameters | Add-Property -Name "azure_service_principal" -Value $credential -Force
+		}
+		elseif($PSCmdlet.ParameterSetName -eq "AWS")
 		{
 			$credential = @{
 				role_arn = $PSBoundParameters.RoleARN
@@ -127,7 +141,7 @@ Function Add-UnityCatalogStorageCredential {
 
 			$parameters | Add-Property -Name "aws_iam_role" -Value $credential -Force
 		}
-		elseif((Get-DatabricksCloudProvider) -eq "GCP")
+		elseif($PSCmdlet.ParameterSetName -eq "GCP")
 		{
 			$credential = @{
 				email = $PSBoundParameters.EMail
@@ -178,7 +192,11 @@ Function Update-UnityCatalogStorageCredential {
 
 		if((Get-DatabricksCloudProvider) -eq "Azure")
 		{
-			New-DynamicParam -ParameterSetName "Azure" -Name AccessConnectorID -Alias 'access_connector_id' -ValueFromPipelineByPropertyName -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "Azure" -Name AccessConnectorID -Alias 'access_connector_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+
+			New-DynamicParam -ParameterSetName "AzureSP" -Name TenantID -Alias 'tenant_id','directory_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AzureSP" -Name ClientID -Alias 'client_id','application_id' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
+			New-DynamicParam -ParameterSetName "AzureSP" -Name ClientSecret -Alias 'client_secret' -ValueFromPipelineByPropertyName -Mandatory -DPDictionary $Dictionary
 		}
 		elseif((Get-DatabricksCloudProvider) -eq "AWS")
 		{
@@ -213,7 +231,7 @@ Function Update-UnityCatalogStorageCredential {
 		$parameters | Add-Property -Name "comment" -Value $Comment -Force
 		$parameters | Add-Property -Name "force" -Value $Force.IsPresent -Force
 
-		if((Get-DatabricksCloudProvider) -eq "Azure")
+		if($PSCmdlet.ParameterSetName -eq "Azure")
 		{
 			$credential = @{
 				access_connector_id = $AccessConnectorID
@@ -222,7 +240,18 @@ Function Update-UnityCatalogStorageCredential {
 
 			$parameters | Add-Property -Name "azure_managed_identity" -Value $credential -Force
 		}
-		elseif((Get-DatabricksCloudProvider) -eq "AWS")
+		elseif($PSCmdlet.ParameterSetName -eq "AzureSP")
+		{
+			$credential = @{
+				directory_id = $PSBoundParameters.TenantID
+				application_id = $PSBoundParameters.ClientID
+				client_secret = $PSBoundParameters.ClientSecret
+				credential_id = $CredentialID
+			}
+
+			$parameters | Add-Property -Name "azure_managed_identity" -Value $credential -Force
+		}
+		elseif($PSCmdlet.ParameterSetName -eq "AWS")
 		{
 			$credential = @{
 				role_arn = $PSBoundParameters.RoleARN
@@ -232,7 +261,7 @@ Function Update-UnityCatalogStorageCredential {
 
 			$parameters | Add-Property -Name "aws_iam_role" -Value $credential -Force
 		}
-		elseif((Get-DatabricksCloudProvider) -eq "GCP")
+		elseif($PSCmdlet.ParameterSetName -eq "GCP")
 		{
 			$credential = @{
 				email = $PSBoundParameters.EMail
