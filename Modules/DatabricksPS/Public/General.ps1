@@ -425,7 +425,11 @@ Function Set-DatabricksEnvironment {
 				$script:dbApiRootUrl = "https://$($azResource.Properties.workspaceUrl.Trim('/'))/api"
 
 				$azToken = Get-AzAccessToken -ResourceUrl "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
-				$script:dbAuthenticationHeader["Authorization"] = "$($azToken.Type) $($azToken.Token)"
+				$plainToken = $azToken.Token
+				if ($plainToken -is [System.Security.SecureString]) {
+					$plainToken = ConvertFrom-SecureString -AsPlainText -SecureString $plainToken
+				}
+				$script:dbAuthenticationHeader["Authorization"] = "$($azToken.Type) $($plainToken)"
 			}
 			else {
 				Write-Verbose "Using Username/Password authentication flow ..."
