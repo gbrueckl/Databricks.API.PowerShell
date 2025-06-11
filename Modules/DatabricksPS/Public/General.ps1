@@ -427,7 +427,7 @@ Function Set-DatabricksEnvironment {
 				$azToken = Get-AzAccessToken -ResourceUrl "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
 				$plainToken = $azToken.Token
 				if ($plainToken -is [System.Security.SecureString]) {
-					$plainToken = [System.Net.NetworkCredential]::new('', $plainToken).Password
+					$plainToken = ConvertFrom-SecureString -AsPlainText -SecureString $plainToken
 				}
 				$script:dbAuthenticationHeader["Authorization"] = "$($azToken.Type) $($plainToken)"
 			}
