@@ -1,5 +1,9 @@
 # Release History
 
+## v1.13.0.0
+
+- Fixed issue due to a [recent change](https://learn.microsoft.com/en-us/powershell/azure/migrate-az-14.0.0?view=azps-14.1.0#get-azaccesstoken) in the `Az` modules `Get-AzAccessToken` function
+
 ## v1.12.0.0
 
 - Added support for the first Unity Catalog APIs (`Catalog`, `StorageCredential`, `ExternalLocation`, `Schema`)
