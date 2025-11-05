@@ -112,7 +112,7 @@ Function Update-UnityCatalogPermission {
 			@{ principal = "user3@example.com"; add = @("MODIFY"); remove = @("EXECUTE") }
 		) | Update-UnityCatalogPermission -SecureableType TABLE -SecureableName main.default.my_table
 	#>
-	[CmdletBinding(DefaultParameterSetName = "SimpleChange")]
+	[CmdletBinding(DefaultParameterSetName = "SingleChange")]
 	param 
 	(	
 		[Parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)] [Alias("type", "securable_type")] [ValidateSet('METASTORE', 'CATALOG', 'SCHEMA', 'TABLE', 'VIEW', 'FUNCTION', 'VOLUME', 'EXTERNAL_LOCATION', 'STORAGE_CREDENTIAL', 'SHARE', 'RECIPIENT', 'PROVIDER', 'CONNECTION')] [string] $SecureableType,
